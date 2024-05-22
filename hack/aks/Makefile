@@ -90,7 +90,7 @@ overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
 
 create-tagged-ip:
-	$(AZCLI) network public-ip create --name $(TAGGED_IP_PREFIX)-$(CLUSTER) --resource-group $(GROUP) --allocation-method static --ip-tags FirstPartyUsage=/TestTagging-O365 --version IPV4 --sku Standard
+	$(AZCLI) network public-ip create --name $(TAGGED_IP_PREFIX)-$(CLUSTER) --resource-group $(GROUP) --allocation-method static --ip-tags FirstPartyUsage=/TestTagging-O365 --version IPV4 --sku Standard --region $(REGION) --tier regional
 
 ##@ AKS Clusters
 
@@ -106,7 +106,7 @@ overlay-byocni-up: rg-up overlay-net-up create-tagged-ip ## Brings up an Overlay
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
 		--load-balancer-sku standard \
-		--load-balancer-outbound-ip /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(TAGGED_IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(TAGGED_IP_PREFIX)-$(CLUSTER) \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
