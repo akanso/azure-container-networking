@@ -185,7 +185,7 @@ endif
 	@$(MAKE) set-kubeconf
 
 swift-byoncni-nokubeproxy-public-ip: rg-up swift-net-up
-	$(AZCLI) az network public-ip create --name $() \
+	$(AZCLI) az network public-ip create --name "ciliume2eip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags 'FirstPartyUsage=/TestTagging-O365' \
