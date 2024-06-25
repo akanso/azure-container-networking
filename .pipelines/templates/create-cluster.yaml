@@ -39,7 +39,6 @@ jobs:
 #            VM_SIZE=${{ parameters.vmSize }} VM_SIZE_WIN=${{ parameters.vmSizeWin }} \
 #            OS_SKU_WIN=${{ parameters.osSkuWin }} OS=${{parameters.os}} \
 #            WINDOWS_USERNAME=${WINDOWS_USERNAME} WINDOWS_PASSWORD=${WINDOWS_PASSWORD}
-
             make -C ./hack/aks ${{ parameters.clusterType }} \
             AZCLI=az REGION=${{ parameters.region }} SUB=$(SUB_AZURE_NETWORK_AGENT_BUILD_VALIDATIONS) \
             CLUSTER=${{ parameters.clusterName }} \
