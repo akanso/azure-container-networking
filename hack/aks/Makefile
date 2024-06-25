@@ -184,7 +184,7 @@ ifeq ($(OS),windows)
 endif
 	@$(MAKE) set-kubeconf
 
-swift-byoncni-nokubeproxy-public-ip: rg-up swift-net-up
+swift-byoncni-nokubeproxy-public-ip:
 	$(AZCLI) az network public-ip create --name "ciliume2eip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
@@ -194,8 +194,7 @@ swift-byoncni-nokubeproxy-public-ip: rg-up swift-net-up
 		--tier Regional \
 		--version IPv4
 
-
-swift-byocni-nokubeproxy-up: #rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy
+swift-byocni-nokubeproxy-up: rg-up swift-net-up swift-byoncni-nokubeproxy-public-ip  ## Bring up a SWIFT BYO CNI cluster without kube-proxy
 	#$(AZCLI) publicIpName=""
 	$(AZCLI) publicIpId=$(az network public-ip show -g $RG -n $publicIpName --query id -o tsv)
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
