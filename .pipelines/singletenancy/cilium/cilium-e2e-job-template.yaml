@@ -30,7 +30,6 @@ stages:
           dependsOn: ${{ parameters.dependsOn }}
           region: $(REGION_AKS_CLUSTER_TEST)
           publicIp: ${{ parameters.publicIp }}
-          ip-tags: ${{ parameters.ip-tags }}
 
   - stage: ${{ parameters.name }}
     displayName: E2E - ${{ parameters.displayName }}
