@@ -133,23 +133,12 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 	@$(MAKE) set-kubeconf
 
 overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
-	$(AZCLI) publicIpName="public-ip-overlay-cilium"
-	$(AZCLI) az network public-ip create --name $publicIpName \
-		--resource-group $(GROUP) \
-		--allocation-method Static \
-		--ip-tags 'FirstPartyUsage=/TestTagging-O365' \
-		--location $LOCATION \
-		--sku Standard \
-		--tier Regional \
-		--version IPv4
-	$(AZCLI) publicIpId=$(az network public-ip show -g $RG -n $publicIpName --query id -o tsv)
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips $publicIpId \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--network-plugin-mode overlay \
@@ -195,13 +184,23 @@ endif
 	@$(MAKE) set-kubeconf
 
 swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy
+	#$(AZCLI) publicIpName=""
+	$(AZCLI) az network public-ip create --name 'public-ip-ciliume2e' \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags 'FirstPartyUsage=/TestTagging-O365' \
+		--location $LOCATION \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	$(AZCLI) publicIpId=$(az network public-ip show -g $RG -n $publicIpName --query id -o tsv)
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips $publicIpId  \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
