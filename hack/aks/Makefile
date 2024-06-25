@@ -87,6 +87,15 @@ overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes 10.0.0.0/8 -o none
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
 
+swift-public-ip: ## Create public ip
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
 
 ##@ AKS Clusters
 
@@ -182,18 +191,9 @@ ifeq ($(OS),windows)
 endif
 	@$(MAKE) set-kubeconf
 
-swift-byoncni-nokubeproxy-public-ip:
-	$(AZCLI) az network public-ip create --name $(PUBLIC_IP) \
-		--resource-group $(GROUP) \
-		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
-		--location $(REGION) \
-		--sku Standard \
-		--tier Regional \
-		--version IPv4
+
 
 swift-byocni-nokubeproxy-up: rg-up swift-net-up swift-byoncni-nokubeproxy-public-ip  ## Bring up a SWIFT BYO CNI cluster without kube-proxy
-	#$(AZCLI) publicIpName=""
 	$(AZCLI) publicIpId=$(az network public-ip show -g $RG -n $publicIpName --query id -o tsv)
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
