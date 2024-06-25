@@ -25,7 +25,6 @@ SUB        ?= $(AZURE_SUBSCRIPTION)
 CLUSTER    ?= $(USER)-$(REGION)
 GROUP      ?= $(CLUSTER)
 VNET       ?= $(CLUSTER)
-PUBLICIP   ?= $()
 
 ##@ Help
 
@@ -185,7 +184,7 @@ endif
 	@$(MAKE) set-kubeconf
 
 swift-byoncni-nokubeproxy-public-ip:
-	$(AZCLI) az network public-ip create --name "ciliume2eip" \
+	$(AZCLI) az network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags 'FirstPartyUsage=/TestTagging-O365' \
