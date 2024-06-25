@@ -406,6 +406,7 @@ stages:
         vmSize: Standard_B2ms
         k8sVersion: ""
         dependsOn: "test"
+        publicIp: "ciliume2e-publicip"
 
     # Cilium Overlay E2E tests
     - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml

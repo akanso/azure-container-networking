@@ -25,6 +25,7 @@ SUB        ?= $(AZURE_SUBSCRIPTION)
 CLUSTER    ?= $(USER)-$(REGION)
 GROUP      ?= $(CLUSTER)
 VNET       ?= $(CLUSTER)
+PUBLICIP   ?= $()
 
 ##@ Help
 
@@ -184,7 +185,7 @@ endif
 	@$(MAKE) set-kubeconf
 
 swift-byoncni-nokubeproxy-public-ip: rg-up swift-net-up
-	$(AZCLI) az network public-ip create --name 'public-ip-ciliume2e' \
+	$(AZCLI) az network public-ip create --name $() \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags 'FirstPartyUsage=/TestTagging-O365' \
@@ -194,7 +195,7 @@ swift-byoncni-nokubeproxy-public-ip: rg-up swift-net-up
 		--version IPv4
 
 
-swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy
+swift-byocni-nokubeproxy-up: #rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy
 	#$(AZCLI) publicIpName=""
 	$(AZCLI) publicIpId=$(az network public-ip show -g $RG -n $publicIpName --query id -o tsv)
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
