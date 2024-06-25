@@ -187,8 +187,8 @@ swift-byoncni-nokubeproxy-public-ip:
 	$(AZCLI) az network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags 'FirstPartyUsage=/TestTagging-O365' \
-		--location $LOCATION \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
