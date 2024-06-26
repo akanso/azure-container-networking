@@ -194,7 +194,7 @@ endif
 
 
 swift-byocni-nokubeproxy-up: rg-up swift-net-up swift-public-ip  ## Bring up a SWIFT BYO CNI cluster without kube-proxy
-	publicIpId= $(AZCLI) network public-ip show -g $RG -n $publicIpName --query id -o tsv)
+	publicIpId= $(AZCLI) network public-ip show -g $RG -n $publicIpName --query id -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
