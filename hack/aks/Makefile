@@ -199,8 +199,9 @@ endif
 	@$(MAKE) set-kubeconf
 
 
-
-swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
+#--enable-managed-identity \
+#--assign-identity "/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/managedidentity"
+swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up #managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
 	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "ciliumpublicip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
@@ -208,9 +209,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up managed-identity-up
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips publicIpId  \
-		--enable-managed-identity \
-        --assign-identity "/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/managedidentity" \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/ciliumpublicip \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
