@@ -200,7 +200,7 @@ endif
 
 
 
-swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy
+swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
 	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "ciliumpublicip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
