@@ -87,7 +87,7 @@ overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes 10.0.0.0/8 -o none
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
 
-swift-public-ip: ## Create public ip
+public-ip-up: ## Create public ip
 	$(AZCLI) network public-ip create --name "ciliumpublicip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
@@ -97,6 +97,13 @@ swift-public-ip: ## Create public ip
 		--tier Regional \
 		--version IPv4
 
+managed-identity-up:
+	$(AZCLI) identity create --name "managedidentity" --resource-group $(GROUP)  --location $(REGION)
+	USER_ASSIGNED_CLIENT_ID=$(AZCLI) identity show --resource-group $(GROUP) --name "managedidentity" --query 'clientId' -o tsv
+	$(AZCLI) role assignment create \
+            --assignee $(USER_ASSIGNED_CLIENT_ID) \
+            --role "Network Contributor" \
+            --scope "/subscriptions/$(SUB)/resourceGroups/$(GROUP)"
 ##@ AKS Clusters
 
 byocni-up: swift-byocni-up ## Alias to swift-byocni-up
@@ -193,8 +200,8 @@ endif
 
 
 
-swift-byocni-nokubeproxy-up: rg-up swift-net-up swift-public-ip  ## Bring up a SWIFT BYO CNI cluster without kube-proxy
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "ciliumpublicip" #--query id -o tsv
+swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "ciliumpublicip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -202,6 +209,8 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up swift-public-ip  ## Bring up a S
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
 		--load-balancer-outbound-ips publicIpId  \
+		--enable-managed-identity \
+        --assign-identity "/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/managedidentity" \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
