@@ -99,7 +99,7 @@ public-ip-up: ## Create public ip
 
 managed-identity-up:
 	$(AZCLI) identity create --name "managedidentity" --resource-group $(GROUP)  --location $(REGION)
-	USER_ASSIGNED_CLIENT_ID=$(AZCLI) identity show --resource-group $(GROUP) --name "managedidentity" --query 'clientId' -o tsv
+	USER_ASSIGNED_CLIENT_ID= $(AZCLI) identity show --resource-group $(GROUP) --name "managedidentity" --query id -o tsv
 	$(AZCLI) role assignment create \
             --assignee $(USER_ASSIGNED_CLIENT_ID) \
             --role "Network Contributor" \
