@@ -201,7 +201,7 @@ endif
 
 #--enable-managed-identity \
 #--assign-identity "/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/managedidentity"
-swift-byocni-nokubeproxy-up: rg-up swift-net-up #managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
+swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
 	$(AZCLI) network public-ip create --name "ciliumpublicip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
