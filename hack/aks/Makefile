@@ -201,7 +201,15 @@ endif
 
 #--enable-managed-identity \
 #--assign-identity "/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/managedidentity"
-swift-byocni-nokubeproxy-up: rg-up swift-net-up public-ip-up #managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
+swift-byocni-nokubeproxy-up: rg-up swift-net-up #managed-identity-up  ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
+	$(AZCLI) network public-ip create --name "ciliumpublicip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
 	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "ciliumpublicip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
