@@ -87,15 +87,6 @@ overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes 10.0.0.0/8 -o none
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
 
-public-ip-up: ## Create public ip
-	$(AZCLI) network public-ip create --name "ciliumpublicip" \
-		--resource-group $(GROUP) \
-		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
-		--location $(REGION) \
-		--sku Standard \
-		--tier Regional \
-		--version IPv4
 
 managed-identity-up:
 	$(AZCLI) identity create --name "managedidentity" --resource-group $(GROUP)  --location $(REGION)
@@ -111,13 +102,22 @@ cilium-up: swift-cilium-up ## Alias to swift-cilium-up
 up: swift-up ## Alias to swift-up
 
 overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
+	$(AZCLI) network public-ip create --name "overlay-cni-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku standard \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/overlay-cni-public-ip \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
@@ -131,13 +131,22 @@ endif
 	@$(MAKE) set-kubeconf
 
 overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster without kube-proxy
+	$(AZCLI) network public-ip create --name "overlay-cni-no-kube-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-no-kube-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/overlay-cni-no-kube-public-ip \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
@@ -148,12 +157,22 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 	@$(MAKE) set-kubeconf
 
 overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
+	$(AZCLI) network public-ip create --name "overlay-cillium-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cillium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/overlay-cillium-public-ip \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--network-plugin-mode overlay \
@@ -164,13 +183,22 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 	@$(MAKE) set-kubeconf
 
 overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
+	$(AZCLI) network public-ip create --name "overlay-azcni-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/overlay-azcni-public-ip \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
@@ -180,13 +208,22 @@ overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 	@$(MAKE) set-kubeconf
 
 swift-byocni-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster
+	$(AZCLI) network public-ip create --name "swift-byo-cni-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-cni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku standard \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/swift-byo-cni-public-ip \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -198,11 +235,8 @@ ifeq ($(OS),windows)
 endif
 	@$(MAKE) set-kubeconf
 
-
-#--enable-managed-identity \
-#--assign-identity "/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.ManagedIdentity/userAssignedIdentities/managedidentity"
 swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
-	$(AZCLI) network public-ip create --name "ciliumpublicip" \
+	$(AZCLI) network public-ip create --name "swift-byo-nok-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
@@ -210,14 +244,14 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "ciliumpublicip" --query "ipAddress" -o tsv
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-nok-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/ciliumpublicip \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/swift-byo-nok-public-ip \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -228,13 +262,22 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 	@$(MAKE) set-kubeconf
 
 swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
+	$(AZCLI) network public-ip create --name "swift-cilium-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-cilium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/swift-cilium-public-ip \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/CiliumDataplanePreview \
@@ -245,13 +288,22 @@ swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
 	@$(MAKE) set-kubeconf
 
 swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
+	$(AZCLI) network public-ip create --name "swift-azcni-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/swift-azcni-public-ip \
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -285,13 +337,22 @@ swiftv2-dummy-cluster-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 # These AKS clusters can only be created in a limited subscription listed here:
 # https://dev.azure.com/msazure/CloudNativeCompute/_git/aks-rp?path=/resourceprovider/server/microsoft.com/containerservice/flags/network_flags.go&version=GBmaster&line=134&lineEnd=135&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
 vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT BYO CNI cluster
+	$(AZCLI) network public-ip create --name "vnetscale-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/vnetscale-public-ip \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -301,13 +362,22 @@ vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 	@$(MAKE) set-kubeconf
 
 vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT BYO CNI cluster without kube-proxy
+	$(AZCLI) network public-ip create --name "vnetscale-nok-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-nok-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/vnetscale-nok-public-ip \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -318,13 +388,22 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 	@$(MAKE) set-kubeconf
 
 vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT Cilium cluster
+	$(AZCLI) network public-ip create --name "vnetscale-cilium-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-cilium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/vnetscale-cilium-public-ip \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/CiliumDataplanePreview \
@@ -335,13 +414,22 @@ vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 	@$(MAKE) set-kubeconf
 
 vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT AzCNI cluster
+	$(AZCLI) network public-ip create --name "vnetscale-azcni-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/vnetscale-azcni-public-ip \
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -470,9 +558,6 @@ down: ## Delete the cluster
 	$(AZCLI) aks delete -g $(GROUP) -n $(CLUSTER) --yes
 	@$(MAKE) unset-kubeconf
 	@$(MAKE) rg-down
-
-#clean-public-ip:
-#	$(AZCLI) Remove-AzPublicIpAddress -Name $publicIpName -ResourceGroupName $(GROUP)
 
 restart-vmss: ## Restarts the nodes in the cluster
 	$(AZCLI) vmss restart -g MC_${GROUP}_${CLUSTER}_${REGION} --name $(VMSS_NAME)
