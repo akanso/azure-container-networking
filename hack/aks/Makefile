@@ -110,7 +110,7 @@ overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -139,7 +139,7 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-no-kube-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-no-kube-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -165,7 +165,7 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cillium-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cillium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -191,7 +191,7 @@ overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-azcni-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -216,7 +216,7 @@ swift-byocni-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-cni-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-cni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -244,7 +244,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-nok-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-nok-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -270,7 +270,7 @@ swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-cilium-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-cilium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -296,7 +296,7 @@ swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-azcni-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -345,7 +345,7 @@ vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -370,7 +370,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-nok-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-nok-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -396,7 +396,7 @@ vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-cilium-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-cilium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -422,7 +422,7 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	publicIpId= $(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-azcni-public-ip" --query "ipAddress" -o tsv
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \

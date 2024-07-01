@@ -29,7 +29,6 @@ stages:
           k8sVersion: ${{ parameters.k8sVersion }}
           dependsOn: ${{ parameters.dependsOn }}
           region: $(REGION_AKS_CLUSTER_TEST)
-          publicIp: ${{ parameters.publicIp }}
 
   - stage: ${{ parameters.name }}
     displayName: E2E - ${{ parameters.displayName }}
