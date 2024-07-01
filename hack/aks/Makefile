@@ -87,14 +87,6 @@ overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes 10.0.0.0/8 -o none
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
 
-
-managed-identity-up:
-	$(AZCLI) identity create --name "managedidentity" --resource-group $(GROUP)  --location $(REGION)
-	USER_ASSIGNED_CLIENT_ID= $(AZCLI) identity show --resource-group $(GROUP) --name "managedidentity" --query id -o tsv
-	$(AZCLI) role assignment create \
-            --assignee $(USER_ASSIGNED_CLIENT_ID) \
-            --role "Network Contributor" \
-            --scope "/subscriptions/$(SUB)/resourceGroups/$(GROUP)"
 ##@ AKS Clusters
 
 byocni-up: swift-byocni-up ## Alias to swift-byocni-up
