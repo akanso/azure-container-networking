@@ -232,7 +232,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 	$(AZCLI) network public-ip create --name "swift-byo-nok-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP-TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
