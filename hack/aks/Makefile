@@ -19,6 +19,7 @@ OS_SKU_WIN      ?= Windows2022
 REGION          ?= westus2
 VM_SIZE	        ?= Standard_B2s
 VM_SIZE_WIN     ?= Standard_B2s
+IP-TAG          ?= FirstPartyUsage=/TestTagging-O365
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -357,7 +358,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 	$(AZCLI) network public-ip create --name "vnetscale-nok-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP-TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
