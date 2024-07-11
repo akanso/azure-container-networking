@@ -320,10 +320,19 @@ swiftv2-multitenancy-cluster-up: rg-up
 	@$(MAKE) set-kubeconf
 
 swiftv2-dummy-cluster-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
+	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags $(IP_TAG) \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
 		--no-ssh-key \
 		--yes
 	@$(MAKE) set-kubeconf
