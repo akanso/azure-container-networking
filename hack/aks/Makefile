@@ -98,7 +98,7 @@ overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
 	$(AZCLI) network public-ip create --name "overlay-cni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -126,7 +126,7 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 	$(AZCLI) network public-ip create --name "overlay-cni-no-kube-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -151,7 +151,7 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 	$(AZCLI) network public-ip create --name "overlay-cillium-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -176,7 +176,7 @@ overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 	$(AZCLI) network public-ip create --name "overlay-azcni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -200,7 +200,7 @@ swift-byocni-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster
 	$(AZCLI) network public-ip create --name "swift-byo-cni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -252,7 +252,7 @@ swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
 	$(AZCLI) network public-ip create --name "swift-cilium-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -277,7 +277,7 @@ swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 	$(AZCLI) network public-ip create --name "swift-azcni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -300,7 +300,7 @@ swiftv2-multitenancy-cluster-up: rg-up
 	$(AZCLI) network public-ip create --name "swift-mult-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -334,7 +334,7 @@ vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 	$(AZCLI) network public-ip create --name "vnetscale-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -383,7 +383,7 @@ vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 	$(AZCLI) network public-ip create --name "vnetscale-cilium-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -408,7 +408,7 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 	$(AZCLI) network public-ip create --name "vnetscale-azcni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -431,7 +431,7 @@ windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
 	$(AZCLI) network public-ip create --name "wincniv1-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -456,7 +456,7 @@ linux-cniv1-up: rg-up overlay-net-up ## Bring up a Linux CNIv1 cluster
 	$(AZCLI) network public-ip create --name "linux-cniv1-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -479,7 +479,7 @@ dualstack-overlay-up: rg-up overlay-net-up ## Brings up an dualstack Overlay clu
 	$(AZCLI) network public-ip create --name "dualstack-lin-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -504,7 +504,7 @@ dualstack-overlay-byocni-up: rg-up overlay-net-up ## Brings up an dualstack Over
 	$(AZCLI) network public-ip create --name "dualstack-cni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -529,7 +529,7 @@ cilium-dualstack-up: rg-up overlay-net-up ## Brings up a Cilium Dualstack Overla
 	$(AZCLI) network public-ip create --name "dualstack-nokcni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -555,7 +555,7 @@ dualstack-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up a Dualstack o
 	$(AZCLI) network public-ip create --name "dualstack-nokbyocni-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
