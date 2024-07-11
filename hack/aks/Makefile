@@ -20,6 +20,7 @@ REGION          ?= westus2
 VM_SIZE	        ?= Standard_B2s
 VM_SIZE_WIN     ?= Standard_B2s
 IP_TAG          ?= FirstPartyUsage=/TestTagging-O365
+IP_PREFIX       ?= serviceTaggedIp
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -224,7 +225,7 @@ endif
 	@$(MAKE) set-kubeconf
 
 swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
-	$(AZCLI) network public-ip create --name "swift-byo-nok-public-ip" \
+	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -238,7 +239,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/swift-byo-nok-public-ip \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
