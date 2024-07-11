@@ -232,7 +232,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 	$(AZCLI) network public-ip create --name "swift-byo-nok-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags $(IP-TAG) \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
@@ -358,7 +358,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 	$(AZCLI) network public-ip create --name "vnetscale-nok-public-ip" \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
-		--ip-tags $(IP-TAG) \
+		--ip-tags $(IP_TAG) \
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
