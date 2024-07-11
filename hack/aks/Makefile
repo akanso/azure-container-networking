@@ -430,12 +430,22 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 	@$(MAKE) set-kubeconf
 
 windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
+	$(AZCLI) network public-ip create --name "wincniv1-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
+	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "wincniv1-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/wincniv1-public-ip \
 		--network-plugin azure \
 		--windows-admin-password $(WINDOWS_PASSWORD) \
 		--windows-admin-username $(WINDOWS_USERNAME) \
