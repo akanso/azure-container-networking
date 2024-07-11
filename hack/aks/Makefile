@@ -19,7 +19,7 @@ OS_SKU_WIN      ?= Windows2022
 REGION          ?= westus2
 VM_SIZE	        ?= Standard_B2s
 VM_SIZE_WIN     ?= Standard_B2s
-IP-TAG          ?= FirstPartyUsage=/TestTagging-O365
+IP_TAG          ?= FirstPartyUsage=/TestTagging-O365
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -103,7 +103,6 @@ overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -132,7 +131,6 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cni-no-kube-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -158,7 +156,6 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-cillium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -184,7 +181,6 @@ overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "overlay-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -209,7 +205,6 @@ swift-byocni-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-cni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -237,7 +232,6 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-byo-nok-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -263,7 +257,6 @@ swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-cilium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -289,7 +282,6 @@ swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "swift-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -305,6 +297,14 @@ swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 	@$(MAKE) set-kubeconf
 
 swiftv2-multitenancy-cluster-up: rg-up
+	$(AZCLI) network public-ip create --name "swift-mult-public-ip" \
+		--resource-group $(GROUP) \
+		--allocation-method Static \
+		--ip-tags "FirstPartyUsage=/TestTagging-O365" \
+		--location $(REGION) \
+		--sku Standard \
+		--tier Regional \
+		--version IPv4
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
@@ -312,6 +312,7 @@ swiftv2-multitenancy-cluster-up: rg-up
 		--nodepool-name "mtapool" \
 		--node-vm-size $(VM_SIZE) \
 		--node-count 2 \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/swift-mult-public-ip \
 		--nodepool-tags fastpathenabled=true \
 		--no-ssh-key \
 		--yes
@@ -338,7 +339,6 @@ vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -363,7 +363,6 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-nok-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -389,7 +388,6 @@ vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-cilium-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -415,7 +413,6 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "vnetscale-azcni-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
@@ -439,7 +436,6 @@ windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
 		--sku Standard \
 		--tier Regional \
 		--version IPv4
-	$(AZCLI) network public-ip show --resource-group $(GROUP) --name "wincniv1-public-ip" --query "ipAddress" -o tsv
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
