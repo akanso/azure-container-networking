@@ -21,6 +21,7 @@ VM_SIZE	        ?= Standard_B2s
 VM_SIZE_WIN     ?= Standard_B2s
 IP_TAG          ?= FirstPartyUsage=/TestTagging-O365
 IP_PREFIX       ?= serviceTaggedIp
+PUBLIC_IP       ?= $(IP_PREFIX)-$(CLUSTER)
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -96,7 +97,7 @@ cilium-up: swift-cilium-up ## Alias to swift-cilium-up
 up: swift-up ## Alias to swift-up
 
 overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -110,7 +111,7 @@ overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
@@ -124,7 +125,7 @@ endif
 	@$(MAKE) set-kubeconf
 
 overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster without kube-proxy
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -149,7 +150,7 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 	@$(MAKE) set-kubeconf
 
 overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -163,7 +164,7 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--network-plugin-mode overlay \
@@ -174,7 +175,7 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 	@$(MAKE) set-kubeconf
 
 overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -188,7 +189,7 @@ overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
@@ -198,7 +199,7 @@ overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 	@$(MAKE) set-kubeconf
 
 swift-byocni-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -212,7 +213,7 @@ swift-byocni-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -225,7 +226,7 @@ endif
 	@$(MAKE) set-kubeconf
 
 swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -239,7 +240,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -250,7 +251,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 	@$(MAKE) set-kubeconf
 
 swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -264,7 +265,7 @@ swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/CiliumDataplanePreview \
@@ -275,7 +276,7 @@ swift-cilium-up: rg-up swift-net-up ## Bring up a SWIFT Cilium cluster
 	@$(MAKE) set-kubeconf
 
 swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -289,7 +290,7 @@ swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -298,7 +299,7 @@ swift-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 	@$(MAKE) set-kubeconf
 
 swiftv2-multitenancy-cluster-up: rg-up
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -313,14 +314,14 @@ swiftv2-multitenancy-cluster-up: rg-up
 		--nodepool-name "mtapool" \
 		--node-vm-size $(VM_SIZE) \
 		--node-count 2 \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--nodepool-tags fastpathenabled=true \
 		--no-ssh-key \
 		--yes
 	@$(MAKE) set-kubeconf
 
 swiftv2-dummy-cluster-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -332,7 +333,7 @@ swiftv2-dummy-cluster-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--no-ssh-key \
 		--yes
 	@$(MAKE) set-kubeconf
@@ -341,7 +342,7 @@ swiftv2-dummy-cluster-up: rg-up swift-net-up ## Bring up a SWIFT AzCNI cluster
 # These AKS clusters can only be created in a limited subscription listed here:
 # https://dev.azure.com/msazure/CloudNativeCompute/_git/aks-rp?path=/resourceprovider/server/microsoft.com/containerservice/flags/network_flags.go&version=GBmaster&line=134&lineEnd=135&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
 vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT BYO CNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -355,7 +356,7 @@ vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -365,7 +366,7 @@ vnetscale-swift-byocni-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 	@$(MAKE) set-kubeconf
 
 vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT BYO CNI cluster without kube-proxy
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -379,7 +380,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -390,7 +391,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 	@$(MAKE) set-kubeconf
 
 vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT Cilium cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -404,7 +405,7 @@ vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/CiliumDataplanePreview \
@@ -415,7 +416,7 @@ vnetscale-swift-cilium-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale
 	@$(MAKE) set-kubeconf
 
 vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT AzCNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -429,7 +430,7 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP)\
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -438,7 +439,7 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 	@$(MAKE) set-kubeconf
 
 windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -452,7 +453,7 @@ windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--windows-admin-password $(WINDOWS_PASSWORD) \
 		--windows-admin-username $(WINDOWS_USERNAME) \
@@ -463,7 +464,7 @@ windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
 	@$(MAKE) set-kubeconf
 
 linux-cniv1-up: rg-up overlay-net-up ## Bring up a Linux CNIv1 cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -476,7 +477,7 @@ linux-cniv1-up: rg-up overlay-net-up ## Bring up a Linux CNIv1 cluster
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--max-pods 250 \
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
@@ -486,7 +487,7 @@ linux-cniv1-up: rg-up overlay-net-up ## Bring up a Linux CNIv1 cluster
 	@$(MAKE) set-kubeconf
 
 dualstack-overlay-up: rg-up overlay-net-up ## Brings up an dualstack Overlay cluster with Linux node only
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -500,7 +501,7 @@ dualstack-overlay-up: rg-up overlay-net-up ## Brings up an dualstack Overlay clu
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--subscription $(SUB) \
@@ -511,7 +512,7 @@ dualstack-overlay-up: rg-up overlay-net-up ## Brings up an dualstack Overlay clu
 	@$(MAKE) set-kubeconf
 
 dualstack-overlay-byocni-up: rg-up overlay-net-up ## Brings up an dualstack Overlay BYO CNI cluster
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -525,7 +526,7 @@ dualstack-overlay-byocni-up: rg-up overlay-net-up ## Brings up an dualstack Over
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--subscription $(SUB) \
@@ -536,7 +537,7 @@ dualstack-overlay-byocni-up: rg-up overlay-net-up ## Brings up an dualstack Over
 	@$(MAKE) set-kubeconf
 
 cilium-dualstack-up: rg-up overlay-net-up ## Brings up a Cilium Dualstack Overlay cluster with Linux node only
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -550,7 +551,7 @@ cilium-dualstack-up: rg-up overlay-net-up ## Brings up a Cilium Dualstack Overla
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--network-dataplane cilium \
@@ -562,7 +563,7 @@ cilium-dualstack-up: rg-up overlay-net-up ## Brings up a Cilium Dualstack Overla
 	@$(MAKE) set-kubeconf
 
 dualstack-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up a Dualstack overlay BYOCNI cluster with Linux node only and no kube-proxy
-	$(AZCLI) network public-ip create --name $(IP_PREFIX)-$(CLUSTER) \
+	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
 		--allocation-method Static \
 		--ip-tags $(IP_TAG) \
@@ -576,7 +577,7 @@ dualstack-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up a Dualstack o
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(IP_PREFIX)-$(CLUSTER) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--subscription $(SUB) \
