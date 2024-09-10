@@ -8,18 +8,21 @@ AZIMG   = mcr.microsoft.com/azure-cli
 AZCLI   ?= docker run --rm -v $(AZCFG):/root/.azure -v $(KUBECFG):/root/.kube -v $(SSH):/root/.ssh -v $(PWD):/root/tmpsrc $(AZIMG) az
 
 # overrideable defaults
-AUTOUPGRADE          ?= patch
-K8S_VER              ?= 1.30
-NODE_COUNT           ?= 2
-NODE_COUNT_WIN	     ?= $(NODE_COUNT)
-NODEUPGRADE          ?= NodeImage
-OS				     ?= linux # Used to signify if you want to bring up a windows nodePool on byocni clusters
-OS_SKU               ?= Ubuntu
-OS_SKU_WIN           ?= Windows2022
-REGION               ?= westus2
-VM_SIZE	             ?= Standard_B2s
-VM_SIZE_WIN          ?= Standard_B2s
-KUBE_PROXY_JSON_PATH ?= ./kube-proxy.json
+AUTOUPGRADE     ?= patch
+K8S_VER         ?= 1.28
+NODE_COUNT      ?= 2
+NODE_COUNT_WIN	?= $(NODE_COUNT)
+NODEUPGRADE     ?= NodeImage
+OS				?= linux # Used to signify if you want to bring up a windows nodePool on byocni clusters
+OS_SKU          ?= Ubuntu
+OS_SKU_WIN      ?= Windows2022
+REGION          ?= westus2
+VM_SIZE	        ?= Standard_B2s
+VM_SIZE_WIN     ?= Standard_B2s
+VNET_PREFIX 	?= 10.0.0.0/8
+SUBNET_PREFIX 	?= 10.10.0.0/16
+POD_CIDR		?= 192.168.0.0/16
+SVC_CIDR		?= 192.168.10.0/16
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -86,8 +89,8 @@ vnetscale-swift-net-up: ## Create vnet, nodenet and podnet subnets for vnet scal
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name podnet --address-prefixes 10.40.0.0/13 -o none
 
 overlay-net-up: ## Create vnet, nodenet subnets
-	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes 10.0.0.0/8 -o none
-	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
+	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes $(VNET_PREFIX) -o none
+	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix $(SUBNET_PREFIX) -o none
 
 
 ##@ AKS Clusters
@@ -148,6 +151,44 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
 		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--yes
+	@$(MAKE) set-kubeconf
+
+overlay-byocni-nokubeproxy-up-mesh: rg-up overlay-net-up  ## Brings up an Overlay BYO CNI cluster without kube-proxy
+	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--auto-upgrade-channel $(AUTOUPGRADE) \
+		--node-os-upgrade-channel $(NODEUPGRADE) \
+		--kubernetes-version $(K8S_VER) \
+		--node-count $(NODE_COUNT) \
+		--node-vm-size $(VM_SIZE) \
+		--load-balancer-sku standard \
+		--network-plugin none \
+		--network-plugin-mode overlay \
+		--pod-cidr $(POD_CIDR) \
+		--service-cidr $(SVC_CIDR) \
+		--dns-service-ip $(DNS_IP) \
+		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
+		--no-ssh-key \
+		--kube-proxy-config ./kube-proxy.json \
+		--yes
+	@$(MAKE) set-kubeconf
+
+overlay-byocni-nokubeproxy-up-mesh: rg-up overlay-net-up  ## Brings up an Overlay BYO CNI cluster without kube-proxy
+	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--auto-upgrade-channel $(AUTOUPGRADE) \
+		--node-os-upgrade-channel $(NODEUPGRADE) \
+		--kubernetes-version $(K8S_VER) \
+		--node-count $(NODE_COUNT) \
+		--node-vm-size $(VM_SIZE) \
+		--load-balancer-sku standard \
+		--network-plugin none \
+		--network-plugin-mode overlay \
+		--pod-cidr $(POD_CIDR) \
+		--service-cidr $(SVC_CIDR) \
+		--dns-service-ip $(DNS_IP) \
+		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
+		--no-ssh-key \
+		--kube-proxy-config ./kube-proxy.json \
 		--yes
 	@$(MAKE) set-kubeconf
 
