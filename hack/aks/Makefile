@@ -27,8 +27,8 @@ SVC_CIDR		?= 192.168.10.0/16
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
 CLUSTER    ?= $(USER)-$(REGION)
-GROUP      ?= $(CLUSTER)
-VNET       ?= $(CLUSTER)
+GROUP      ?= $(CLUSTER)-rg
+VNET       ?= $(CLUSTER)-vnet
 
 ##@ Help
 
