@@ -16,7 +16,7 @@ for unique in $sufixes; do
         AZCLI=az REGION=westus2 SUB=$SUB \
         CLUSTER=${clusterPrefix}-${unique} \
         POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_sufix=10.${unique}0.0.0/16 SUBNET_sufix=10.${unique}0.0.0/16
+        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
 
     if [ $install == "helm" ]; then
         cilium install -n kube-system cilium cilium/cilium --version v1.16.1 \
