@@ -23,13 +23,31 @@ for unique in $sufixes; do
         --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
         --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
         --set hubble.enabled=false \
-        --set envoy.enabled=false
+        --set envoy.enabled=false \
+        --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
+        --set ipam.mode="delegated-plugin" \
+        --set extraArgs[0]="--local-router-ipv4=169.254.23.0" \
+        --set tunnel="disabled" \
+        --set routingMode=native \
+        --set endpointRoutes.enabled=true \
+        --set endpointHealthChecking.enabled=false
+
     else # Ignore this block for now, was testing internal resources.
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-operator/files
+        export CILIUM_VERSION_TAG=v1.16-240904
+        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
         envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
         envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
+
+        export CILIUM_VERSION_TAG=v1.16-240904
+        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
+        DIR=1.16
+        kubectl apply -f test/manifests/v${DIR}/cilium-agent/files
+        kubectl apply -f test/manifests/v${DIR}/cilium-operator/files
+        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY},${IPV6_HP_BPF_VERSION}' < test/manifests/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
+        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/manifests/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
     fi
 
     make test-load CNS_ONLY=true \
@@ -77,25 +95,28 @@ az network vnet peering create \
 # --set kube-proxy-replacement-healthz-bind-address="0.0.0.0:10256"
 
 
-cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=false
-cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=false
+# cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=false
+# cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=false
 # -- testing --
-# cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
-# cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
-# -- testing --
+cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
+cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
+# # -- testing --
 
 cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
 cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
 
-# CA is passed between clusters in this step
+# # CA is passed between clusters in this step
 cilium clustermesh connect --context ${clusterPrefix}-${sufix1} --destination-context ${clusterPrefix}-${sufix2}
 # These can be run in parallel in different bash shells
 # Running connectivity test from context to multi. test-namespace shows the direction of the test. 1->2, 2->1.
 # Completeing both of these will take 20+~minutes. Run outside of script.
-# cilium connectivity test --context ${clusterPrefix}-${sufix1} --multi-cluster ${clusterPrefix}-${sufix2} --test-namespace ciltest-${sufix1}-${sufix2} --force-deploy
-# cilium connectivity test --context ${clusterPrefix}-${sufix2} --multi-cluster ${clusterPrefix}-${sufix1} --test-namespace ciltest-${sufix2}-${sufix1} --force-deploy
+cilium connectivity test --context ${clusterPrefix}-${sufix1} --multi-cluster ${clusterPrefix}-${sufix2} --test-namespace ciltest-${sufix1}-${sufix2} --force-deploy
+cilium connectivity test --context ${clusterPrefix}-${sufix2} --multi-cluster ${clusterPrefix}-${sufix1} --test-namespace ciltest-${sufix2}-${sufix1} --force-deploy
 
-
+cilium config set --context ${clusterPrefix}-${sufix1} cluster.name ${clusterPrefix}-${sufix1}
+cilium config set --context ${clusterPrefix}-${sufix1} cluster.id ${sufix1}
+cilium config set --context ${clusterPrefix}-${sufix2} cluster.name ${clusterPrefix}-${sufix2}
+cilium config set --context ${clusterPrefix}-${sufix2} cluster.id ${sufix2}
 
 # -- Useful debug commands --
 # cilium status --context ${clusterPrefix}-${sufix1}
