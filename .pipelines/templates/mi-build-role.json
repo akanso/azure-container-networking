@@ -14,18 +14,6 @@
     "Microsoft.Storage/storageAccounts/tableServices/tables/read",
     "Microsoft.Storage/storageAccounts/tableServices/tables/write",
     "Microsoft.Storage/storageAccounts/tableServices/tables/delete",
-
-    "Microsoft.Network/publicIPAddresses/read",
-    "Microsoft.Network/virtualNetworks/read",
-    "Microsoft.Network/loadBalancers/read",
-    "Microsoft.Network/networkInterfaces/read",
-    "Microsoft.Compute/virtualMachines/*/read",
-    "Microsoft.HybridCompute/machines/*/read",
-    "Microsoft.HybridConnectivity/endpoints/listCredentials/action",
-
-    "Microsoft.Compute/*/read",
-    "Microsoft.Compute/*/write",
-    "Microsoft.Compute/*/delete",
     
     "Microsoft.ContainerRegistry/registries/pull/read",
     "Microsoft.ContainerRegistry/registries/push/write"
@@ -49,14 +37,7 @@
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete",
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/modifypermissions/action",
     "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action",
-    "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action",
-
-    "Microsoft.Compute/virtualMachines/login/action",
-    "Microsoft.Compute/virtualMachines/loginAsAdmin/action",
-    "Microsoft.HybridCompute/machines/login/action",
-    "Microsoft.HybridCompute/machines/loginAsAdmin/action",
-    "Microsoft.Compute/virtualMachines/start/action",
-    "Microsoft.Compute/virtualMachines/restart/action"
+    "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action"
   ],
   "notDataActions": [],
   "assignableScopes": [

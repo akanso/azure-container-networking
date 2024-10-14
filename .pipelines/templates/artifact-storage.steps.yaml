@@ -229,8 +229,6 @@ steps:
       DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | \
         jq -rc '.')
       
-          #'.assignableScopes[] = $RESOURCE_GROUP_ID')
-          #--arg RESOURCE_GROUP_ID "$ACNCI_BUILD_RESOURCEGROUP_ID" 
       echo $DEF | jq .
       if (( $DEFS_FOUND < 1 )); then
         az role definition create \
