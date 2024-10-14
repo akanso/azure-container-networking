@@ -309,16 +309,15 @@ stages:
         dependsOn: "containerize"
 
     # Azure Overlay E2E Stateless CNI tests
-    # Windows is not supported for arm64 yet
-    # - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
-    #   parameters:
-    #     name: "azure_overlay_stateless_e2e"
-    #     displayName: Azure Stateless CNI Overlay
-    #     os: windows
-    #     clusterType: overlay-byocni-up
-    #     clusterName: "statelesswin"
-    #     vmSize: Standard_B2ms
-    #     dependsOn: "containerize"
+    - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
+      parameters:
+        name: "azure_overlay_stateless_e2e"
+        displayName: Azure Stateless CNI Overlay
+        os: windows
+        clusterType: overlay-byocni-up
+        clusterName: "statelesswin"
+        vmSize: Standard_B2ms
+        dependsOn: "containerize"
 
     # AKS Swift E2E tests
     - template: singletenancy/aks-swift/e2e-job-template.yaml
@@ -357,19 +356,19 @@ stages:
         k8sVersion: 1.25
         scaleup: 100
         dependsOn: "containerize"
-    # Windows is not supported for arm64 yet
-    # - template: singletenancy/aks/e2e-job-template.yaml
-    #   parameters:
-    #     name: "aks_windows_22_e2e"
-    #     displayName: AKS Windows 2022
-    #     arch: amd64
-    #     os: windows
-    #     clusterType: windows-cniv1-up
-    #     clusterName: "win22e2e"
-    #     vmSize: Standard_B2ms
-    #     os_version: "ltsc2022"
-    #     scaleup: 50
-    #     dependsOn: "containerize"
+
+    - template: singletenancy/aks/e2e-job-template.yaml
+      parameters:
+        name: "aks_windows_22_e2e"
+        displayName: AKS Windows 2022
+        arch: amd64
+        os: windows
+        clusterType: windows-cniv1-up
+        clusterName: "win22e2e"
+        vmSize: Standard_B2ms
+        os_version: "ltsc2022"
+        scaleup: 50
+        dependsOn: "containerize"
 
     # CNI dual stack overlay E2E tests
     - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
@@ -410,7 +409,7 @@ stages:
         - cilium_h_overlay_e2e
         - aks_ubuntu_22_linux_e2e
         - aks_swift_vnetscale_e2e
-        # - aks_windows_22_e2e
+        - aks_windows_22_e2e
         - dualstackoverlay_e2e
         - cilium_dualstackoverlay_e2e
         # - swiftv2_e2e
@@ -455,10 +454,10 @@ stages:
                 name: aks_ubuntu_22_linux_e2e
                 clusterName: "ubuntu22e2e"
                 region: $(REGION_AKS_CLUSTER_TEST)
-              # aks_windows_22_e2e:
-              #   name: aks_windows_22_e2e
-              #   clusterName: "win22e2e"
-              #   region: $(REGION_AKS_CLUSTER_TEST)
+              aks_windows_22_e2e:
+                name: aks_windows_22_e2e
+                clusterName: "win22e2e"
+                region: $(REGION_AKS_CLUSTER_TEST)
               dualstackoverlay_e2e:
                 name: dualstackoverlay_e2e
                 clusterName: "dsovere2e"
