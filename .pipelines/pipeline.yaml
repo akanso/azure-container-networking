@@ -257,7 +257,7 @@ stages:
         displayName: Cilium
         clusterType: swift-byocni-nokubeproxy-up
         clusterName: "ciliume2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: ""
         dependsOn: "containerize"
 
@@ -268,7 +268,7 @@ stages:
         displayName: Cilium on AKS Overlay
         clusterType: overlay-byocni-nokubeproxy-up
         clusterName: "cilovere2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: ""
         dependsOn: "containerize"
 
@@ -280,7 +280,7 @@ stages:
         os: linux
         clusterType: dualstack-byocni-nokubeproxy-up
         clusterName: "cildsovere2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: ""
         dependsOn: "containerize"
 
@@ -291,7 +291,7 @@ stages:
         displayName: Cilium on AKS Overlay with Hubble
         clusterType: overlay-byocni-nokubeproxy-up
         clusterName: "cilwhleovere2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: ""
         dependsOn: "containerize"
         testHubble: true
@@ -304,7 +304,7 @@ stages:
         os: linux
         clusterType: overlay-byocni-up
         clusterName: "azovere2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: ""
         dependsOn: "containerize"
 
@@ -316,7 +316,7 @@ stages:
         os: windows
         clusterType: overlay-byocni-up
         clusterName: "statelesswin"
-        vmSize: Standard_B2ms
+        vmSize: Standard_DC4ads_v6
         dependsOn: "containerize"
 
     # AKS Swift E2E tests
@@ -327,7 +327,7 @@ stages:
         os: linux
         clusterType: swift-byocni-up
         clusterName: "swifte2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: ""
         dependsOn: "containerize"
 
@@ -339,7 +339,7 @@ stages:
         os: linux
         clusterType: vnetscale-swift-byocni-up
         clusterName: "vscaleswifte2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: "1.30"
         dependsOn: "containerize"
 
@@ -352,7 +352,7 @@ stages:
         os: "linux"
         clusterType: linux-cniv1-up
         clusterName: "ubuntu22e2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         k8sVersion: 1.25
         scaleup: 100
         dependsOn: "containerize"
@@ -365,7 +365,7 @@ stages:
         os: windows
         clusterType: windows-cniv1-up
         clusterName: "win22e2e"
-        vmSize: Standard_B2ms
+        vmSize: Standard_DC4ads_v6
         os_version: "ltsc2022"
         scaleup: 50
         dependsOn: "containerize"
@@ -378,7 +378,7 @@ stages:
         os: linux
         clusterType: dualstack-overlay-byocni-up
         clusterName: "dsovere2e"
-        vmSize: Standard_D4ps_v6
+        vmSize: Standard_DC4ads_v6
         dependsOn: "containerize"
 
     # Swiftv2 E2E tests with multitenancy cluster start up
