@@ -227,21 +227,23 @@ steps:
       ls -la
       DEFS_FOUND=$(az role definition list \
         --name "$ACNCI_BUILDUSER_ROLE_NAME" \
-        --resource-group "$ACNCI_BUILDUSER_ROLE_NAME" \
         --custom-role-only -ojson | jq length)
 
       DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | \
         jq -rc \
-          --arg RESOURCEID "$ACNCI_BUILD_RESOURCEGROUP_ID" \
+          --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
           '.assignableScopes[] = $RESOURCEID')
       
       echo $DEF | jq .
       if (( $DEFS_FOUND < 1 )); then
         az role definition create \
           --role-definition "$DEF"
-      else
+      else if (( $DEFS_FOUND == 0 )); then
         az role definition update \
           --role-definition "$DEF"
+      else
+        echo >&2 "##[error]There was an error creating/updating the role definition."
+        exit 1
       fi
   env:
     ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
