@@ -147,13 +147,13 @@ steps:
       MI_DATA=$(az identity list \
         --resource-group "$ACNCI_BUILD_RESOURCEGROUP" | \
       jq -rc '.')
-      MI_DATA_LENGTH=$(echo "$MA_DATA" | jq length)
+      MI_DATA_LENGTH=$(echo "$MI_DATA" | jq length)
 
       echo $MI_DATA
       echo $MI_DATA_LENGTH
-      if [[ -n $MA_DATA ]] && \
-         [[ $MA_DATA != null ]] && \
-         (( $MA_DATA_LENGTH > 0 )); then
+      if [[ -n $MI_DATA ]] && \
+         [[ $MI_DATA != null ]] && \
+         (( $MI_DATA_LENGTH > 0 )); then
         echo >&2 "##vso[task.setvariable variable=MI_DATA;isoutput=true]$MI_ID"
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]false"
       else
@@ -226,9 +226,16 @@ steps:
 
       set -x
       pwd
-      DEFS_FOUND=$(az role definition list --name "$ACNCI_BUILDUSER_ROLE_NAME" --custom-role-only -ojson | jq length)
+      DEFS_FOUND=$(az role definition list \
+        --name "$ACNCI_BUILDUSER_ROLE_NAME" \
+        --custom-role-only \
+        -ojson | \
+      jq length)
 
-      DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | jq -rc --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" '.assignableScopes[] = $RESOURCEID')
+      DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | \
+        jq -rc \
+          --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
+          '.assignableScopes[] = $RESOURCEID')
       echo "here1"
       if (( "$DEFS_FOUND" < 1 )); then
       echo "here2"
@@ -260,11 +267,12 @@ steps:
 
       R_QUERY="[? principalId == '$ACNCI_MANAGEDIDENTITY_OBJECTID' ]"
       MI_ROLE_DATA=$(az role assignment list \
-        --role "$ACNCI_BUILDUSER_ROLE_NAME"
-        --resource-group "$ACNCI_BUILD_RESOURCEGROUP"
-        --query "$R_QUERY"
+        --role "$ACNCI_BUILDUSER_ROLE_NAME" \
+        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" \
+        --query "$R_QUERY" \
         --output json | jq -rc '.')
-      MI_ROLE_DATA_LENGTH=$(echo "$MA_ROLE_DATA" | jq length)
+      MI_ROLE_DATA_LENGTH=$(echo "$MI_ROLE_DATA" | jq length)
+
       echo >&2 "##vso[task.setvariable variable=MI_ROLE_DATA;]$MI_ROLE_DATA"
       echo >&2 "##vso[task.setvariable variable=MI_ROLE_LENGTH;]$MI_ROLE_DATA_LENGTH"
   env:
@@ -284,8 +292,8 @@ steps:
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
       if [[ -n $MI_ROLE_DATA_LENGTH ]] && \
-         [[ $MA_DATA != null ]] && \
-         (( $MA_DATA_LENGTH > 0 )); then
+         [[ $MI_DATA != null ]] && \
+         (( $MI_DATA_LENGTH > 0 )); then
         az role assignment create \
           --role "$ACNCI_BUILDUSER_ROLE_NAME"
           --assignee-object-id "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
