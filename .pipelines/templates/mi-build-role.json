@@ -26,9 +26,6 @@
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/filter/action",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/move/action",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/read",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/write",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/delete",
 
     "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
     "Microsoft.Storage/storageAccounts/tableServices/tables/entities/write",
@@ -43,7 +40,6 @@
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete",
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/modifypermissions/action",
 
-    "Microsoft.Storage/storageAccounts/queueServices/queues/messages/*",
     "Microsoft.Storage/storageAccounts/queueServices/queues/messages/*"
   ],
   "notDataActions": [],
