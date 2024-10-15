@@ -60,7 +60,7 @@ steps:
     AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
 - task: AzureCLI@2
-  displayName: "[Provision] Pool - Build Resource Groups"
+  displayName: "[Provision] Build Resource Group"
   condition: and(succeeded(), eq(variables.CREATE_NEW_RG, True))
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
@@ -146,15 +146,13 @@ steps:
 
       MI_DATA=$(az identity list \
         --resource-group "$ACNCI_BUILD_RESOURCEGROUP" | \
-      jq -rc '.')
+        jq -rc '.')
       MI_DATA_LENGTH=$(echo "$MI_DATA" | jq length)
 
-      echo $MI_DATA
-      echo $MI_DATA_LENGTH
       if [[ -n $MI_DATA ]] && \
          [[ $MI_DATA != null ]] && \
          (( $MI_DATA_LENGTH > 0 )); then
-        echo >&2 "##vso[task.setvariable variable=MI_DATA;isoutput=true]$MI_ID"
+        echo >&2 "##vso[task.setvariable variable=MI_DATA;isoutput=true]$MI_DATA"
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]false"
       else
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]true"
