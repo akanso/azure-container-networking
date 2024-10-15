@@ -244,7 +244,7 @@ steps:
           --role-definition "$DEF"
       fi
   env:
-    ACNCI_BUILD_RESOURCEGROUP_ID: $[ variables['resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID'] ]
+    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
 
 - task: AzureCLI@2
   displayName: "[Check] Build User MI Roles"
