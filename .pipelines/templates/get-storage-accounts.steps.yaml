@@ -28,9 +28,6 @@ steps:
       set -eu
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-      # Get Subscription ID.
-      SUBSCRIPTION_ID=$(az account show | jq -rc .)
-      echo $SUBSCRIPTION_ID
       # Query for Test Storage Accounts
       R_QUERY="[? type == 'Microsoft.Storage/storageAccounts' && resourceGroup == '$RG_NAME']"
       az resource list \

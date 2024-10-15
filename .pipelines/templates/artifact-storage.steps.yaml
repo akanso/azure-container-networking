@@ -2,6 +2,7 @@
 steps:
       
 - task: AzureCLI@2
+  name: build
   displayName: "[Output] SC Environment App Details"
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
@@ -14,10 +15,10 @@ steps:
 
       # App OID
       SP_APP_OID=$(az ad sp show --id "$servicePrincipalId" | jq -rc '.id') 
-      echo >&2 "##vso[task.setvariable variable=SP_APP_OID]$SP_APP_OID"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILD_SP_APP_OID;isoutput=true;]$SP_APP_OID"
       # Get Subscription ID.
       SUBSCRIPTION_ID=$(az account show | jq -rc '.id')
-      echo >&2 "##vso[task.setvariable variable=SUBSCRIPTION_ID]$SUBSCRIPTION_ID"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILD_SUBSCRIPTION_ID;isoutput=true;issecret=true]$SUBSCRIPTION_ID"
 
 
 ## Resource Groups ##
@@ -147,11 +148,12 @@ steps:
         --resource-group "$ACNCI_BUILD_RESOURCEGROUP" | \
         jq -rc '.')
       MI_DATA_LENGTH=$(echo "$MI_DATA" | jq length)
+      echo >&2 "##vso[task.setvariable variable=MI_DATA]$MI_DATA"
+      echo >&2 "##vso[task.setvariable variable=MI_DATA_LENGTH]$MI_DATA_LENGTH"
 
       if [[ -n $MI_DATA ]] && \
          [[ $MI_DATA != null ]] && \
          (( $MI_DATA_LENGTH > 0 )); then
-        echo >&2 "##vso[task.setvariable variable=MI_DATA;isoutput=true]$MI_DATA"
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]false"
       else
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]true"
@@ -207,6 +209,9 @@ steps:
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_ID"
       MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
+  env:
+    MI_DATA: $(MI_DATA)
+    MI_DATA_LENGTH: $(MI_DATA_LENGTH)
 
 
 ## MI Role Assignments ##
@@ -229,7 +234,7 @@ steps:
 
       DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | \
         jq -rc \
-          --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
+          --arg RESOURCEID "/subscriptions/$ACNCI_BUILD_SUBSCRIPTION_ID" \
           '.assignableScopes[] = $RESOURCEID')
 
       if (( "$DEFS_FOUND" < 1 )); then
@@ -242,8 +247,8 @@ steps:
         echo >&2 "##[error]There was an error creating/updating the role definition."
         exit 1
       fi
-  #env:
-  #  ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
+  env:
+    ACNCI_BUILD_SUBSCRIPTION_ID: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
 
 - task: AzureCLI@2
   displayName: "[Check] Build User MI Roles"
@@ -283,8 +288,8 @@ steps:
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
       if [[ -n $MI_ROLE_DATA_LENGTH ]] && \
-         [[ $MI_DATA != null ]] && \
-         (( $MI_DATA_LENGTH > 0 )); then
+         [[ $MI_ROLE_DATA != null ]] && \
+         (( $MI_ROLE_DATA_LENGTH > 0 )); then
         az role assignment create \
           --role "$ACNCI_BUILDUSER_ROLE_NAME"
           --assignee-object-id "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
@@ -299,11 +304,11 @@ steps:
           --scope "$ACNCI_BUILD_RESOURCEGROUP_ID"
       fi
   env:
+    MI_ROLE_DATA: $(MI_ROLE_DATA)
+    MI_ROLE_DATA_LENGTH: $(MI_ROLE_DATA_LENGTH)
     ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
     ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
     ACNCI_BUILDUSER_ROLE_NAME: $(ACNCI_BUILDUSER_ROLE_NAME)
-    MI_ROLE_DATA: $(MI_ROLE_DATA)
-    MI_ROLE_DATA_LENGTH: $(MI_ROLE_DATA_LENGTH)
 
 
 #- task: AzureCLI@2
