@@ -27,7 +27,7 @@
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/filter/action",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/move/action",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action",c
+    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/read",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/write",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags/delete",
