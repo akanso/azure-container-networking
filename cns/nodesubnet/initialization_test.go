@@ -1,11 +1,13 @@
 package nodesubnet_test
 
 import (
+	"context"
 	"net"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/cnireconciler"
+	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/nodesubnet"
 	"github.com/Azure/azure-container-networking/cns/restserver"
 	"github.com/Azure/azure-container-networking/cns/types"
@@ -96,4 +98,17 @@ func TestNewCNSPodInfoProvider(t *testing.T) {
 			}
 		})
 	}
+}
+
+// testContext creates a context from the provided testing.T that will be
+// canceled if the test suite is terminated.
+func testContext(t *testing.T) (context.Context, context.CancelFunc) {
+	if deadline, ok := t.Deadline(); ok {
+		return context.WithDeadline(context.Background(), deadline)
+	}
+	return context.WithCancel(context.Background())
+}
+
+func init() {
+	logger.InitLogger("testlogs", 0, 0, "./")
 }
