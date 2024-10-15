@@ -258,9 +258,11 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
+      R_QUERY="[? principalId == '$ACNCI_MANAGEDIDENTITY_OBJECTID' ]"
       MI_ROLE_DATA=$(az role assignment list \
         --role "$ACNCI_BUILDUSER_ROLE_NAME"
-        --assignee "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
+        --resource-group "$ACNCI_BUILD_RESOURCEGROUP"
+        --query "$R_QUERY"
         --output json | jq -rc '.')
       MI_ROLE_DATA_LENGTH=$(echo "$MA_ROLE_DATA" | jq length)
       echo >&2 "##vso[task.setvariable variable=MI_ROLE_DATA;]$MI_ROLE_DATA"
@@ -268,6 +270,7 @@ steps:
   env:
     ACNCI_BUILDUSER_ROLE_NAME: $(ACNCI_BUILDUSER_ROLE_NAME)
     ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
+    ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
 
 - task: AzureCLI@2
   displayName: "[Provision] Build User ManagedIdentity Roles"
@@ -301,7 +304,7 @@ steps:
     ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
     ACNCI_BUILDUSER_ROLE_NAME: $(ACNCI_BUILDUSER_ROLE_NAME)
     MI_ROLE_DATA: $(MI_ROLE_DATA)
-    MI_ROLE_DATALENGTH: $(MI_ROLE_DATA_LENGTH)
+    MI_ROLE_DATA_LENGTH: $(MI_ROLE_DATA_LENGTH)
 
 
 #- task: AzureCLI@2
