@@ -20,8 +20,6 @@
   ],
   "notActions": [],
   "dataActions": [
-    "Microsoft.Storage/storageAccounts/blobServices/containers/lease/action",
-
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
