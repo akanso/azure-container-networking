@@ -224,29 +224,26 @@ steps:
 
       set -x
       pwd
-      ls -la
-      DEFS_FOUND=$(az role definition list \
-        --name "$ACNCI_BUILDUSER_ROLE_NAME" \
-        --custom-role-only -ojson | jq length)
+      DEFS_FOUND=$(az role definition list --name "$ACNCI_BUILDUSER_ROLE_NAME" --custom-role-only -ojson | jq length)
 
-      DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | \
-        jq -rc \
-          --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
-          '.assignableScopes[] = $RESOURCEID')
-      
+      DEF=$(cat ./azure-container-networking/.pipelines/templates/mi-build-role.json | jq -rc --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" '.assignableScopes[] = $RESOURCEID')
+      echo "here1"
       if (( "$DEFS_FOUND" < 1 )); then
+      echo "here2"
         az role definition create --role-definition "$DEF"
 
       else if (( "$DEFS_FOUND" > 0 )); then
+      echo "here3"
         az role definition update --role-definition "$DEF"
 
       else
+      echo "here4"
         echo >&2 "##[error]There was an error creating/updating the role definition."
         exit 1
       fi
-      echo $DEF | jq .
-  env:
-    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
+      echo "here5"
+  #env:
+  #  ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
 
 - task: AzureCLI@2
   displayName: "[Check] Build User MI Roles"
