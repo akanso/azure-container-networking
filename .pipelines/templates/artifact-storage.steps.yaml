@@ -22,7 +22,6 @@ steps:
 
 ## Resource Groups ##
 - bash: |
-    set -x
     UNIQUE_ID=`tr -dc '0-9a-z' < /dev/urandom | head -c${1:-7}`
     echo >&2 "##vso[task.setvariable variable=LOCAL_ACNCI_UNIQUE_ID]$UNIQUE_ID"
   displayName: "[Infra] Generate Unique ID"
@@ -222,8 +221,6 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-      set -x
-      pwd
       DEFS_FOUND=$(az role definition list \
         --name "$ACNCI_BUILDUSER_ROLE_NAME" \
         --custom-role-only \
@@ -234,21 +231,17 @@ steps:
         jq -rc \
           --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
           '.assignableScopes[] = $RESOURCEID')
-      echo "here1"
+
       if (( "$DEFS_FOUND" < 1 )); then
-      echo "here2"
         az role definition create --role-definition "$DEF"
 
       elif (( "$DEFS_FOUND" > 0 )); then
-      echo "here3"
         az role definition update --role-definition "$DEF"
 
       else
-      echo "here4"
         echo >&2 "##[error]There was an error creating/updating the role definition."
         exit 1
       fi
-      echo "here5"
   #env:
   #  ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
 
@@ -272,7 +265,7 @@ steps:
       MI_ROLE_DATA_LENGTH=$(echo "$MI_ROLE_DATA" | jq length)
 
       echo >&2 "##vso[task.setvariable variable=MI_ROLE_DATA;]$MI_ROLE_DATA"
-      echo >&2 "##vso[task.setvariable variable=MI_ROLE_LENGTH;]$MI_ROLE_DATA_LENGTH"
+      echo >&2 "##vso[task.setvariable variable=MI_ROLE_DATA_LENGTH;]$MI_ROLE_DATA_LENGTH"
   env:
     ACNCI_BUILDUSER_ROLE_NAME: $(ACNCI_BUILDUSER_ROLE_NAME)
     ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
