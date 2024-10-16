@@ -1,7 +1,3 @@
-parameters:
-- name: requireBlobService
-  type: boolean
-  default: false
 
 steps:
       
@@ -467,7 +463,6 @@ steps:
 - task: AzureCLI@2
   displayName: "[Provision] Container Access Permissions"
   continueOnError: true
-  condition: and(succeeded(), parameters.requireBlobService)
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
     scriptType: bash
