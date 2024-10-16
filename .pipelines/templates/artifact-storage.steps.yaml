@@ -144,23 +144,27 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-      MI_DATA=$(az identity list \
-        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" | \
-        jq -rc '.')
-      MI_DATA_LENGTH=$(echo "$MI_DATA" | jq length)
-      echo >&2 "##vso[task.setvariable variable=MI_DATA]$MI_DATA"
-      echo >&2 "##vso[task.setvariable variable=MI_DATA_LENGTH]$MI_DATA_LENGTH"
+      R_QUERY="[? tags.\""$ACNCI_BUILDTAG_DEFINITIONID"\" && tags.\""$ACNCI_BUILDTAG_CREATEDBYAPPID"\"]"
+      MI_LIST=$(az identity list /
+        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" /
+        --query "$R_QUERY" -o json | /
+        jq -rc \
+          --arg ACNCI_BUILDTAG_CREATEDBYAPPID "$ACNCI_BUILDTAG_CREATEDBYAPPID" /
+          --arg APPID "$servicePrincipalId" /
+          --arg ACNCI_BUILDTAG_DEFINITIONID "$ACNCI_BUILDTAG_DEFINITIONID" /
+          --arg DEFINITIONID "$SYSTEM_DEFINITIONID" /
+        '[ .[] | select(.tags[$ACNCI_BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$ACNCI_BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
+      MI_LIST_LENGTH=$(echo "$MI_LIST" | jq length)
 
-      if [[ -n $MI_DATA ]] && \
-         [[ $MI_DATA != null ]] && \
-         (( $MI_DATA_LENGTH > 0 )); then
+      if [[ -n $MI_LIST ]] && \
+         [[ $MI_LIST != null ]] && \
+         (( $MI_LIST_LENGTH > 0 )); then
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]false"
       else
         echo >&2 "##vso[task.setvariable variable=CREATE_NEW_MI;]true"
       fi
   env:
     ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
   
 - task: AzureCLI@2
   displayName: "[Provision] Build User ManagedIdentity"
@@ -183,11 +187,9 @@ steps:
                "$ACNCI_BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
                "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
   env:
-    LOCATION: $(ACNCI_RG_LOCATION)
     LOCAL_ACNCI_UNIQUE_ID: $(LOCAL_ACNCI_UNIQUE_ID)
     ACNCI_MANAGEDIDENTITY_PREFIX: $(ACNCI_MANAGEDIDENTITY_PREFIX)
     ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
 
 - task: AzureCLI@2
   name: managedidentity
@@ -201,6 +203,23 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
+      R_QUERY="[? tags.\""$ACNCI_BUILDTAG_DEFINITIONID"\" && tags.\""$ACNCI_BUILDTAG_CREATEDBYAPPID"\"]"
+      MI_LIST=$(az identity list /
+        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" /
+        --query "$R_QUERY" -o json | /
+        jq -rc \
+          --arg ACNCI_BUILDTAG_CREATEDBYAPPID "$ACNCI_BUILDTAG_CREATEDBYAPPID" /
+          --arg APPID "$servicePrincipalId" /
+          --arg ACNCI_BUILDTAG_DEFINITIONID "$ACNCI_BUILDTAG_DEFINITIONID" /
+          --arg DEFINITIONID "$SYSTEM_DEFINITIONID" /
+        '[ .[] | select(.tags[$ACNCI_BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$ACNCI_BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
+      MI_LIST_LENGTH=$(echo "$MI_LIST" | jq length)
+
+      # Select MI to use
+      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
+      IDX=$(( "$RANDOM_SELECT" % "$MI_LIST_LENGTH" ))
+      MI_DATA=$(echo "$MI_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
+
       MI_ID=$(echo "$MI_DATA" | jq -r '.id')
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_ID;isoutput=true]$MI_ID"
       MI_PRINCIPALID=$(echo "$MI_DATA" | jq -r '.principalId')
@@ -210,8 +229,7 @@ steps:
       MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
   env:
-    MI_DATA: $(MI_DATA)
-    MI_DATA_LENGTH: $(MI_DATA_LENGTH)
+    ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
 
 
 ## MI Role Assignments ##
