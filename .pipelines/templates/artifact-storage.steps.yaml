@@ -189,7 +189,7 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-      MANAGEDIDENTITY_NAME="${ACNCI_MANAGEDIDENTITY_PREFIX}${LOCAL_ACNCI_UNIQUE_ID}-${LOCATION}"
+      MANAGEDIDENTITY_NAME="${ACNCI_MANAGEDIDENTITY_PREFIX}${LOCAL_ACNCI_UNIQUE_ID}-${ACNCI_RG_LOCATION}"
       az identity create \
         --name "$MANAGEDIDENTITY_NAME" \
         --resource-group "$ACNCI_BUILD_RESOURCEGROUP" \
@@ -379,13 +379,15 @@ steps:
         --name "$SA_NAME" \
         --location "$ACNCI_SA_LOCATION" \
         --resource-group "$ACNCI_BUILD_RESOURCEGROUP" \ 
-        --assign-identity "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
+        --user-identity-id "ACNCI_MANAGEDIDENTITY_ARMID" \
+        --user-identity-type UserAssigned \
         --allow-blob-public-access false \
         --allow-shared-key-access false \
-        --enable-files-aad-integration true \
         --tags "$ACNCI_BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
                "$ACNCI_BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
                "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" 
+        #--enable-files-aad-integration true
+        #--assign-identity "$ACNCI_MANAGEDIDENTITY_OBJECTID" 
         #--default-action Deny 
   env:
     LOCAL_ACNCI_UNIQUE_ID: $(LOCAL_ACNCI_UNIQUE_ID)
