@@ -1,3 +1,7 @@
+parameters:
+- name: requireBlobService
+  type: bool
+  default: false
 
 steps:
       
@@ -128,6 +132,17 @@ steps:
   env:
     INFRA_RG_LIST: $(INFRA_RG_LIST)
     INFRA_RG_LENGTH: $(INFRA_RG_LENGTH)
+
+- task: AzureCLI@2
+  displayName: "[Check] "
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
     
 ## Managed Identity ##
 # Inherited Env Vars:
@@ -329,28 +344,6 @@ steps:
     ACNCI_BUILDUSER_ROLE_NAME: $(ACNCI_BUILDUSER_ROLE_NAME)
 
 
-#- task: AzureCLI@2
-#  inputs:
-#    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
-#    scriptType: bash
-#    scriptLocation: inlineScript
-#    addSpnToEnvironment: true
-#    inlineScript: |
-#      set -e
-#      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-#
-#      STORAGE_ACC_ID=$(az storage account show \
-#        --resource-group "$ACNCI_BUILD_RESOURCEGROUP_ID" \
-#        --name "$STORAGE_ACC" \
-#        --query id -o tsv)
-#      USER_ASSIGNED_CLIENT_ID=$(az identity show --resource-group "$RG" --name "$USER_ASSIGNED_IDENTITY_NAME" --query 'clientId' -o tsv)
-#      az role assignment create \
-#        --role "Storage Blob Data Contributor" \
-#        --assignee "$USER_ASSIGNED_CLIENT_ID" \
-#        --scope "$STORAGE_ACC_ID"
-#  env:
-#    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
-
 - template: get-storage-accounts.steps.yaml
   parameters:
     STORAGE_ACCOUNT_SERVICE_CONNECTION: $(ACN_TEST_SERVICE_CONNECTION)
@@ -471,6 +464,29 @@ steps:
     SA_LIST_LENGTH: $(SA_LIST_LENGTH)
     SA_SERVICE_CONN: $(ACN_TEST_SERVICE_CONNECTION)
 
+- task: AzureCLI@2
+  displayName: "[Provision] Container Access Permissions"
+  continueOnError: true
+  condition: and(succeeded(), parameters.requireBlobService)
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+      az role assignment create \
+        --role "Storage Blob Data Contributor" \
+        --assignee "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
+        --assignee-principal-type "ServicePrincipal" \
+        --scope "$ACNCI_STORAGEACCOUNT_ID"
+  env:
+    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
+    ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
+    ACNCI_STORAGEACCOUNT_ID: $(storageaccounts.ACNCI_STORAGEACCOUNT_ID)
+
 #- task: AzureCLI@2
 #  displayName: "[Grant] Storage Account Access Permissions"
 #  inputs:
@@ -504,6 +520,7 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
+      az login --identity "$ACNCI_MANAGEDIDENTITY_ID"
       az storage account show -n "$SA_NAME" --query networkRuleSet
       az storage container create \
         --account-name "$SA_NAME" \
@@ -517,6 +534,7 @@ steps:
     CONTAINER_NAME: "azure-container-networking-pr" 
     RG_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
     SA_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
+    ACNCI_MANAGEDIDENTITY_ID: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID)
 
 - task: AzureCLI@2
   name: artifact_blob
