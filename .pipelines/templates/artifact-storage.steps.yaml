@@ -1,6 +1,6 @@
 parameters:
 - name: requireBlobService
-  type: bool
+  type: boolean
   default: false
 
 steps:
