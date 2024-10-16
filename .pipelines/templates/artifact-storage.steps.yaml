@@ -373,6 +373,7 @@ steps:
     inlineScript: |
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+      az upgrade -y
 
       SA_NAME="${ACNCI_SA_PREFIX}${LOCAL_ACNCI_UNIQUE_ID}"
       az storage account create \
