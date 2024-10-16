@@ -145,14 +145,14 @@ steps:
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
       R_QUERY="[? tags.\""$ACNCI_BUILDTAG_DEFINITIONID"\" && tags.\""$ACNCI_BUILDTAG_CREATEDBYAPPID"\"]"
-      MI_LIST=$(az identity list /
-        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" /
-        --query "$R_QUERY" -o json | /
+      MI_LIST=$(az identity list \
+        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" \
+        --query "$R_QUERY" -o json | \
         jq -rc \
-          --arg ACNCI_BUILDTAG_CREATEDBYAPPID "$ACNCI_BUILDTAG_CREATEDBYAPPID" /
-          --arg APPID "$servicePrincipalId" /
-          --arg ACNCI_BUILDTAG_DEFINITIONID "$ACNCI_BUILDTAG_DEFINITIONID" /
-          --arg DEFINITIONID "$SYSTEM_DEFINITIONID" /
+          --arg ACNCI_BUILDTAG_CREATEDBYAPPID "$ACNCI_BUILDTAG_CREATEDBYAPPID" \
+          --arg APPID "$servicePrincipalId" \
+          --arg ACNCI_BUILDTAG_DEFINITIONID "$ACNCI_BUILDTAG_DEFINITIONID" \
+          --arg DEFINITIONID "$SYSTEM_DEFINITIONID" \
         '[ .[] | select(.tags[$ACNCI_BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$ACNCI_BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
       MI_LIST_LENGTH=$(echo "$MI_LIST" | jq length)
 
@@ -204,14 +204,14 @@ steps:
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
       R_QUERY="[? tags.\""$ACNCI_BUILDTAG_DEFINITIONID"\" && tags.\""$ACNCI_BUILDTAG_CREATEDBYAPPID"\"]"
-      MI_LIST=$(az identity list /
-        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" /
-        --query "$R_QUERY" -o json | /
+      MI_LIST=$(az identity list \
+        --resource-group "$ACNCI_BUILD_RESOURCEGROUP" \
+        --query "$R_QUERY" -o json | \
         jq -rc \
-          --arg ACNCI_BUILDTAG_CREATEDBYAPPID "$ACNCI_BUILDTAG_CREATEDBYAPPID" /
-          --arg APPID "$servicePrincipalId" /
-          --arg ACNCI_BUILDTAG_DEFINITIONID "$ACNCI_BUILDTAG_DEFINITIONID" /
-          --arg DEFINITIONID "$SYSTEM_DEFINITIONID" /
+          --arg ACNCI_BUILDTAG_CREATEDBYAPPID "$ACNCI_BUILDTAG_CREATEDBYAPPID" \
+          --arg APPID "$servicePrincipalId" \
+          --arg ACNCI_BUILDTAG_DEFINITIONID "$ACNCI_BUILDTAG_DEFINITIONID" \
+          --arg DEFINITIONID "$SYSTEM_DEFINITIONID" \
         '[ .[] | select(.tags[$ACNCI_BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$ACNCI_BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
       MI_LIST_LENGTH=$(echo "$MI_LIST" | jq length)
 
