@@ -224,8 +224,8 @@ steps:
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_ID;isoutput=true]$MI_ID"
       MI_PRINCIPALID=$(echo "$MI_DATA" | jq -r '.principalId')
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_OBJECTID;isoutput=true]$MI_PRINCIPALID"
-      MI_ID=$(echo "$MI_DATA" | jq -r '.clientId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_ID"
+      MI_APPID=$(echo "$MI_DATA" | jq -r '.clientId')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_APPID"
       MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
       echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
   env:
@@ -307,16 +307,16 @@ steps:
   
       if [[ -n $MI_ROLE_DATA_LENGTH ]] && \
          [[ $MI_ROLE_DATA != null ]] && \
-         (( $MI_ROLE_DATA_LENGTH > 0 )); then
-        az role assignment create \
-          --role "$ACNCI_BUILDUSER_ROLE_NAME"
+         (( "$MI_ROLE_DATA_LENGTH" > 0 )); then
+        az role assignment update \
+          --role "$ACNCI_BUILDUSER_ROLE_NAME" \
           --assignee-object-id "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
           --assignee-principal-type ServicePrincipal \
           --scope "$ACNCI_BUILD_RESOURCEGROUP_ID"
 
       else
-        az role assignment update \
-          --role "$ACNCI_BUILDUSER_ROLE_NAME"
+        az role assignment create \
+          --role "$ACNCI_BUILDUSER_ROLE_NAME" \
           --assignee-object-id "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
           --assignee-principal-type ServicePrincipal \
           --scope "$ACNCI_BUILD_RESOURCEGROUP_ID"
