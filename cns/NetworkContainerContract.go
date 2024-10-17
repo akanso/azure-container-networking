@@ -55,7 +55,6 @@ const (
 	JobObject              = "JobObject"
 	COW                    = "COW" // Container on Windows
 	BackendNICNC           = "BackendNICNC"
-	NodeSubnet             = "NodeSubnet" // Artificial Container Type for NodeSubnet
 )
 
 // Orchestrator Types
@@ -67,7 +66,6 @@ const (
 	AzureFirstParty = "AzureFirstParty"
 	KubernetesCRD   = "KubernetesCRD"
 	// TODO: Add OrchastratorType as CRD: https://msazure.visualstudio.com/One/_workitems/edit/7711872
-	KubernetesNodeSubnet = "KubernetesNodeSubnet"
 )
 
 // Encap Types

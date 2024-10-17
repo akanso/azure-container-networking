@@ -7,10 +7,10 @@ import (
 
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/cnireconciler"
+	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/nodesubnet"
 	"github.com/Azure/azure-container-networking/cns/restserver"
 	"github.com/Azure/azure-container-networking/cns/types"
-	"github.com/Azure/azure-container-networking/crd/nodenetworkconfig/api/v1alpha"
 	"github.com/Azure/azure-container-networking/store"
 )
 
@@ -56,7 +56,7 @@ func getMockStore() store.KeyValueStore {
 
 type MockIpamStateReconciler struct{}
 
-func (m *MockIpamStateReconciler) ReconcileIPAMState(ncRequests []*cns.CreateNetworkContainerRequest, podInfoByIP map[string]cns.PodInfo, _ *v1alpha.NodeNetworkConfig) types.ResponseCode {
+func (m *MockIpamStateReconciler) ReconcileIPAMStateForNodeSubnet(ncRequests []*cns.CreateNetworkContainerRequest, podInfoByIP map[string]cns.PodInfo) types.ResponseCode {
 	if len(ncRequests) == 1 && len(ncRequests[0].SecondaryIPConfigs) == len(podInfoByIP) {
 		return types.Success
 	}
@@ -100,10 +100,15 @@ func TestNewCNSPodInfoProvider(t *testing.T) {
 	}
 }
 
+// testContext creates a context from the provided testing.T that will be
+// canceled if the test suite is terminated.
 func testContext(t *testing.T) (context.Context, context.CancelFunc) {
-	ctx := context.Background()
 	if deadline, ok := t.Deadline(); ok {
-		return context.WithDeadline(ctx, deadline)
+		return context.WithDeadline(context.Background(), deadline)
 	}
-	return context.WithCancel(ctx)
+	return context.WithCancel(context.Background())
+}
+
+func init() {
+	logger.InitLogger("testlogs", 0, 0, "./")
 }

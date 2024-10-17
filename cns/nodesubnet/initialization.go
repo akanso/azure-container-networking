@@ -6,13 +6,12 @@ import (
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/logger"
 	cnstypes "github.com/Azure/azure-container-networking/cns/types"
-	"github.com/Azure/azure-container-networking/crd/nodenetworkconfig/api/v1alpha"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/maps"
 )
 
 type ipamReconciler interface {
-	ReconcileIPAMState(ncRequests []*cns.CreateNetworkContainerRequest, podInfoByIP map[string]cns.PodInfo, nnc *v1alpha.NodeNetworkConfig) cnstypes.ResponseCode
+	ReconcileIPAMStateForNodeSubnet(ncRequests []*cns.CreateNetworkContainerRequest, podInfoByIP map[string]cns.PodInfo) cnstypes.ResponseCode
 }
 
 func ReconcileInitialCNSState(_ context.Context, ipamReconciler ipamReconciler, podInfoByIPProvider cns.PodInfoByIPProvider) (int, error) {
@@ -27,7 +26,7 @@ func ReconcileInitialCNSState(_ context.Context, ipamReconciler ipamReconciler, 
 	// Create a network container request that holds all the IPs from PodInfoByIP
 	secondaryIPs := maps.Keys(podInfoByIP)
 	ncRequest := CreateNodeSubnetNCRequest(secondaryIPs)
-	responseCode := ipamReconciler.ReconcileIPAMState([]*cns.CreateNetworkContainerRequest{ncRequest}, podInfoByIP, nil)
+	responseCode := ipamReconciler.ReconcileIPAMStateForNodeSubnet([]*cns.CreateNetworkContainerRequest{ncRequest}, podInfoByIP)
 
 	if responseCode != cnstypes.Success {
 		return 0, errors.Errorf("failed to reconcile initial CNS state: %d", responseCode)

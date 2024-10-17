@@ -32,7 +32,7 @@ func CreateNodeSubnetNCRequest(secondaryIPs []string) *cns.CreateNetworkContaine
 		HostPrimaryIP:        NodeSubnetHostPrimaryIP,
 		SecondaryIPConfigs:   secondaryIPConfigs,
 		NetworkContainerid:   NodeSubnetNCID,
-		NetworkContainerType: cns.NodeSubnet,
+		NetworkContainerType: cns.Docker,                                 // Using docker as the NC type for NodeSubnet to match Swift. (The NC is not real)
 		Version:              strconv.FormatInt(NodeSubnetNCVersion, 10), //nolint:gomnd // it's decimal
 		IPConfiguration:      cns.IPConfiguration{},
 		NCStatus:             NodeSubnetNCStatus,
