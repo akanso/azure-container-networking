@@ -447,6 +447,7 @@ windows-nodepool-up: ## Add windows node pool
 		--os-sku $(OS_SKU_WIN) \
 		--max-pods 250 \
 		--subscription $(SUB)
+		--aks-custom-headers UseWindowsGen2VM=true
 
 windows-swift-nodepool-up: ## Add windows node pool
 	$(AZCLI) aks nodepool add -g $(GROUP) -n npwin \
