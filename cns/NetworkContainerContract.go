@@ -55,8 +55,9 @@ const (
 	JobObject              = "JobObject"
 	COW                    = "COW" // Container on Windows
 	BackendNICNC           = "BackendNICNC"
-	NodeSubnet             = "NodeSubnet" // Artificial Container Type for NodeSubnet
 )
+
+const NodeSubnet = "NodeSubnet" // Artificial Container Type for NodeSubnet
 
 // Orchestrator Types
 const (

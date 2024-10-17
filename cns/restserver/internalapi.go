@@ -405,6 +405,8 @@ func (service *HTTPRestService) ReconcileIPAMStateForSwift(ncReqs []*cns.CreateN
 	return types.Success
 }
 
+// todo: there is some redundancy between this funcation and ReconcileIPAMStateForNodeSubnet. The difference is that this one
+// doesn't include the NNC parameter. We may want to unify the common parts.
 func (service *HTTPRestService) ReconcileIPAMStateForNodeSubnet(ncReqs []*cns.CreateNetworkContainerRequest, podInfoByIP map[string]cns.PodInfo) types.ResponseCode {
 	logger.Printf("Reconciling CNS IPAM state with nc requests: [%+v], PodInfo [%+v]", ncReqs, podInfoByIP)
 
