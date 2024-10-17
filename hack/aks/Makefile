@@ -446,7 +446,7 @@ windows-nodepool-up: ## Add windows node pool
 		--os-type Windows \
 		--os-sku $(OS_SKU_WIN) \
 		--max-pods 250 \
-		--subscription $(SUB)
+		--subscription $(SUB) \
 		--aks-custom-headers UseWindowsGen2VM=true
 
 windows-swift-nodepool-up: ## Add windows node pool
