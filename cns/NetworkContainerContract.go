@@ -57,8 +57,6 @@ const (
 	BackendNICNC           = "BackendNICNC"
 )
 
-const NodeSubnet = "NodeSubnet" // Artificial Container Type for NodeSubnet
-
 // Orchestrator Types
 const (
 	Kubernetes      = "Kubernetes"
@@ -68,7 +66,6 @@ const (
 	AzureFirstParty = "AzureFirstParty"
 	KubernetesCRD   = "KubernetesCRD"
 	// TODO: Add OrchastratorType as CRD: https://msazure.visualstudio.com/One/_workitems/edit/7711872
-	KubernetesNodeSubnet = "KubernetesNodeSubnet"
 )
 
 // Encap Types

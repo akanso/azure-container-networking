@@ -18,6 +18,7 @@ import (
 
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/logger"
+	"github.com/Azure/azure-container-networking/cns/nodesubnet"
 	"github.com/Azure/azure-container-networking/cns/types"
 	"github.com/Azure/azure-container-networking/common"
 	"github.com/Azure/azure-container-networking/crd/nodenetworkconfig/api/v1alpha"
@@ -564,12 +565,12 @@ func (service *HTTPRestService) CreateOrUpdateNetworkContainerInternal(req *cns.
 
 	// For now only RequestController uses this API which will be initialized only for AKS scenario.
 	// Validate ContainerType is set as Docker
-	if service.state.OrchestratorType != cns.KubernetesCRD && service.state.OrchestratorType != cns.Kubernetes && service.state.OrchestratorType != cns.KubernetesNodeSubnet {
+	if service.state.OrchestratorType != cns.KubernetesCRD && service.state.OrchestratorType != cns.Kubernetes {
 		logger.Errorf("[Azure CNS] Error. Unsupported OrchestratorType: %s", service.state.OrchestratorType)
 		return types.UnsupportedOrchestratorType
 	}
 
-	if req.NetworkContainerType == cns.NodeSubnet {
+	if req.NetworkContainerid == nodesubnet.NodeSubnetNCID {
 		// For NodeSubnet scenarios, Validate PrimaryCA must be empty
 		if req.IPConfiguration.IPSubnet.IPAddress != "" {
 			logger.Errorf("[Azure CNS] Error. PrimaryCA is invalid, NC Req: %v", req)
