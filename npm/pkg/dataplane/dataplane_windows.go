@@ -50,6 +50,15 @@ func (dp *DataPlane) initializeDataPlane() error {
 		},
 		Flags: hcn.HostComputeQueryFlagsNone,
 	}
+
+	dp.endpointQuery.queryL1Vh = hcn.HostComputeQuery{
+		SchemaVersion: hcn.SchemaVersion{
+			Major: hcnSchemaMajorVersion,
+			Minor: hcnSchemaMinorVersion,
+		},
+		Flags: hcn.HostComputeQueryFlagsNone,
+	}
+
 	// Filter out any endpoints that are not in "AttachedShared" or "Attached" State. All running Windows pods with networking must be in this state.
 	// L1vh Nodes have state: Attached
 	filterMap := make(map[string]interface{})
@@ -81,7 +90,17 @@ func (dp *DataPlane) initializeDataPlane() error {
 		return npmerrors.SimpleErrorWrapper("failed to marshal endpoint filter2 map", err)
 	}
 
-	dp.endpointQuery.query.Filter = string(filter2)
+	filterl1vh := map[string]uint16{"State": hcnEndpointStateAttached}
+	l1vhfilter, err := json.Marshal(filterl1vh)
+	klog.Infof("filter map in json: %+v", string(l1vhfilter))
+
+	if err != nil {
+		return npmerrors.SimpleErrorWrapper("failed to marshal endpoint filter1 map", err)
+	}
+	klog.Infof("l1vh filter map in json: %+v", string(l1vhfilter))
+
+	dp.endpointQuery.query.Filter = string(filter)
+	dp.endpointQuery.queryL1Vh.Filter = string(l1vhfilter)
 
 	// reset endpoint cache so that netpol references are removed for all endpoints while refreshing pod endpoints
 	// no need to lock endpointCache at boot up
@@ -355,7 +374,9 @@ func (dp *DataPlane) getEndpointsToApplyPolicies(netPols []*policies.NPMNetworkP
 func (dp *DataPlane) getLocalPodEndpoints() ([]*hcn.HostComputeEndpoint, error) {
 	klog.Info("getting local endpoints")
 	timer := metrics.StartNewTimer()
-	endpoints, err := dp.ioShim.Hns.ListEndpointsQuery(dp.endpointQuery.query)
+	endpoints1, err := dp.ioShim.Hns.ListEndpointsQuery(dp.endpointQuery.query)
+	endpointsl1vh, err := dp.ioShim.Hns.ListEndpointsQuery(dp.endpointQuery.queryL1Vh)
+	endpoints := append(endpoints1, endpointsl1vh...)
 	metrics.RecordListEndpointsLatency(timer)
 	if err != nil {
 		metrics.IncListEndpointsFailures()

@@ -39,5 +39,6 @@ func newNPMEndpoint(endpoint *hcn.HostComputeEndpoint) *npmEndpoint {
 }
 
 type endpointQuery struct {
-	query hcn.HostComputeQuery
+	query     hcn.HostComputeQuery
+	queryL1Vh hcn.HostComputeQuery
 }
