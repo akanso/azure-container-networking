@@ -19,7 +19,6 @@ import (
 	"github.com/Azure/azure-container-networking/cns/types/bounded"
 	"github.com/Azure/azure-container-networking/cns/wireserver"
 	acn "github.com/Azure/azure-container-networking/common"
-	"github.com/Azure/azure-container-networking/nmagent"
 	nma "github.com/Azure/azure-container-networking/nmagent"
 	"github.com/Azure/azure-container-networking/store"
 	"github.com/pkg/errors"
@@ -42,7 +41,7 @@ type nmagentClient interface {
 	SupportedAPIs(context.Context) ([]string, error)
 	GetNCVersionList(context.Context) (nma.NCVersionList, error)
 	GetHomeAz(context.Context) (nma.AzResponse, error)
-	GetInterfaceIPInfo(ctx context.Context) (nmagent.Interfaces, error)
+	GetInterfaceIPInfo(ctx context.Context) (nma.Interfaces, error)
 }
 
 type wireserverProxy interface {

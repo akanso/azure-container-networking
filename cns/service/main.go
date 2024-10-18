@@ -883,13 +883,18 @@ func main() {
 			cns.GlobalPodInfoScheme = cns.InfraIDPodInfoScheme
 		}
 
-		podInfoByIPProvider, err := getPodInfoByIPProvider(rootCtx, cnsconfig, httpRemoteRestService, nil, "")
+		var podInfoByIPProvider cns.PodInfoByIPProvider
+		podInfoByIPProvider, err = getPodInfoByIPProvider(rootCtx, cnsconfig, httpRemoteRestService, nil, "")
 		if err != nil {
 			logger.Errorf("[Azure CNS] Failed to get PodInfoByIPProvider: %v", err)
 			return
 		}
 
-		httpRemoteRestService.InitializeNodeSubnet(rootCtx, podInfoByIPProvider)
+		err = httpRemoteRestService.InitializeNodeSubnet(rootCtx, podInfoByIPProvider)
+		if err != nil {
+			logger.Errorf("[Azure CNS] Failed to initialize node subnet: %v", err)
+			return
+		}
 	}
 
 	// Initialize multi-tenant controller if the CNS is running in MultiTenantCRD mode.

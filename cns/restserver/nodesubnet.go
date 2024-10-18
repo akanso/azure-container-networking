@@ -26,9 +26,9 @@ func (service *HTTPRestService) UpdateIPsForNodeSubnet(secondaryIPs []netip.Addr
 	if code != types.Success {
 		logger.Debugf("Error in processing IP change")
 		return errors.Errorf("failed to save fetched ips. code: %d, message %s", code, msg)
-	} else {
-		logger.Debugf("IP change processed successfully")
 	}
+
+	logger.Debugf("IP change processed successfully")
 
 	// saved NC successfully, generate conflist to indicate CNS is ready
 	go service.MustGenerateCNIConflistOnce()
