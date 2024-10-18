@@ -876,12 +876,12 @@ func main() {
 		if !cnsconfig.ManageEndpointState {
 			logger.Errorf("[Azure CNS] ManageEndpointState must be set to true for AzureHost mode")
 			return
-		} else {
-			// If cns manageendpointstate is true, then cns maintains its own state and reconciles from it.
-			// in this case, cns maintains state with containerid as key and so in-memory cache can lookup
-			// and update based on container id.
-			cns.GlobalPodInfoScheme = cns.InfraIDPodInfoScheme
 		}
+
+		// If cns manageendpointstate is true, then cns maintains its own state and reconciles from it.
+		// in this case, cns maintains state with containerid as key and so in-memory cache can lookup
+		// and update based on container id.
+		cns.GlobalPodInfoScheme = cns.InfraIDPodInfoScheme
 
 		var podInfoByIPProvider cns.PodInfoByIPProvider
 		podInfoByIPProvider, err = getPodInfoByIPProvider(rootCtx, cnsconfig, httpRemoteRestService, nil, "")
