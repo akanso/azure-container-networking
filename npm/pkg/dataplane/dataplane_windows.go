@@ -54,18 +54,34 @@ func (dp *DataPlane) initializeDataPlane() error {
 	// L1vh Nodes have state: Attached
 	filterMap := make(map[string]interface{})
 
-	filterMap["state"] = map[string][]int{
+	filterMap["state"] = map[string][]uint16{
 		"$in": {hcnEndpointStateAttached, hcnEndpointStateAttachedSharing},
 	}
 
 	//filterMap := map[string]uint16{"State": hcnEndpointStateAttachedSharing}
 	filter, err := json.Marshal(filterMap)
-	klog.Infof("filter map in json: %+v", filter)
+	klog.Infof("filter map in json: %+v", string(filter))
+
+	filterMap1 := map[string]uint16{"State": hcnEndpointStateAttachedSharing}
+	filter1, err := json.Marshal(filterMap1)
+	klog.Infof("filter map in json: %+v", string(filter1))
 
 	if err != nil {
-		return npmerrors.SimpleErrorWrapper("failed to marshal endpoint filter map", err)
+		return npmerrors.SimpleErrorWrapper("failed to marshal endpoint filter1 map", err)
 	}
-	dp.endpointQuery.query.Filter = string(filter)
+
+	filterMap2 := make(map[string]interface{})
+
+	// Assuming HNS supports arrays for querying multiple states, we add both states to the filter.
+	filterMap2["state"] = []uint16{hcnEndpointStateAttached, hcnEndpointStateAttachedSharing}
+	filter2, err := json.Marshal(filterMap2)
+	klog.Infof("filter map in json: %+v", string(filter2))
+
+	if err != nil {
+		return npmerrors.SimpleErrorWrapper("failed to marshal endpoint filter2 map", err)
+	}
+
+	dp.endpointQuery.query.Filter = string(filter2)
 
 	// reset endpoint cache so that netpol references are removed for all endpoints while refreshing pod endpoints
 	// no need to lock endpointCache at boot up
