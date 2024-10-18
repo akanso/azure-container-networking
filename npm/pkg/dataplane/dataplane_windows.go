@@ -52,7 +52,6 @@ func (dp *DataPlane) initializeDataPlane() error {
 	}
 	// Filter out any endpoints that are not in "AttachedShared" or "Attached" State. All running Windows pods with networking must be in this state.
 	// L1vh Nodes have state: Attached
-
 	filterMap := make(map[string]interface{})
 
 	filterMap["state"] = map[string][]int{
