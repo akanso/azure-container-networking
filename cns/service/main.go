@@ -1507,7 +1507,13 @@ func InitializeCRDState(ctx context.Context, httpRestService cns.HTTPService, cn
 	return nil
 }
 
-func getPodInfoByIPProvider(ctx context.Context, cnsconfig *configuration.CNSConfig, httpRestServiceImplementation *restserver.HTTPRestService, clientset *kubernetes.Clientset, nodeName string) (podInfoByIPProvider cns.PodInfoByIPProvider, err error) {
+func getPodInfoByIPProvider(
+	ctx context.Context,
+	cnsconfig *configuration.CNSConfig,
+	httpRestServiceImplementation *restserver.HTTPRestService,
+	clientset *kubernetes.Clientset,
+	nodeName string,
+) (podInfoByIPProvider cns.PodInfoByIPProvider, err error) {
 	switch {
 	case cnsconfig.ManageEndpointState:
 		logger.Printf("Initializing from self managed endpoint store")
