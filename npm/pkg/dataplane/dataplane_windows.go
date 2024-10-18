@@ -50,9 +50,19 @@ func (dp *DataPlane) initializeDataPlane() error {
 		},
 		Flags: hcn.HostComputeQueryFlagsNone,
 	}
-	// Filter out any endpoints that are not in "AttachedShared" State. All running Windows pods with networking must be in this state.
-	filterMap := map[string]uint16{"State": hcnEndpointStateAttachedSharing}
+	// Filter out any endpoints that are not in "AttachedShared" or "Attached" State. All running Windows pods with networking must be in this state.
+	// L1vh Nodes have state: Attached
+
+	filterMap := make(map[string]interface{})
+
+	filterMap["state"] = map[string][]int{
+		"$in": {hcnEndpointStateAttached, hcnEndpointStateAttachedSharing},
+	}
+
+	//filterMap := map[string]uint16{"State": hcnEndpointStateAttachedSharing}
 	filter, err := json.Marshal(filterMap)
+	klog.Infof("filter map in json: %+v", filter)
+
 	if err != nil {
 		return npmerrors.SimpleErrorWrapper("failed to marshal endpoint filter map", err)
 	}
