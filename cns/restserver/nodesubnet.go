@@ -38,7 +38,7 @@ func (service *HTTPRestService) UpdateIPsForNodeSubnet(secondaryIPs []netip.Addr
 func (service *HTTPRestService) InitializeNodeSubnet(ctx context.Context, podInfoByIPProvider cns.PodInfoByIPProvider) error {
 	// Set orchestrator type
 	orchestrator := cns.SetOrchestratorTypeRequest{
-		OrchestratorType: cns.KubernetesNodeSubnet,
+		OrchestratorType: cns.KubernetesCRD,
 	}
 	service.SetNodeOrchestrator(&orchestrator)
 	service.nodesubnetIPFetcher = nodesubnet.NewIPFetcher(service.nma, service, 0, 0, logger.Log)
