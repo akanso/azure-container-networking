@@ -47,7 +47,7 @@ func (service *HTTPRestService) InitializeNodeSubnet(ctx context.Context, podInf
 	} else if _, err := nodesubnet.ReconcileInitialCNSState(ctx, service, podInfoByIPProvider); err != nil {
 		return errors.Wrap(err, "reconcile initial CNS state")
 	}
-	// statefile (if any) is reconciled. Initalize the IP fetcher. Start the IP fetcher only after the service is started,
+	// statefile (if any) is reconciled. Initialize the IP fetcher. Start the IP fetcher only after the service is started,
 	// and any pending async delete operations are completed.
 	service.nodesubnetIPFetcher = nodesubnet.NewIPFetcher(service.nma, service, 0, 0, logger.Log)
 
