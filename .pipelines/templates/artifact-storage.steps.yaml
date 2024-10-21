@@ -30,6 +30,7 @@ steps:
 - template: get-resources.steps.yaml
   parameters:
     resourceType: resourcegroups
+    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     inputs: 
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
