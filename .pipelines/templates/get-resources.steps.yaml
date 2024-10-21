@@ -15,6 +15,7 @@ parameters:
 - name: inputs 
   type: object
   default: {}
+
 - name: outputVariableName
   type: string
   default: 'OUT_RESULT'
@@ -69,6 +70,7 @@ steps:
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$MI_ROLE_DATA"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$MI_ROLE_DATA_LENGTH"
       env:
+        VAR_NAME: '${{ parameters.outputVariableName }}'
         MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
         RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
         ROLE_NAME: '${{ parameters.inputs.roleName }}'
