@@ -161,8 +161,8 @@ steps:
     condition: ${{ parameters.updateCondition }}
 
     env:
-    ${{ if eq(parameters.resourceType, 'roledefinition') }}:
-      ROLEDEFINITION_JSON: '${{ parameters.inputs.roleDefinitionJson }}'
+      ${{ if eq(parameters.resourceType, 'roledefinition') }}:
+        ROLEDEFINITION_JSON: '${{ parameters.inputs.roleDefinitionJson }}'
 
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
