@@ -130,29 +130,27 @@ steps:
                    "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
   
 
-# Update data list
-- ${{ if and(ne(parameters.createCondition, ''), ne(parameters.createCondition, False),
-             or(
-                eq('resourcegroups', parameters.resourceType),
-                eq('storageaccounts', parameters.resourceType),
-                eq('managedidentity', parameters.resourceType))) }}:
-  - template: get-resources.steps.yaml
-    parameters:
-      resourceType: ${{ parameters.resourceType }}
-      serviceConnection: ${{ parameters.serviceConnection }}
-      inputs: 
-        buildTagDefinitionIdKey: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-        buildTagCreatedByAppIdKey: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
-        ${{ if eq(parameters.resourceType, 'managedidentity') }}:
-          resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
-
-        ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
-          roleDefinitionName: '${{ parameters.inputs.roleDefinitionName }}'
-          roleDefinitionFileLocation: '${{ parameters.inputs.roleDefinitionFileLocation }}'
-          subscriptionId: '${{ parameters.inputs.subscriptionId }}'
-
-        ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-          resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
+  - ${{ if or(eq(parameters.resourceType, 'resourcegroups'),
+              eq(parameters.resourceType, 'storageaccounts'),
+              eq(parameters.resourceType, 'managedidentity')) }}:
+    # Update data list
+    - template: get-resources.steps.yaml
+      parameters:
+        resourceType: ${{ parameters.resourceType }}
+        serviceConnection: ${{ parameters.serviceConnection }}
+        inputs: 
+          buildTagDefinitionIdKey: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
+          buildTagCreatedByAppIdKey: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
+          ${{ if eq(parameters.resourceType, 'managedidentity') }}:
+            resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
+  
+          ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
+            roleDefinitionName: '${{ parameters.inputs.roleDefinitionName }}'
+            roleDefinitionFileLocation: '${{ parameters.inputs.roleDefinitionFileLocation }}'
+            subscriptionId: '${{ parameters.inputs.subscriptionId }}'
+  
+          ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
+            resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
 
 
 - ${{ if and(parameters.updateCondition, eq(parameters.resourceType, 'roledefinition')) }}:
