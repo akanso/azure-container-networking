@@ -77,7 +77,7 @@ steps:
   env:
     ACNCI_RG_LOCATION: $(ACNCI_RG_LOCATION)
     INFRA_RG_LIST: $(OUT_RESULT)
-    INFRA_RG_LENGTH: $(OUT_RESULT)
+    INFRA_RG_LENGTH: $(OUT_RESULT_LENGTH)
     
 
 ## Managed Identity ##
