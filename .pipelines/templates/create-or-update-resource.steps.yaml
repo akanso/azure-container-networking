@@ -29,7 +29,7 @@ parameters:
 
 steps:
 
-${{ if parameters.createCondition }}:
+- ${{ if parameters.createCondition }}:
   - task: AzureCLI@2
     displayName: "[CREATE] ARM Details - (${{ parameters.resourceType }})"
     condition: ${{ parameters.createCondition }}
