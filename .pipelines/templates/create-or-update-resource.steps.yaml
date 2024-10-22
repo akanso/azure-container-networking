@@ -155,10 +155,15 @@ steps:
           resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
 
 
-- ${{ if parameters.updateCondition }}:
+- ${{ if and(parameters.updateCondition, eq(parameters.resourceType, 'roledefinition')) }}:
   - task: AzureCLI@2
     displayName: "[UPDATE] ARM Details - (${{ parameters.resourceType }})"
     condition: ${{ parameters.updateCondition }}
+
+    env:
+    ${{ if eq(parameters.resourceType, 'roledefinition') }}:
+      ROLEDEFINITION_JSON: '${{ parameters.inputs.roleDefinitionJson }}'
+
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       scriptType: bash
@@ -171,5 +176,3 @@ steps:
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
           az role definition update --role-definition "$ROLEDEFINITION_JSON"
-        env:
-          ROLEDEFINITION_JSON: '${{ parameters.inputs.roleDefinitionJson }}'
