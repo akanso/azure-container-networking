@@ -131,11 +131,15 @@ steps:
   
 
 # Update data list
-- ${{ if and(parameters.createCondition,
-             contains('resourcegroups|managedidentity|storageaccounts', parameters.resourceType)) }}:
+- ${{ if and(ne(parameters.createCondition, ''), ne(parameters.createCondition, False),
+             or(
+                eq('resourcegroups', parameters.resourceType),
+                eq('storageaccounts', parameters.resourceType),
+                eq('managedidentity', parameters.resourceType))) }}:
   - template: get-resources.steps.yaml
     parameters:
       resourceType: ${{ parameters.resourceType }}
+      serviceConnection: ${{ parameters.serviceConnection }}
       inputs: 
         buildTagDefinitionIdKey: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
         buildTagCreatedByAppIdKey: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
