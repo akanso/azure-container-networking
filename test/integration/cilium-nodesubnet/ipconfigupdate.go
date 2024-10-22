@@ -104,6 +104,8 @@ func main() {
 			for i := 2; i <= secondaryConfigCount+1; i++ {
 				ipConfig := make(map[string]interface{})
 				for k, v := range primaryIPConfig {
+					// only the primary config needs loadBalancerBackendAddressPools. Azure doesn't allow
+					// secondary IP configs to be associated with pools that are used for load balancing.
 					if k == "loadBalancerBackendAddressPools" {
 						continue
 					}

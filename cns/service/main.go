@@ -661,8 +661,6 @@ func main() {
 	}
 	if isManaged, ok := acn.GetArg(acn.OptManaged).(bool); ok && isManaged {
 		config.ChannelMode = cns.Managed
-	} else if cnsconfig.ChannelMode == cns.AzureHost {
-		config.ChannelMode = cns.AzureHost
 	}
 
 	homeAzMonitor := restserver.NewHomeAzMonitor(nmaClient, time.Duration(cnsconfig.AZRSettings.PopulateHomeAzCacheRetryIntervalSecs)*time.Second)
