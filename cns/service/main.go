@@ -872,9 +872,10 @@ func main() {
 		}
 	}
 
+	// AzureHost channelmode indeicates Nodesubnet. IPs are to be fetched from NMagent.
 	if config.ChannelMode == cns.AzureHost {
 		if !cnsconfig.ManageEndpointState {
-			logger.Errorf("[Azure CNS] ManageEndpointState must be set to true for AzureHost mode")
+			logger.Errorf("ManageEndpointState must be set to true for AzureHost mode")
 			return
 		}
 

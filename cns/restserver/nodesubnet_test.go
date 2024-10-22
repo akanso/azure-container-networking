@@ -18,11 +18,11 @@ func (m *MockPodInfoByIPProvider) PodInfoByIP() (res map[string]cns.PodInfo, err
 
 // Mock implementation of CNIConflistGenerator
 type MockCNIConflistGenerator struct {
-	GenerateCalled chan bool
+	GenerateCalled chan struct{}
 }
 
 func (m *MockCNIConflistGenerator) Generate() error {
-	m.GenerateCalled <- true
+	close(m.GenerateCalled)
 	return nil
 }
 
@@ -32,32 +32,30 @@ func (m *MockCNIConflistGenerator) Close() error {
 }
 
 func TestNodeSubnet(t *testing.T) {
-	mockPodInfoProvider := new(MockPodInfoByIPProvider)
+	mockPodInfoProvider := &MockPodInfoByIPProvider{}
 
 	// Create a real HTTPRestService object
 	mockCNIConflistGenerator := &MockCNIConflistGenerator{
-		GenerateCalled: make(chan bool),
+		GenerateCalled: make(chan struct{}),
 	}
-	service := restserver.GetRestServiceObjectForNodeSubnetTest(mockCNIConflistGenerator)
-	defer service.Service.Uninitialize()
-
+	service := restserver.GetRestServiceObjectForNodeSubnetTest(t, mockCNIConflistGenerator)
 	ctx, cancel := testContext(t)
 	defer cancel()
 
 	err := service.InitializeNodeSubnet(ctx, mockPodInfoProvider)
 	service.StartNodeSubnet(ctx)
 
-	if err != nil {
-		t.Errorf("InitializeNodeSubnet returned an error: %v", err)
-	}
-
 	if service.GetNodesubnetIPFetcher() == nil {
 		t.Error("NodeSubnetIPFetcher is not initialized")
 	}
 
+	if err != nil {
+		t.Fatalf("InitializeNodeSubnet returned an error: %v", err)
+	}
+
 	select {
 	case <-ctx.Done():
-		t.Error("Test context was canceled before conflist generation")
+		t.Errorf("test context done - %s", ctx.Err())
 		return
 	case <-mockCNIConflistGenerator.GenerateCalled:
 		break

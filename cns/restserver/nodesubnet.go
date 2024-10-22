@@ -24,7 +24,6 @@ func (service *HTTPRestService) UpdateIPsForNodeSubnet(secondaryIPs []netip.Addr
 
 	code, msg := service.saveNetworkContainerGoalState(*networkContainerRequest)
 	if code != types.Success {
-		logger.Debugf("Error in processing IP change")
 		return errors.Errorf("failed to save fetched ips. code: %d, message %s", code, msg)
 	}
 

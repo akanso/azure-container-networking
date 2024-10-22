@@ -3,6 +3,7 @@ package restserver
 import (
 	"context"
 	"net/netip"
+	"testing"
 
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/common"
@@ -13,7 +14,7 @@ import (
 	"github.com/Azure/azure-container-networking/store"
 )
 
-func GetRestServiceObjectForNodeSubnetTest(generator CNIConflistGenerator) *HTTPRestService {
+func GetRestServiceObjectForNodeSubnetTest(t *testing.T, generator CNIConflistGenerator) *HTTPRestService {
 	config := &common.ServiceConfig{
 		Name:        "test",
 		Version:     "1.0",
@@ -55,6 +56,8 @@ func GetRestServiceObjectForNodeSubnetTest(generator CNIConflistGenerator) *HTTP
 	if err != nil {
 		return nil
 	}
+
+	t.Cleanup(func() { svc.Uninitialize() })
 
 	return &HTTPRestService{
 		Service:              svc,
