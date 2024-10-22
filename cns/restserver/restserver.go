@@ -13,7 +13,7 @@ import (
 	"github.com/Azure/azure-container-networking/cns/dockerclient"
 	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/networkcontainers"
-	nodesubnet "github.com/Azure/azure-container-networking/cns/nodesubnet"
+	"github.com/Azure/azure-container-networking/cns/nodesubnet"
 	"github.com/Azure/azure-container-networking/cns/routes"
 	"github.com/Azure/azure-container-networking/cns/types"
 	"github.com/Azure/azure-container-networking/cns/types/bounded"
