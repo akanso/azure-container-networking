@@ -62,7 +62,7 @@ stages:
       - job: resources
         displayName: "[Infra] Retrieve Artifact Storage Information"
         variables:
-          ACNCI_BUILDUSER_ROLE_NAME: "ACN CI/CD Build Environment Owner"
+          ACNCI_BUILDUSER_ROLEDEFINITION_NAME: "ACN CI/CD Build Environment Owner"
           ACNCI_MANAGEDIDENTITY_PREFIX: acnci-builds-
           ACNCI_RG_PREFIX: acnci-builds-
           ACNCI_RG_LOCATION: centralus

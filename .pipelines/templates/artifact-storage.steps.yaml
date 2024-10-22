@@ -39,6 +39,11 @@ steps:
   parameters:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: resourcegroups
+    createCondition: |
+      and(succeeded(),
+          or(not(variables.OUT_RESULT_LENGTH),
+             lt(variables.OUT_RESULT_LENGTH, variables.ACNCI_POOL_SIZE)))
+    updateCondition: False
     inputs:
       resourceGroupList: $(OUT_RESULT)
       resourceGroupCount: $(OUT_RESULT_LENGTH)
@@ -47,11 +52,6 @@ steps:
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
-      createCondition: |
-        and(succeeded(),
-            or(not(variables.OUT_RESULT_LENGTH),
-               lt(variables.OUT_RESULT_LENGTH, variables.ACNCI_POOL_SIZE)))
-      updateCondition: False
 
 - task: AzureCLI@2
   name: resourcegroups
@@ -96,20 +96,20 @@ steps:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: managedidentity
     refreshAfterCreation: True 
+    createCondition: |
+      and(succeeded(),
+          or(not(variables.OUT_RESULT_LENGTH),
+             eq(variables.OUT_RESULT_LENGTH, 'null'),
+             lt(variables.OUT_RESULT_LENGTH, 1)))
+    updateCondition: False
     inputs:
       managedIdentityList: $(OUT_RESULT)
       managedIdentityCount: $(OUT_RESULT_LENGTH)
-      managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)-$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
+      managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
-      createCondition: |
-        and(succeeded(),
-            or(not(variables.OUT_RESULT_LENGTH),
-               eq(variables.OUT_RESULT_LENGTH, 'null'),
-               lt(variables.OUT_RESULT_LENGTH, 1)))
-      updateCondition: False
 
 - task: AzureCLI@2
   name: managedidentity
@@ -160,6 +160,13 @@ steps:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: roledefinition
     refreshAfterCreation: True 
+    createCondition: |
+      and(succeeded(),
+          or(not(variables.OUT_RESULT_LENGTH),
+             lt(variables.OUT_RESULT_LENGTH, 1)))
+    updateCondition: |
+      and(succeeded(),
+          gt(variables.OUT_RESULT_LENGTH, 0))
     inputs:
       roleDefinitionName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       roleDefinitionJson: $(OUT_RESULT)
@@ -169,13 +176,6 @@ steps:
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
-      createCondition: |
-        and(succeeded(),
-            or(not(variables.OUT_RESULT_LENGTH),
-               lt(variables.OUT_RESULT_LENGTH, 1)))
-      updateCondition: |
-        and(succeeded(),
-            gt(variables.OUT_RESULT_LENGTH, 0))
 
 
 ## Provision MI Roles
@@ -195,6 +195,12 @@ steps:
   parameters:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: roleassignments
+    createCondition: |
+      and(succeeded(),
+          or(not(variables.OUT_RESULT_LENGTH),
+             eq(variables.OUT_RESULT, 'null'),
+             lt(variables.OUT_RESULT_LENGTH, 1)))
+    updateCondition: False
     inputs:
       roleName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
@@ -202,12 +208,6 @@ steps:
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
-      createCondition: |
-        and(succeeded(),
-            or(not(variables.OUT_RESULT_LENGTH),
-               eq(variables.OUT_RESULT, 'null'),
-               lt(variables.OUT_RESULT_LENGTH, 1)))
-      updateCondition: False
 
 
 # storage accounts
@@ -226,6 +226,11 @@ steps:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: storageaccounts
     refreshAfterCreation: True 
+    createCondition: |
+      and(succeeded(),
+          or(not(variables.OUT_RESULT_LENGTH),
+             lt(variables.OUT_RESULT_LENGTH, 1)))
+    updateCondition: False
     inputs:
       storageAccountName: '$(ACNCI_SA_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)'
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
@@ -233,11 +238,6 @@ steps:
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)  
-      createCondition: |
-        and(succeeded(),
-            or(not(variables.OUT_RESULT_LENGTH),
-               lt(variables.OUT_RESULT_LENGTH, 1)))
-      updateCondition: False
 
 - task: AzureCLI@2
   name: artifact_storage
