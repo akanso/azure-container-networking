@@ -205,6 +205,7 @@ steps:
       roleName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
       resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
+      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
