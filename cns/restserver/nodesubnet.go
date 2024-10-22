@@ -8,7 +8,7 @@ import (
 	"github.com/Azure/azure-container-networking/cns/logger"
 	nodesubnet "github.com/Azure/azure-container-networking/cns/nodesubnet"
 	"github.com/Azure/azure-container-networking/cns/types"
-	errors "github.com/pkg/errors"
+	"github.com/pkg/errors"
 )
 
 var _ nodesubnet.IPConsumer = &HTTPRestService{}
