@@ -139,16 +139,16 @@ steps:
       inputs: 
         buildTagDefinitionIdKey: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
         buildTagCreatedByAppIdKey: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
-      ${{ if eq(parameters.resourceType, 'managedidentity') }}:
-        resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
+        ${{ if eq(parameters.resourceType, 'managedidentity') }}:
+          resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
 
-      ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
-        roleDefinitionName: '${{ parameters.inputs.roleDefinitionName }}'
-        roleDefinitionFileLocation: '${{ parameters.inputs.roleDefinitionFileLocation }}'
-        subscriptionId: '${{ parameters.inputs.subscriptionId }}'
+        ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
+          roleDefinitionName: '${{ parameters.inputs.roleDefinitionName }}'
+          roleDefinitionFileLocation: '${{ parameters.inputs.roleDefinitionFileLocation }}'
+          subscriptionId: '${{ parameters.inputs.subscriptionId }}'
 
-      ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-        resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
+        ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
+          resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
 
 
 - ${{ if parameters.updateCondition }}:
