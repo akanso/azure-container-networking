@@ -149,7 +149,7 @@ steps:
     resourceType: roledefinition
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     inputs: 
-      roleDefinitionName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      roleDefinitionName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       roleDefinitionFileLocation: ./azure-container-networking/.pipelines/templates/mi-build-role.json
       subscriptionId: $(build.subscriptionId)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
@@ -161,8 +161,10 @@ steps:
     resourceType: roledefinition
     refreshAfterCreation: True 
     inputs:
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      roleDefinitionName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       roleDefinitionJson: $(OUT_RESULT)
+      roleDefinitionFileLocation: ./azure-container-networking/.pipelines/templates/mi-build-role.json
+      resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       subscriptionId: $(build.subscriptionId)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
@@ -183,7 +185,7 @@ steps:
     resourceType: roleassignments
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     inputs: 
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      roleName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
@@ -194,7 +196,7 @@ steps:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: roleassignments
     inputs:
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      roleName: $(ACNCI_BUILDUSER_ROLEDEFINITION_NAME)
       managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
       resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
@@ -236,13 +238,6 @@ steps:
             or(not(variables.OUT_RESULT_LENGTH),
                lt(variables.OUT_RESULT_LENGTH, 1)))
       updateCondition: False
-
-    
-- template: get-storage-accounts.steps.yaml
-  parameters:
-    STORAGE_ACCOUNT_SERVICE_CONNECTION: $(ACN_TEST_SERVICE_CONNECTION)
-    condition: and(succeeded(), eq(variables.SA_LIST_LENGTH, 0))
-    resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
 
 - task: AzureCLI@2
   name: artifact_storage

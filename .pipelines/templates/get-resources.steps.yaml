@@ -22,7 +22,7 @@ parameters:
 
 steps:
 - task: AzureCLI@2
-  displayName: "[GET] ARM Details - (${{ parameters.resourceType }})"
+  displayName: "[Get] ARM Details - (${{ parameters.resourceType }})"
 
   env:
     VAR_NAME: '${{ parameters.outputVariableName }}'
@@ -30,7 +30,7 @@ steps:
     BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
     ${{ if eq(parameters.resourceType, 'roledefinition') }}:
       SUBSCRIPTION_ID: '${{ parameters.inputs.subscriptionId }}'
-      ROLE_NAME: '${{ parameters.inputs.roleName }}'
+      ROLEDEFINITION_NAME: '${{ parameters.inputs.roleDefinitionName }}'
       ROLEDEFINITION_FILEPATH: '${{ parameters.inputs.roleDefinitionFileLocation }}'
 
     ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
@@ -65,7 +65,7 @@ steps:
             '.assignableScopes[] = $RESOURCEID')
   
         DEFS_FOUND=$(az role definition list \
-          --name "$ROLE_NAME" \
+          --name "$ROLEDEFINITION_NAME" \
           --custom-role-only \
           -ojson | \
         jq length)

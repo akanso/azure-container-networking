@@ -35,7 +35,7 @@ steps:
 
 - ${{ if parameters.createCondition }}:
   - task: AzureCLI@2
-    displayName: "[CREATE] ARM Details - (${{ parameters.resourceType }})"
+    displayName: "[Create] ARM Details - (${{ parameters.resourceType }})"
     condition: ${{ parameters.createCondition }}
 
     env:
@@ -43,7 +43,7 @@ steps:
       BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
       BUILDTAG_CREATEDBYBUILDID: '${{ parameters.inputs.buildTagCreatedByBuildIdKey }}'
       ${{ if eq(parameters.resourceType, 'roleassignments') }}:
-        ROLE_NAME: '${{ parameters.inputs.roleName }}'
+        ROLEDEFINITION_NAME: '${{ parameters.inputs.roleDefinitionName }}'
         RESOURCEGROUP_ID: '${{ parameters.inputs.resourceGroupId }}'
         MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
 
@@ -76,7 +76,7 @@ steps:
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
     
           az role assignment create \
-            --role "$ROLE_NAME" \
+            --role "$ROLEDEFINITION_NAME" \
             --assignee-object-id "$MANAGEDIDENTITY_OBJECTID" \
             --assignee-principal-type ServicePrincipal \
             --scope "$RESOURCEGROUP_ID"
@@ -157,7 +157,7 @@ steps:
 
 - ${{ if and(parameters.updateCondition, eq(parameters.resourceType, 'roledefinition')) }}:
   - task: AzureCLI@2
-    displayName: "[UPDATE] ARM Details - (${{ parameters.resourceType }})"
+    displayName: "[Update] ARM Details - (${{ parameters.resourceType }})"
     condition: ${{ parameters.updateCondition }}
 
     env:
