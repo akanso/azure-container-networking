@@ -4,12 +4,12 @@ parameters:
   type: string
 
 - name: createCondition
-  type: string
-  default: succeeded()
+  type: object
+  default: 'succeeded()'
 
 - name: updateCondition
-  type: string
-  default: succeeded()
+  type: object
+  default: 'succeeded()'
 
 - name: resourceType
   type: string
