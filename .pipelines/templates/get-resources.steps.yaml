@@ -59,16 +59,21 @@ steps:
         set -e
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
-        DEF=$(cat "$ROLEDEFINITION_FILEPATH" | \
-          jq -rc \
-            --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
-            '.assignableScopes[] = $RESOURCEID')
-  
-        DEFS_FOUND=$(az role definition list \
+        DEFS=$(az role definition list \
           --name "$ROLEDEFINITION_NAME" \
           --custom-role-only \
-          -ojson | \
-        jq length)
+          -ojson | jq -rc '.')
+        DEFS_FOUND=$(echo "$DEFS" | jq length)
+  
+        if [[ -z $DEFS ]] || \
+           [[ $DEFS_FOUND == 'null' ]] || \
+           (( $DEFS_FOUND < 1 )); then
+
+          DEFS=$(cat "$ROLEDEFINITION_FILEPATH" | \
+            jq -rc \
+              --arg RESOURCEID "/subscriptions/$SUBSCRIPTION_ID" \
+              '.assignableScopes[] = $RESOURCEID')
+        fi
 
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$DEFS"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$DEFS_FOUND"
