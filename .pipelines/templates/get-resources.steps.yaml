@@ -23,6 +23,31 @@ parameters:
 steps:
 - task: AzureCLI@2
   displayName: "[GET] ARM Details - (${{ parameters.resourceType }})"
+
+  env:
+    VAR_NAME: '${{ parameters.outputVariableName }}'
+    BUILDTAG_DEFINITIONID: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
+    BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
+    ${{ if eq(parameters.resourceType, 'roledefinition') }}:
+      SUBSCRIPTION_ID: '${{ parameters.inputs.subscriptionId }}'
+      ROLE_NAME: '${{ parameters.inputs.roleName }}'
+      ROLEDEFINITION_FILEPATH: '${{ parameters.inputs.roleDefinitionFileLocation }}'
+
+    ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
+      MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
+      RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+      ROLE_NAME: '${{ parameters.inputs.roleName }}'
+
+    ${{ elseif eq(parameters.resourceType, 'resourcegroups') }}:
+      # Allows use of az devops commands
+      AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+
+    ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
+      RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+
+    ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
+      RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+
   inputs:
     azureSubscription: ${{ parameters.serviceConnection }}
     scriptType: bash
@@ -47,11 +72,6 @@ steps:
 
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$DEFS"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$DEFS_FOUND"
-      env:
-        VAR_NAME: '${{ parameters.outputVariableName }}'
-        SUBSCRIPTION_ID: '${{ parameters.inputs.subscriptionId }}'
-        ROLE_NAME: '${{ parameters.inputs.roleName }}'
-        ROLEDEFINITION_FILEPATH: '${{ parameters.inputs.roleDefinitionFileLocation }}'
   
 
     ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
@@ -69,11 +89,6 @@ steps:
   
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$MI_ROLE_DATA"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$MI_ROLE_DATA_LENGTH"
-      env:
-        VAR_NAME: '${{ parameters.outputVariableName }}'
-        MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
-        RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
-        ROLE_NAME: '${{ parameters.inputs.roleName }}'
 
 
     ${{ elseif eq(parameters.resourceType, 'resourcegroups') }}:
@@ -90,12 +105,6 @@ steps:
   
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$INFRA_RG_LIST"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$INFRA_RG_LENGTH"
-      env:
-        VAR_NAME: '${{ parameters.outputVariableName }}'
-        # Allows use of az devops commands
-        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
-        BUILDTAG_DEFINITIONID: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-        BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
 
 
     ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
@@ -117,11 +126,6 @@ steps:
         #  uses custom variable naming if specified.
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$R_LIST"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$R_LIST_LENGTH"
-      env:
-        VAR_NAME: '${{ parameters.outputVariableName }}'
-        BUILDTAG_DEFINITIONID: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-        BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
-        RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
 
 
     ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
@@ -143,8 +147,3 @@ steps:
   
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$MI_LIST"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$MI_LIST_LENGTH"
-      env:
-        VAR_NAME: '${{ parameters.outputVariableName }}'
-        BUILDTAG_DEFINITIONID: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-        BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
-        RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
