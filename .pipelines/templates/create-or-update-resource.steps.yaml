@@ -11,6 +11,10 @@ parameters:
   type: object
   default: 'succeeded()'
 
+- name: refreshAfterCreation
+  type: boolean
+  default: False
+
 - name: resourceType
   type: string
   values:
@@ -130,9 +134,7 @@ steps:
                    "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
   
 
-  - ${{ if or(eq(parameters.resourceType, 'resourcegroups'),
-              eq(parameters.resourceType, 'storageaccounts'),
-              eq(parameters.resourceType, 'managedidentity')) }}:
+  - ${{ if parameters.refreshAfterCreation }}:
     # Update data list
     - template: get-resources.steps.yaml
       parameters:

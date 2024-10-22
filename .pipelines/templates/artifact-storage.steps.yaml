@@ -95,6 +95,7 @@ steps:
   parameters:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: managedidentity
+    refreshAfterCreation: True 
     inputs:
       managedIdentityList: $(OUT_RESULT)
       managedIdentityCount: $(OUT_RESULT_LENGTH)
@@ -158,6 +159,7 @@ steps:
   parameters:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: roledefinition
+    refreshAfterCreation: True 
     inputs:
       roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
       roleDefinitionJson: $(OUT_RESULT)
@@ -221,6 +223,7 @@ steps:
   parameters:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: storageaccounts
+    refreshAfterCreation: True 
     inputs:
       storageAccountName: '$(ACNCI_SA_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)'
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
