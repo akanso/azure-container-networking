@@ -54,7 +54,7 @@ steps:
       ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
         MANAGEDIDENTITY_ARMID: ${{ parameters.inputs.managedIdentityResourceId }}
         RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
-        RESOURCEGROUP_LOCATION: ${{ parameters.inputs.resourceGroupLocation }}
+        STORAGEACCOUNT_LOCATION: ${{ parameters.inputs.storageAccountLocation }}
         STORAGEACCOUNT_NAME: ${{ parameters.inputs.storageAccountName }}
 
       ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
@@ -100,31 +100,15 @@ steps:
           #[[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
           az upgrade -y
 
-          echo "az storage account create "
-          echo "--name "$STORAGEACCOUNT_NAME" "
-          echo "--location "$RESOURCEGROUP_LOCATION" "
-          echo "--resource-group "$RESOURCEGROUP_NAME" "
-          echo "--user-identity-id "$MANAGEDIDENTITY_ARMID" "
-          echo "--user-identity-type UserAssigned "
-          echo "--allow-blob-public-access false "
-          echo "--allow-shared-key-access false "
-          echo "--tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" "
-          echo ""$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" "
-          echo ""$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId""
           az storage account create \
             --name "$STORAGEACCOUNT_NAME" \
-            --location "$RESOURCEGROUP_LOCATION" \
+            --location "$STORAGEACCOUNT_LOCATION" \
             --resource-group "$RESOURCEGROUP_NAME" \ 
-            --user-identity-id "$MANAGEDIDENTITY_ARMID" \
-            --user-identity-type UserAssigned \
             --allow-blob-public-access false \
             --allow-shared-key-access false \
             --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
                    "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
                    "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
-            #--enable-files-aad-integration true
-            #--assign-identity "$ACNCI_MANAGEDIDENTITY_OBJECTID" 
-            #--default-action Deny 
     
       ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
         inlineScript: |

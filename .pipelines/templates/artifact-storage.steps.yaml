@@ -236,8 +236,8 @@ steps:
     updateCondition: False
     inputs:
       storageAccountName: '$(ACNCI_SA_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)'
+      storageAccountLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      resourceGroupLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
       managedIdentityResourceId: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID) 
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
@@ -292,6 +292,32 @@ steps:
     SA_SERVICE_CONN: $(ACN_TEST_SERVICE_CONNECTION)
 
 - task: AzureCLI@2
+  name: artifact_container
+  displayName: "[Output] Ensure Storage Container"
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+      az storage account show -n "$SA_NAME" --query networkRuleSet
+      az storage container create \
+        --account-name "$SA_NAME" \
+        --resource-group "$RG_NAME" \
+        --name "$CONTAINER_NAME" \
+        --auth-mode login
+
+      echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_ARTIFACT_CONTAINER;isoutput=true]$CONTAINER_NAME"
+  env:
+    CONTAINER_NAME: "azure-container-networking-pr" 
+    RG_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+    SA_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
+    ACNCI_MANAGEDIDENTITY_ID: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID)
+
+- task: AzureCLI@2
   displayName: "[Provision] Container Access Permissions"
   continueOnError: true
   inputs:
@@ -312,34 +338,6 @@ steps:
     ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
     ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
     ACNCI_STORAGEACCOUNT_ID: $(storageaccounts.ACNCI_STORAGEACCOUNT_ID)
-
-- task: AzureCLI@2
-  name: artifact_container
-  displayName: "[Output] Ensure Storage Container"
-  inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
-    scriptType: bash
-    scriptLocation: inlineScript
-    addSpnToEnvironment: true
-    inlineScript: |
-      set -e
-      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-
-      az login --identity "$ACNCI_MANAGEDIDENTITY_ID"
-      az storage account show -n "$SA_NAME" --query networkRuleSet
-      az storage container create \
-        --account-name "$SA_NAME" \
-        --resource-group "$RG_NAME" \
-        --name "$CONTAINER_NAME" \
-        --auth-mode login
-        #--public-access off 
-
-      echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_ARTIFACT_CONTAINER;isoutput=true]$CONTAINER_NAME"
-  env:
-    CONTAINER_NAME: "azure-container-networking-pr" 
-    RG_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-    SA_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
-    ACNCI_MANAGEDIDENTITY_ID: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID)
 
 - task: AzureCLI@2
   name: artifact_blob
