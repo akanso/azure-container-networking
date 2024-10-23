@@ -39,30 +39,30 @@ steps:
     condition: ${{ parameters.createCondition }}
 
     env:
-      BUILDTAG_DEFINITIONID: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-      BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
-      BUILDTAG_CREATEDBYBUILDID: '${{ parameters.inputs.buildTagCreatedByBuildIdKey }}'
+      BUILDTAG_DEFINITIONID: ${{ parameters.inputs.buildTagDefinitionIdKey }}
+      BUILDTAG_CREATEDBYAPPID: ${{ parameters.inputs.buildTagCreatedByAppIdKey }}
+      BUILDTAG_CREATEDBYBUILDID: ${{ parameters.inputs.buildTagCreatedByBuildIdKey }}
       ${{ if eq(parameters.resourceType, 'roleassignments') }}:
-        ROLE_NAME: '${{ parameters.inputs.roleName }}'
-        RESOURCEGROUP_ID: '${{ parameters.inputs.resourceGroupId }}'
-        MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
+        ROLE_NAME: ${{ parameters.inputs.roleName }}
+        RESOURCEGROUP_ID: ${{ parameters.inputs.resourceGroupId }}
+        MANAGEDIDENTITY_OBJECTID: ${{ parameters.inputs.managedIdentityObjectId }}
 
       ${{ elseif eq(parameters.resourceType, 'resourcegroups') }}:
-        RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
-        RESOURCEGROUP_LOCATION: '${{ parameters.inputs.resourceGroupLocation }}'
+        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+        RESOURCEGROUP_LOCATION: ${{ parameters.inputs.resourceGroupLocation }}
 
       ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-        MANAGEDIDENTITY_ARMID: '${{ parameters.inputs.managedIdentityResourceId }}'
-        RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
-        RESOURCEGROUP_LOCATION: '${{ parameters.inputs.resourceGroupLocation }}'
+        MANAGEDIDENTITY_ARMID: ${{ parameters.inputs.managedIdentityResourceId }}
+        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+        RESOURCEGROUP_LOCATION: ${{ parameters.inputs.resourceGroupLocation }}
 
       ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
-        ROLEDEFINITION_JSON: '${{ parameters.inputs.roleDefinitionJson }}'
+        ROLEDEFINITION_JSON: ${{ parameters.inputs.roleDefinitionJson }}
 
       ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
-        MANAGEDIDENTITY_NAME: '${{ parameters.inputs.managedIdentityName }}'
-        MANAGEDIDENTITY_LOCATION: '${{ parameters.inputs.managedIdentityLocation }}'
-        RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+        MANAGEDIDENTITY_NAME: ${{ parameters.inputs.managedIdentityName }}
+        MANAGEDIDENTITY_LOCATION: ${{ parameters.inputs.managedIdentityLocation }}
+        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
 
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
@@ -143,18 +143,18 @@ steps:
         resourceType: ${{ parameters.resourceType }}
         serviceConnection: ${{ parameters.serviceConnection }}
         inputs: 
-          buildTagDefinitionIdKey: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-          buildTagCreatedByAppIdKey: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
+          buildTagDefinitionIdKey: ${{ parameters.inputs.buildTagDefinitionIdKey }}
+          buildTagCreatedByAppIdKey: ${{ parameters.inputs.buildTagCreatedByAppIdKey }}
           ${{ if eq(parameters.resourceType, 'managedidentity') }}:
-            resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
+            resourceGroupName: ${{ parameters.inputs.resourceGroupName }}
   
           ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
-            roleName: '${{ parameters.inputs.roleName }}'
-            roleDefinitionFileLocation: '${{ parameters.inputs.roleDefinitionFileLocation }}'
-            subscriptionId: '${{ parameters.inputs.subscriptionId }}'
+            roleName: ${{ parameters.inputs.roleName }}
+            roleDefinitionFileLocation: ${{ parameters.inputs.roleDefinitionFileLocation }}
+            subscriptionId: ${{ parameters.inputs.subscriptionId }}
   
           ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-            resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
+            resourceGroupName: ${{ parameters.inputs.resourceGroupName }}
 
 
 - ${{ if and(parameters.updateCondition, eq(parameters.resourceType, 'roledefinition')) }}:
@@ -164,7 +164,7 @@ steps:
 
     env:
       ${{ if eq(parameters.resourceType, 'roledefinition') }}:
-        ROLEDEFINITION_JSON: '${{ parameters.inputs.roleDefinitionJson }}'
+        ROLEDEFINITION_JSON: ${{ parameters.inputs.roleDefinitionJson }}
 
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}

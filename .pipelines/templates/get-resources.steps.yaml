@@ -25,28 +25,28 @@ steps:
   displayName: "[Get] ARM Details - (${{ parameters.resourceType }})"
 
   env:
-    VAR_NAME: '${{ parameters.outputVariableName }}'
-    BUILDTAG_DEFINITIONID: '${{ parameters.inputs.buildTagDefinitionIdKey }}'
-    BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
+    VAR_NAME: ${{ parameters.outputVariableName }}
+    BUILDTAG_DEFINITIONID: ${{ parameters.inputs.buildTagDefinitionIdKey }}
+    BUILDTAG_CREATEDBYAPPID: ${{ parameters.inputs.buildTagCreatedByAppIdKey }}
     ${{ if eq(parameters.resourceType, 'roledefinition') }}:
-      SUBSCRIPTION_ID: '${{ parameters.inputs.subscriptionId }}'
-      ROLE_NAME: '${{ parameters.inputs.roleName }}'
-      ROLEDEFINITION_FILEPATH: '${{ parameters.inputs.roleDefinitionFileLocation }}'
+      SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
+      ROLE_NAME: ${{ parameters.inputs.roleName }}
+      ROLEDEFINITION_FILEPATH: ${{ parameters.inputs.roleDefinitionFileLocation }}
 
     ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
-      MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
-      RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
-      ROLE_NAME: '${{ parameters.inputs.roleName }}'
+      MANAGEDIDENTITY_OBJECTID: ${{ parameters.inputs.managedIdentityObjectId }}
+      RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+      ROLE_NAME: ${{ parameters.inputs.roleName }}
 
     ${{ elseif eq(parameters.resourceType, 'resourcegroups') }}:
       # Allows use of az devops commands
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
     ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-      RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+      RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
 
     ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
-      RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+      RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
 
   inputs:
     azureSubscription: ${{ parameters.serviceConnection }}

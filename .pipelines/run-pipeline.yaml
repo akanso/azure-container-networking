@@ -60,7 +60,7 @@ stages:
       ##   artifact_storage.ACNCI_STORAGEACCOUNT_LOCATION
       ##   
       - job: resources
-        displayName: "[Infra] Retrieve Artifact Storage Information"
+        displayName: "[Infra] Configure Artifact Resources"
         variables:
           ACNCI_BUILDUSER_ROLE_NAME: "ACN CI/CD Build Environment Owner"
           ACNCI_MANAGEDIDENTITY_PREFIX: acnci-builds-
@@ -97,7 +97,6 @@ stages:
         SA_NAME: $[ stageDependencies.setup.resources.outputs['artifact_storage.ACNCI_STORAGEACCOUNT_NAME'] ]
         CONTAINER_NAME: $[ stageDependencies.setup.resources.outputs['artifact_container.ACNCI_STORAGEACCOUNT_ARTIFACT_CONTAINER'] ]
         BLOB_PATH: $[ stageDependencies.setup.resources.outputs['artifact_blob.ACNCI_STORAGEACCOUNT_BLOBPATH'] ]
-        SYSTEM_DEBUG: $[ coalesce(variables.SYSTEM_DEBUG, 'False') ]
       jobs:
         - job: build
           displayName: Build Binaries
