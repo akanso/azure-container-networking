@@ -8,18 +8,17 @@ AZIMG   = mcr.microsoft.com/azure-cli
 AZCLI   ?= docker run --rm -v $(AZCFG):/root/.azure -v $(KUBECFG):/root/.kube -v $(SSH):/root/.ssh -v $(PWD):/root/tmpsrc $(AZIMG) az
 
 # overrideable defaults
-AUTOUPGRADE          ?= patch
-K8S_VER              ?= 1.30
-NODE_COUNT           ?= 2
-NODE_COUNT_WIN	     ?= $(NODE_COUNT)
-NODEUPGRADE          ?= NodeImage
-OS				     ?= linux # Used to signify if you want to bring up a windows nodePool on byocni clusters
-OS_SKU               ?= Ubuntu
-OS_SKU_WIN           ?= Windows2022
-REGION               ?= westus2
-VM_SIZE	             ?= Standard_B2s
-VM_SIZE_WIN          ?= Standard_B2s
-KUBE_PROXY_JSON_PATH ?= ./kube-proxy.json
+AUTOUPGRADE     ?= patch
+K8S_VER         ?= 1.30
+NODE_COUNT      ?= 2
+NODE_COUNT_WIN	?= $(NODE_COUNT)
+NODEUPGRADE     ?= NodeImage
+OS				?= linux # Used to signify if you want to bring up a windows nodePool on byocni clusters
+OS_SKU          ?= Ubuntu
+OS_SKU_WIN      ?= Windows2022
+REGION          ?= westus2
+VM_SIZE	        ?= Standard_B2s
+VM_SIZE_WIN     ?= Standard_B2s
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -104,13 +103,13 @@ nodesubnet-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an NodeSubne
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku standard \
+		--load-balancer-sku basic \
 		--max-pods 250 \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--os-sku $(OS_SKU) \
 		--no-ssh-key \
-		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--kube-proxy-config ./kube-proxy.json \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -147,7 +146,7 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 		--pod-cidr 192.168.0.0/16 \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
-		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--kube-proxy-config ./kube-proxy.json \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -216,7 +215,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
 		--no-ssh-key \
 		--os-sku $(OS_SKU) \
-		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--kube-proxy-config ./kube-proxy.json \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -306,7 +305,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
 		--no-ssh-key \
 		--os-sku $(OS_SKU) \
-		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--kube-proxy-config ./kube-proxy.json \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -435,7 +434,7 @@ dualstack-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up a Dualstack o
 		--ip-families ipv4,ipv6 \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/AzureOverlayDualStackPreview \
 		--no-ssh-key \
-		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--kube-proxy-config ./kube-proxy.json \
 		--yes
 	@$(MAKE) set-kubeconf
 
