@@ -28,7 +28,7 @@ func runAzCommand(params ...string) (string, error) {
 	}
 
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("command failed %s", stderr.String()))
+		return "", errors.Wrap(err, "command failed "+stderr.String())
 	}
 
 	return out.String(), nil
