@@ -236,6 +236,7 @@ steps:
     inputs:
       storageAccountName: '$(ACNCI_SA_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)'
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      resourceGroupLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
       managedIdentityResourceId: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID) 
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)

@@ -55,6 +55,7 @@ steps:
         MANAGEDIDENTITY_ARMID: ${{ parameters.inputs.managedIdentityResourceId }}
         RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
         RESOURCEGROUP_LOCATION: ${{ parameters.inputs.resourceGroupLocation }}
+        STORAGEACCOUNT_NAME: ${{ parameters.inputs.storageAccountName }}
 
       ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
         ROLEDEFINITION_JSON: ${{ parameters.inputs.roleDefinitionJson }}
