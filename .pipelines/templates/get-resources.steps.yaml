@@ -121,6 +121,10 @@ steps:
         # Query for Test Storage Accounts
         R_QUERY="[? type == 'Microsoft.Storage/storageAccounts' && resourceGroup == '$RESOURCEGROUP_NAME']"
         # JSON of Returned Results
+        az resource list \
+          --query "$R_QUERY" \
+          --tag "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
+          --tag "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" -o json
         R_LIST=$(az resource list \
           --query "$R_QUERY" \
           --tag "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \

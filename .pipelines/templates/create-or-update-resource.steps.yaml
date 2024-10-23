@@ -98,8 +98,18 @@ steps:
           set -e
           #[[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
           az upgrade -y
-          az storage account create --help
 
+          echo "az storage account create "
+          echo "--name "$STORAGEACCOUNT_NAME" "
+          echo "--location "$RESOURCEGROUP_LOCATION" "
+          echo "--resource-group "$RESOURCEGROUP_NAME" "
+          echo "--user-identity-id "$MANAGEDIDENTITY_ARMID" "
+          echo "--user-identity-type UserAssigned "
+          echo "--allow-blob-public-access false "
+          echo "--allow-shared-key-access false "
+          echo "--tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" "
+          echo ""$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" "
+          echo ""$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId""
           az storage account create \
             --name "$STORAGEACCOUNT_NAME" \
             --location "$RESOURCEGROUP_LOCATION" \
