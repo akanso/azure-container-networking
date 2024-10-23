@@ -52,7 +52,7 @@ steps:
         RESOURCEGROUP_LOCATION: '${{ parameters.inputs.resourceGroupLocation }}'
 
       ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-        MANAGEDIDENTITY_ARMID: '${{ parameters.inputs.storageAccountManagedIdentityId }}'
+        MANAGEDIDENTITY_ARMID: '${{ parameters.inputs.managedIdentityResourceId }}'
         RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
         RESOURCEGROUP_LOCATION: '${{ parameters.inputs.resourceGroupLocation }}'
 
@@ -96,7 +96,9 @@ steps:
       ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
         inlineScript: |
           set -e
-          [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+          #[[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+          az upgrade -y
+          az storage account create --help
 
           az storage account create \
             --name "$STORAGEACCOUNT_NAME" \

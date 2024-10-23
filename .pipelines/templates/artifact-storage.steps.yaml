@@ -221,6 +221,7 @@ steps:
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)  
 
 - template: create-or-update-resource.steps.yaml
   parameters:
@@ -235,7 +236,7 @@ steps:
     inputs:
       storageAccountName: '$(ACNCI_SA_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)'
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      storageAccountManagedIdentityId: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID) 
+      managedIdentityResourceId: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID) 
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)  
