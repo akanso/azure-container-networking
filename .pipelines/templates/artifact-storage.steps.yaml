@@ -106,6 +106,7 @@ steps:
       managedIdentityList: $(OUT_RESULT)
       managedIdentityCount: $(OUT_RESULT_LENGTH)
       managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
+      managedIdentityLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)

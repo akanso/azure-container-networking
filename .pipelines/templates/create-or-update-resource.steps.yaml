@@ -61,9 +61,9 @@ steps:
         ROLEDEFINITION_JSON: ${{ parameters.inputs.roleDefinitionJson }}
 
       ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
+        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
         MANAGEDIDENTITY_NAME: ${{ parameters.inputs.managedIdentityName }}
         MANAGEDIDENTITY_LOCATION: ${{ parameters.inputs.managedIdentityLocation }}
-        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
 
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
