@@ -30,12 +30,12 @@ steps:
     BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
     ${{ if eq(parameters.resourceType, 'roledefinition') }}:
       SUBSCRIPTION_ID: '${{ parameters.inputs.subscriptionId }}'
-      ROLEDEFINITION_NAME: '${{ parameters.inputs.roleDefinitionName }}'
+      ROLE_NAME: '${{ parameters.inputs.roleName }}'
       ROLEDEFINITION_FILEPATH: '${{ parameters.inputs.roleDefinitionFileLocation }}'
 
     ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
       MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
-      RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+      RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
       ROLE_NAME: '${{ parameters.inputs.roleName }}'
 
     ${{ elseif eq(parameters.resourceType, 'resourcegroups') }}:
@@ -43,10 +43,10 @@ steps:
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
     ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
-      RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+      RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
 
     ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
-      RESOUCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
+      RESOURCEGROUP_NAME: '${{ parameters.inputs.resourceGroupName }}'
 
   inputs:
     azureSubscription: ${{ parameters.serviceConnection }}
@@ -60,7 +60,7 @@ steps:
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
         DEF_LIST=$(az role definition list \
-          --name "$ROLEDEFINITION_NAME" \
+          --name "$ROLE_NAME" \
           --custom-role-only \
           -ojson | jq -rc '.')
         DEF=$(echo "$DEF_LIST" | jq -rc .[0])
@@ -141,7 +141,7 @@ steps:
   
         R_QUERY="[? tags.\""$BUILDTAG_DEFINITIONID"\" && tags.\""$BUILDTAG_CREATEDBYAPPID"\"]"
         MI_LIST=$(az identity list \
-          --resource-group "$RESOUCEGROUP_NAME" \
+          --resource-group "$RESOURCEGROUP_NAME" \
           --query "$R_QUERY" -o json | \
           jq -rc \
             --arg BUILDTAG_CREATEDBYAPPID "$BUILDTAG_CREATEDBYAPPID" \

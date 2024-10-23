@@ -43,7 +43,7 @@ steps:
       BUILDTAG_CREATEDBYAPPID: '${{ parameters.inputs.buildTagCreatedByAppIdKey }}'
       BUILDTAG_CREATEDBYBUILDID: '${{ parameters.inputs.buildTagCreatedByBuildIdKey }}'
       ${{ if eq(parameters.resourceType, 'roleassignments') }}:
-        ROLEDEFINITION_NAME: '${{ parameters.inputs.roleDefinitionName }}'
+        ROLE_NAME: '${{ parameters.inputs.roleName }}'
         RESOURCEGROUP_ID: '${{ parameters.inputs.resourceGroupId }}'
         MANAGEDIDENTITY_OBJECTID: '${{ parameters.inputs.managedIdentityObjectId }}'
 
@@ -76,7 +76,7 @@ steps:
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
     
           az role assignment create \
-            --role "$ROLEDEFINITION_NAME" \
+            --role "$ROLE_NAME" \
             --assignee-object-id "$MANAGEDIDENTITY_OBJECTID" \
             --assignee-principal-type ServicePrincipal \
             --scope "$RESOURCEGROUP_ID"
@@ -147,7 +147,7 @@ steps:
             resourceGroupName: '${{ parameters.inputs.resourceGroupName }}'
   
           ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
-            roleDefinitionName: '${{ parameters.inputs.roleDefinitionName }}'
+            roleName: '${{ parameters.inputs.roleName }}'
             roleDefinitionFileLocation: '${{ parameters.inputs.roleDefinitionFileLocation }}'
             subscriptionId: '${{ parameters.inputs.subscriptionId }}'
   
