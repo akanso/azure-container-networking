@@ -34,8 +34,12 @@ func (service *HTTPRestService) UpdateIPsForNodeSubnet(secondaryIPs []netip.Addr
 	return nil
 }
 
+// initialization steps for nodesubnet:
+// 1. Set orchestrator type to KubernetesCRD
+// 2. Reconcile initial CNS state from statefile
+// 3. Create the IP fetcher
 func (service *HTTPRestService) InitializeNodeSubnet(ctx context.Context, podInfoByIPProvider cns.PodInfoByIPProvider) error {
-	// Set orchestrator type
+	// set orchestrator type
 	orchestrator := cns.SetOrchestratorTypeRequest{
 		OrchestratorType: cns.KubernetesCRD,
 	}

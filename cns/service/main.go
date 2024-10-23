@@ -870,7 +870,7 @@ func main() {
 		}
 	}
 
-	// AzureHost channelmode indeicates Nodesubnet. IPs are to be fetched from NMagent.
+	// AzureHost channelmode indicates Nodesubnet. IPs are to be fetched from NMagent.
 	if config.ChannelMode == cns.AzureHost {
 		if !cnsconfig.ManageEndpointState {
 			logger.Errorf("ManageEndpointState must be set to true for AzureHost mode")
@@ -1506,6 +1506,7 @@ func InitializeCRDState(ctx context.Context, httpRestService cns.HTTPService, cn
 	return nil
 }
 
+// getPodInfoByIPProvider returns a PodInfoByIPProvider that reads endpoint state from the configured source
 func getPodInfoByIPProvider(
 	ctx context.Context,
 	cnsconfig *configuration.CNSConfig,
