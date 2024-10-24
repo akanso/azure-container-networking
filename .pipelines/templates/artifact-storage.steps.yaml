@@ -183,7 +183,7 @@ steps:
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
 
 - task: AzureCLI@2
-  name: managedidentity
+  name: serviceconnection
   displayName: "[Output] Build User ServiceConnection Details"
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
