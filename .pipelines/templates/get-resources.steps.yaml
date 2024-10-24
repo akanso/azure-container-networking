@@ -119,13 +119,15 @@ steps:
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
         # Query for Test Storage Accounts
-        R_QUERY="[? type == 'Microsoft.Storage/storageAccounts' && resourceGroup == '$RESOURCEGROUP_NAME']"
+        R_QUERY="[? tags.\""$BUILDTAG_DEFINITIONID"\" && tags.\""$BUILDTAG_CREATEDBYAPPID"\"]"
         # JSON of Returned Results
-        az resource list \
+        az storage account list \
+          --resource-group "$RESOURCEGROUP_NAME" \
           --query "$R_QUERY" \
           --tag "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
           --tag "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" -o json
-        R_LIST=$(az resource list \
+        R_LIST=$(az storage account list \
+          --resource-group "$RESOURCEGROUP_NAME" \
           --query "$R_QUERY" \
           --tag "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
           --tag "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" -o json | jq -rc '.')
