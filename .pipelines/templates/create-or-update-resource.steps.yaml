@@ -23,6 +23,7 @@ parameters:
   - storageaccounts
   - roledefinition
   - managedidentity
+  - serviceconnection
 
 - name: inputs 
   type: object
@@ -64,6 +65,13 @@ steps:
         RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
         MANAGEDIDENTITY_NAME: ${{ parameters.inputs.managedIdentityName }}
         MANAGEDIDENTITY_LOCATION: ${{ parameters.inputs.managedIdentityLocation }}
+
+      ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
+        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
+        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
+        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
+        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
+        SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
 
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
@@ -123,6 +131,24 @@ steps:
                    "$ACNCI_BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
                    "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
   
+      ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
+        inlineScript: |
+          set -e
+          [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+          az devops service-endpoint azurerm create \
+            --org "https://dev.azure.com/msazure/" \
+            --azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
+            --azure-rm-subscription-id "$SUBSCRIPTION_ID" \
+            --azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
+            --azure-rm-tenant-id "$SERVICECONNECTION_TENANTID"\
+            --name "SERVICECONNECTION_NAME" \
+            --project "One" \
+            --tags "$ACNCI_BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
+                   "$ACNCI_BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
+                   "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
+
+
 
   - ${{ if parameters.refreshAfterCreation }}:
     # Update data list
