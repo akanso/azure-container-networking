@@ -123,9 +123,7 @@ steps:
         # JSON of Returned Results
         az storage account list \
           --resource-group "$RESOURCEGROUP_NAME" \
-          --query "$R_QUERY" \
-          --tag "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
-          --tag "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" -o json
+          --query "$R_QUERY" 
         R_LIST=$(az storage account list \
           --resource-group "$RESOURCEGROUP_NAME" \
           --query "$R_QUERY" | \
