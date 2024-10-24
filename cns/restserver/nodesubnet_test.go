@@ -116,7 +116,8 @@ func checkIPassignment(t *testing.T, service *restserver.HTTPRestService, expect
 		t.Fatalf("expected 2 entries in PodIPConfigState, got %d", len(service.PodIPConfigState))
 	}
 
-	for ip, config := range service.GetPodIPConfigState() {
+	for ip := range service.GetPodIPConfigState() {
+		config := service.GetPodIPConfigState()[ip]
 		if assignmentState, exists := expectedIPs[ip]; !exists {
 			t.Fatalf("unexpected IP %s in PodIPConfigState", ip)
 		} else if config.GetState() != assignmentState {
