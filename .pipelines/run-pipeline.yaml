@@ -18,7 +18,7 @@ parameters:
 
 stages:
   - stage: setup
-    displayName: ACN
+    displayName: "[PreBuild] Configure and Provision Required Resources"
     # Block build start until pre-build validation occurs.
     dependsOn: pre_build
     variables:
@@ -52,13 +52,6 @@ stages:
             name: "EnvironmentalVariables"
             displayName: "Set environmental variables"
 
-      ## Outputs Storage Account for use
-      ##   artifact_storage.ACNCI_STORAGEACCOUNT_ID
-      ##   artifact_storage.ACNCI_STORAGEACCOUNT_SUBSCRIPTION
-      ##   artifact_storage.ACNCI_STORAGEACCOUNT_SERVICECONNECTION
-      ##   artifact_storage.ACNCI_STORAGEACCOUNT_RESOURCEGROUP
-      ##   artifact_storage.ACNCI_STORAGEACCOUNT_LOCATION
-      ##   
       - job: resources
         displayName: "[Infra] Configure Artifact Resources"
         variables:
