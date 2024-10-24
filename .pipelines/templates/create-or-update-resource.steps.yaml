@@ -72,7 +72,7 @@ steps:
         SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
         SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
         SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
-        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
+        SERVICECONNECTION_TENANT_ID: ${{ parameters.inputs.tenantId }}
         SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
 
     inputs:
@@ -147,7 +147,7 @@ steps:
             --azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
             --azure-rm-subscription-id "$SUBSCRIPTION_ID" \
             --azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
-            --azure-rm-tenant-id "$SERVICECONNECTION_TENANTID"\
+            --azure-rm-tenant-id "$SERVICECONNECTION_TENANT_ID"\
             --name "SERVICECONNECTION_NAME" \
             --project "One" --debug
 

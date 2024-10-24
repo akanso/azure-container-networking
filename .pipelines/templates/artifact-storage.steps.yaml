@@ -22,7 +22,7 @@ steps:
       TENANT_ID=$(az account show | jq -rc '.tenantId')
       echo >&2 "##vso[task.setvariable variable=ACNCI_BUILD_SUBSCRIPTION_ID;isoutput=true;issecret=true]$SUBSCRIPTION_ID"
       echo >&2 "##vso[task.setvariable variable=ACNCI_BUILD_SUBSCRIPTION_NAME;isoutput=true;issecret=true]$SUBSCRIPTION_NAME"
-      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILD_TENANTID;isoutput=true;issecret=true]$TENANT_ID"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILD_TENANT_ID;isoutput=true;issecret=true]$TENANT_ID"
 
 
 ## Resource Groups ##
