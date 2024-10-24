@@ -259,8 +259,6 @@ steps:
       R_INDEX=$(( "$SA_RANDOM_SELECT" % "$SA_LIST_LENGTH" ))
       # Make a random selection from the pool
       SA_DATA=$(echo "$SA_LIST" | jq --argjson IDX "$R_INDEX" -rc '.[$IDX]')
-      echo "Delete me"
-      echo "$SA_DATA"
       if (( "$SA_LIST_LENGTH" > 0 )); then
         # Azure Resource ID
         SA_ID=$(echo "$SA_DATA" | jq -r '.id')
@@ -279,6 +277,9 @@ steps:
         # Storage Account Location
         SA_LOCATION=$(echo "$SA_DATA" | jq -r '.location')
         echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_LOCATION;isoutput=true]$SA_LOCATION"
+        # Current Build Storage Data
+        echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_CONTAINER_NAME;isoutput=true]$STORAGECONTAINER_NAME"
+        echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_BLOB_PATH;isoutput=true]$STORAGEBLOB_PATH"
         # - Local Use Only -
         # SA Object
         echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT]$SA_DATA"
@@ -290,35 +291,40 @@ steps:
     SA_LIST: $(OUT_RESULT)
     SA_LIST_LENGTH: $(OUT_RESULT_LENGTH)
     SA_SERVICE_CONN: $(ACN_TEST_SERVICE_CONNECTION)
+    STORAGECONTAINER_NAME: "azure-container-networking-pr"
+    STORAGEBLOB_PATH: $(Build.BuildId)/$(System.JobAttempt)
 
 - task: AzureCLI@2
-  name: artifact_container
-  displayName: "[Output] Ensure Storage Container"
+  name: build_storage
+  displayName: "[Provision] Establish Build Storage"
+  condition: not(or(failed(), skipped()))
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
     scriptType: bash
     scriptLocation: inlineScript
-    addSpnToEnvironment: true
     inlineScript: |
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-      az storage account show -n "$SA_NAME" --query networkRuleSet
       az storage container create \
-        --account-name "$SA_NAME" \
-        --resource-group "$RG_NAME" \
-        --name "$CONTAINER_NAME" \
-        --auth-mode login
+        --account-name "$STORAGEACCOUNT_NAME" \
+        --resource-group "$RESOURCEGROUP_NAME" \
+        --name "$STORAGECONTAINER_NAME" \
+        --auth-mode login || echo >&2 "##[info]Storage container provisioned."
 
-      echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_ARTIFACT_CONTAINER;isoutput=true]$CONTAINER_NAME"
+      echo "hold" | az storage blob upload \
+        --data @- \
+        --name "$STORAGEBLOB_PATH/.created" \
+        --container-name "$STORAGECONTAINER_NAME" \
+        --account-name "$STORAGEACCOUNT_NAME" \
+        --auth-mode login
   env:
-    CONTAINER_NAME: "azure-container-networking-pr" 
-    RG_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-    SA_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
-    ACNCI_MANAGEDIDENTITY_ID: $(managedidentity.ACNCI_MANAGEDIDENTITY_ID)
+    RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+    STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
+    STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
 
 - task: AzureCLI@2
-  displayName: "[Provision] Container Access Permissions"
+  displayName: "[Provision] Build User Access Permissions"
   continueOnError: true
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
@@ -331,25 +337,10 @@ steps:
 
       az role assignment create \
         --role "Storage Blob Data Contributor" \
-        --assignee "$ACNCI_MANAGEDIDENTITY_OBJECTID" \
+        --assignee "$MANAGEDIDENTITY_OBJECTID" \
         --assignee-principal-type "ServicePrincipal" \
-        --scope "$ACNCI_STORAGEACCOUNT_ID"
+        --scope "$STORAGEACCOUNT_ID/blobServices/default/containers/$STORAGECONTAINER_NAME"
   env:
-    ACNCI_BUILD_RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
-    ACNCI_MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
-    ACNCI_STORAGEACCOUNT_ID: $(storageaccounts.ACNCI_STORAGEACCOUNT_ID)
-
-- task: AzureCLI@2
-  name: artifact_blob
-  displayName: "[Output] Get Blob Path"
-  # Always run to generate new blob name
-  condition: always()
-  inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
-    scriptType: bash
-    scriptLocation: inlineScript
-    inlineScript: |
-      set -e
-      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-
-      echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_BLOBPATH;isoutput=true]$BUILD_BUILDID/$SYSTEM_JOBATTEMPT"
+    MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
+    STORAGEACCOUNT_ID: $(artifact_storage.ACNCI_STORAGEACCOUNT_ID)
+    STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
