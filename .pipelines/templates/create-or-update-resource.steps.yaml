@@ -143,10 +143,7 @@ steps:
             --azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
             --azure-rm-tenant-id "$SERVICECONNECTION_TENANTID"\
             --name "SERVICECONNECTION_NAME" \
-            --project "One" \
-            --tags "$ACNCI_BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
-                   "$ACNCI_BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
-                   "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
+            --project "One"
 
 
 
