@@ -128,9 +128,13 @@ steps:
           --tag "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" -o json
         R_LIST=$(az storage account list \
           --resource-group "$RESOURCEGROUP_NAME" \
-          --query "$R_QUERY" \
-          --tag "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
-          --tag "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId" -o json | jq -rc '.')
+          --query "$R_QUERY" | \
+          jq -rc \
+            --arg BUILDTAG_CREATEDBYAPPID "$BUILDTAG_CREATEDBYAPPID" \
+            --arg APPID "$servicePrincipalId" \
+            --arg BUILDTAG_DEFINITIONID "$BUILDTAG_DEFINITIONID" \
+            --arg DEFINITIONID "$SYSTEM_DEFINITIONID" \
+          '[ .[] | select(.tags[$BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
         # Length of resource list
         R_LIST_LENGTH=$(echo "$R_LIST" | jq length)
   
