@@ -258,7 +258,7 @@ steps:
       SA_RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
       R_INDEX=$(( "$SA_RANDOM_SELECT" % "$SA_LIST_LENGTH" ))
       # Make a random selection from the pool
-      SA_DATA=$(echo "$SA_LIST" | jq --argjson IDX "$SA_IDX" -rc '.[$IDX]')
+      SA_DATA=$(echo "$SA_LIST" | jq --argjson IDX "$R_INDEX" -rc '.[$IDX]')
       echo "Delete me"
       echo "$SA_DATA"
       if (( "$SA_LIST_LENGTH" > 0 )); then
