@@ -13,7 +13,7 @@ import (
 
 var _ nodesubnet.IPConsumer = &HTTPRestService{}
 
-// Implement the UpdateIPsForNodeSubnet method for HTTPRestService
+// UpdateIPsForNodeSubnet updates the IP pool of HTTPRestService with newly fetched secondary IPs
 func (service *HTTPRestService) UpdateIPsForNodeSubnet(secondaryIPs []netip.Addr) error {
 	secondaryIPStrs := make([]string, len(secondaryIPs))
 	for i, ip := range secondaryIPs {
