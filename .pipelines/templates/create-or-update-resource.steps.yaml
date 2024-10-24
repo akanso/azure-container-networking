@@ -100,15 +100,8 @@ steps:
           #[[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
           az upgrade -y
 
-          az storage account create \
-            --name "$STORAGEACCOUNT_NAME" \
-            --location "$STORAGEACCOUNT_LOCATION" \
-            --resource-group "$RESOURCEGROUP_NAME" \ 
-            --allow-blob-public-access false \
-            --allow-shared-key-access false \
-            --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
-                   "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
-                   "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
+          echo "az storage account create --name "$STORAGEACCOUNT_NAME" --location "$STORAGEACCOUNT_LOCATION" --resource-group "$RESOURCEGROUP_NAME" --allow-blob-public-access false --allow-shared-key-access false --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId""
+          az storage account create --name "$STORAGEACCOUNT_NAME" --location "$STORAGEACCOUNT_LOCATION" --resource-group "$RESOURCEGROUP_NAME" --allow-blob-public-access false --allow-shared-key-access false --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
     
       ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
         inlineScript: |
