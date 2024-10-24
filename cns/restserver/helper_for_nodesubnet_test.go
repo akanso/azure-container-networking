@@ -28,14 +28,22 @@ func GetRestServiceObjectForNodeSubnetTest(t *testing.T, generator CNIConflistGe
 				IsPrimary:  true,
 				InterfaceSubnets: []nmagent.InterfaceSubnet{
 					{
-						Prefix: "10.240.0.0/16",
+						Prefix: "10.0.0.0/24",
 						IPAddress: []nmagent.NodeIP{
 							{
-								Address:   nmagent.IPAddress(netip.AddrFrom4([4]byte{10, 240, 0, 5})),
+								Address:   nmagent.IPAddress(netip.AddrFrom4([4]byte{10, 0, 0, 4})),
 								IsPrimary: true,
 							},
 							{
-								Address:   nmagent.IPAddress(netip.AddrFrom4([4]byte{10, 240, 0, 6})),
+								Address:   nmagent.IPAddress(netip.AddrFrom4([4]byte{10, 0, 0, 52})),
+								IsPrimary: false,
+							},
+							{
+								Address:   nmagent.IPAddress(netip.AddrFrom4([4]byte{10, 0, 0, 63})),
+								IsPrimary: false,
+							},
+							{
+								Address:   nmagent.IPAddress(netip.AddrFrom4([4]byte{10, 0, 0, 45})),
 								IsPrimary: false,
 							},
 						},
@@ -60,21 +68,18 @@ func GetRestServiceObjectForNodeSubnetTest(t *testing.T, generator CNIConflistGe
 	t.Cleanup(func() { svc.Uninitialize() })
 
 	return &HTTPRestService{
-		Service:              svc,
-		cniConflistGenerator: generator,
-		state:                &httpRestServiceState{},
-		PodIPConfigState:     make(map[string]cns.IPConfigurationStatus),
+		Service:                  svc,
+		cniConflistGenerator:     generator,
+		state:                    &httpRestServiceState{},
+		PodIPConfigState:         make(map[string]cns.IPConfigurationStatus),
+		PodIPIDByPodInterfaceKey: make(map[string][]string),
 		nma: &fakes.NMAgentClientFake{
 			GetInterfaceIPInfoF: func(_ context.Context) (nmagent.Interfaces, error) {
 				return interfaces, nil
 			},
 		},
+		wscli: &fakes.WireserverClientFake{},
 	}
-}
-
-// SetCNIConflistGenerator sets the CNIConflistGenerator for the HTTPRestService.
-func (service *HTTPRestService) SetCNIConflistGenerator(generator CNIConflistGenerator) {
-	service.cniConflistGenerator = generator
 }
 
 // GetNodesubnetIPFetcher gets the nodesubnet.IPFetcher from the HTTPRestService.

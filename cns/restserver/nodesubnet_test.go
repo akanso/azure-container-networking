@@ -2,18 +2,54 @@ package restserver_test
 
 import (
 	"context"
+	"net"
 	"testing"
 
-	"github.com/Azure/azure-container-networking/cns"
+	"github.com/Azure/azure-container-networking/cns/cnireconciler"
 	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/restserver"
+	"github.com/Azure/azure-container-networking/cns/types"
+	"github.com/Azure/azure-container-networking/store"
 )
 
-// Mock implementation of PodInfoByIPProvider
-type MockPodInfoByIPProvider struct{}
+func getMockStore() store.KeyValueStore {
+	mockStore := store.NewMockStore("")
+	endpointState := map[string]*restserver.EndpointInfo{
+		"12e65d89e58cb23c784e97840cf76866bfc9902089bdc8e87e9f64032e312b0b": {
+			PodName:      "coredns-54b69f46b8-ldmwr",
+			PodNamespace: "kube-system",
+			IfnameToIPMap: map[string]*restserver.IPInfo{
+				"eth0": {
+					IPv4: []net.IPNet{
+						{
+							IP:   net.IPv4(10, 0, 0, 52),
+							Mask: net.CIDRMask(24, 32),
+						},
+					},
+				},
+			},
+		},
+		"1fc5176913a3a1a7facfb823dde3b4ded404041134fef4f4a0c8bba140fc0413": {
+			PodName:      "load-test-7f7d49687d-wxc9p",
+			PodNamespace: "load-test",
+			IfnameToIPMap: map[string]*restserver.IPInfo{
+				"eth0": {
+					IPv4: []net.IPNet{
+						{
+							IP:   net.IPv4(10, 0, 0, 63),
+							Mask: net.CIDRMask(24, 32),
+						},
+					},
+				},
+			},
+		},
+	}
 
-func (m *MockPodInfoByIPProvider) PodInfoByIP() (res map[string]cns.PodInfo, err error) {
-	return res, nil
+	err := mockStore.Write(restserver.EndpointStoreKey, endpointState)
+	if err != nil {
+		return nil
+	}
+	return mockStore
 }
 
 // Mock implementation of CNIConflistGenerator
@@ -32,7 +68,10 @@ func (m *MockCNIConflistGenerator) Close() error {
 }
 
 func TestNodeSubnet(t *testing.T) {
-	mockPodInfoProvider := &MockPodInfoByIPProvider{}
+	podInfoByIPProvider, err := cnireconciler.NewCNSPodInfoProvider(getMockStore())
+	if err != nil {
+		t.Fatalf("NewCNSPodInfoProvider returned an error: %v", err)
+	}
 
 	// Create a real HTTPRestService object
 	mockCNIConflistGenerator := &MockCNIConflistGenerator{
@@ -42,15 +81,22 @@ func TestNodeSubnet(t *testing.T) {
 	ctx, cancel := testContext(t)
 	defer cancel()
 
-	err := service.InitializeNodeSubnet(ctx, mockPodInfoProvider)
+	err = service.InitializeNodeSubnet(ctx, podInfoByIPProvider)
+	if err != nil {
+		t.Fatalf("InitializeNodeSubnet returned an error: %v", err)
+	}
+
+	expectedIPs := map[string]types.IPState{
+		"10.0.0.52": types.Assigned,
+		"10.0.0.63": types.Assigned,
+	}
+
+	checkIPassignment(t, service, expectedIPs)
+
 	service.StartNodeSubnet(ctx)
 
 	if service.GetNodesubnetIPFetcher() == nil {
-		t.Error("NodeSubnetIPFetcher is not initialized")
-	}
-
-	if err != nil {
-		t.Fatalf("InitializeNodeSubnet returned an error: %v", err)
+		t.Fatal("NodeSubnetIPFetcher is not initialized")
 	}
 
 	select {
@@ -59,6 +105,23 @@ func TestNodeSubnet(t *testing.T) {
 		return
 	case <-mockCNIConflistGenerator.GenerateCalled:
 		break
+	}
+
+	expectedIPs["10.0.0.45"] = types.Available
+	checkIPassignment(t, service, expectedIPs)
+}
+
+func checkIPassignment(t *testing.T, service *restserver.HTTPRestService, expectedIPs map[string]types.IPState) {
+	if len(service.PodIPConfigState) != len(expectedIPs) {
+		t.Fatalf("expected 2 entries in PodIPConfigState, got %d", len(service.PodIPConfigState))
+	}
+
+	for ip, config := range service.GetPodIPConfigState() {
+		if assignmentState, exists := expectedIPs[ip]; !exists {
+			t.Fatalf("unexpected IP %s in PodIPConfigState", ip)
+		} else if config.GetState() != assignmentState {
+			t.Fatalf("expected state 'Assigned' for IP %s, got %s", ip, config.GetState())
+		}
 	}
 }
 
