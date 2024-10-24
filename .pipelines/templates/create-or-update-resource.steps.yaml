@@ -67,6 +67,8 @@ steps:
         MANAGEDIDENTITY_LOCATION: ${{ parameters.inputs.managedIdentityLocation }}
 
       ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
+        AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_KEY: $(System.AccessToken)
+        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
         SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
         SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
         SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
