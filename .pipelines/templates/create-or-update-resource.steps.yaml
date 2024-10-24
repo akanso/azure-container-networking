@@ -136,6 +136,8 @@ steps:
           set -e
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
+          az config set extension.use_dynamic_install=yes_without_prompt
+          echo $(System.AccessToken) | az devops login
           az devops service-endpoint azurerm create \
             --org "https://dev.azure.com/msazure/" \
             --azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
