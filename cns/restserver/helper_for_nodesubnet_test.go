@@ -83,7 +83,7 @@ func GetRestServiceObjectForNodeSubnetTest(t *testing.T, generator CNIConflistGe
 	}
 }
 
-// GetNodesubnetIPFetcher gets the nodesubnet.IPFetcher from the HTTPRestService.
+// GetNodesubnetIPFetcher gets the nodesubnetIPFetcher from the HTTPRestService.
 func (service *HTTPRestService) GetNodesubnetIPFetcher() *nodesubnet.IPFetcher {
 	return service.nodesubnetIPFetcher
 }
