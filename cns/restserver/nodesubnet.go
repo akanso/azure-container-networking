@@ -56,6 +56,8 @@ func (service *HTTPRestService) InitializeNodeSubnet(ctx context.Context, podInf
 	return nil
 }
 
+// StartNodeSubnet starts the IP fetcher for NodeSubnet. This will cause secondary IPs to be fetched periodically.
+// After the first successful fetch, conflist will be generated to indicate CNS is ready.
 func (service *HTTPRestService) StartNodeSubnet(ctx context.Context) {
 	service.nodesubnetIPFetcher.Start(ctx)
 }

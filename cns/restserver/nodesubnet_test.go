@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/azure-container-networking/store"
 )
 
+// getMockStore creates a mock KeyValueStore with some endpoint state
 func getMockStore() store.KeyValueStore {
 	mockStore := store.NewMockStore("")
 	endpointState := map[string]*restserver.EndpointInfo{
@@ -67,13 +68,15 @@ func (m *MockCNIConflistGenerator) Close() error {
 	return nil
 }
 
+// TestNodeSubnet tests initialization of NodeSubnet with endpoint info, and verfies that
+// the conflist is generated after fetching secondary IPs
 func TestNodeSubnet(t *testing.T) {
 	podInfoByIPProvider, err := cnireconciler.NewCNSPodInfoProvider(getMockStore())
 	if err != nil {
 		t.Fatalf("NewCNSPodInfoProvider returned an error: %v", err)
 	}
 
-	// Create a real HTTPRestService object
+	// create a real HTTPRestService object
 	mockCNIConflistGenerator := &MockCNIConflistGenerator{
 		GenerateCalled: make(chan struct{}),
 	}
@@ -111,6 +114,7 @@ func TestNodeSubnet(t *testing.T) {
 	checkIPassignment(t, service, expectedIPs)
 }
 
+// checkIPassignment checks whether the IP assignment state in the HTTPRestService object matches expectation
 func checkIPassignment(t *testing.T, service *restserver.HTTPRestService, expectedIPs map[string]types.IPState) {
 	if len(service.PodIPConfigState) != len(expectedIPs) {
 		t.Fatalf("expected 2 entries in PodIPConfigState, got %d", len(service.PodIPConfigState))

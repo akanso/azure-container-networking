@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-container-networking/store"
 )
 
+// GetRestServiceObjectForNodeSubnetTest creates a new HTTPRestService object for use in nodesubnet unit tests.
 func GetRestServiceObjectForNodeSubnetTest(t *testing.T, generator CNIConflistGenerator) *HTTPRestService {
 	config := &common.ServiceConfig{
 		Name:        "test",
