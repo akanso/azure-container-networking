@@ -148,7 +148,7 @@ steps:
             --azure-rm-subscription-id "$SUBSCRIPTION_ID" \
             --azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
             --azure-rm-tenant-id "$SERVICECONNECTION_TENANT_ID"\
-            --name "SERVICECONNECTION_NAME" \
+            --name "$SERVICECONNECTION_NAME" \
             --project "One" --debug
 
 
