@@ -141,7 +141,7 @@ steps:
           az config set extension.use_dynamic_install=yes_without_prompt
           #az devops login --identity "$SERVICECONNECTION_PRINCIPALID"
           az config set extension.dynamic_install_allow_preview=true
-          #az devops login
+          az devops login
           az devops service-endpoint azurerm create \
             --org "https://dev.azure.com/msazure/" \
             --azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
