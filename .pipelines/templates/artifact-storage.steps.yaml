@@ -419,6 +419,20 @@ steps:
     STORAGEACCOUNT_ID: $(artifact_storage.ACNCI_STORAGEACCOUNT_ID)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
 
+- template: create-or-update-resource.steps.yaml
+  parameters:
+    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    resourceType: managedidentity
+    refreshAfterCreation: True 
+    createCondition: False
+    updateCondition: succeeded()
+    inputs:
+      managedIdentityName: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)
+      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+
 - task: AzureCLI@2
   displayName: "[Test] Blob Access"
   continueOnError: true
