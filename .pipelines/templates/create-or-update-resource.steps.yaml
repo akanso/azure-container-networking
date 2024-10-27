@@ -85,7 +85,7 @@ steps:
         inlineScript: |
           set -e
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-          az upgrade
+          az upgrade --yes
           az role assignment create --help
     
           az role assignment create \
