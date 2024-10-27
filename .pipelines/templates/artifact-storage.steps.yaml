@@ -148,70 +148,70 @@ steps:
 
 ## MI Service Connection
 
-- template: get-resources.steps.yaml
-  parameters:
-    resourceType: serviceconnection
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    inputs: 
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-#        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
-#        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
-#        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
-#        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
-#        SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
-
-- template: create-or-update-resource.steps.yaml
-  parameters:
-    resourceType: serviceconnection
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    createCondition: |
-      and(succeeded(),
-          or(not(variables.OUT_RESULT_LENGTH),
-             eq(variables.OUT_RESULT_LENGTH, 'null'),
-             lt(variables.OUT_RESULT_LENGTH, 1)))
-    updateCondition: False
-    inputs:
-      serviceConnectionName: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)-serviceconnection
-      serviceConnectionPrincipalId: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
-      subscriptionId: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
-      subscriptionName: $(build.ACNCI_BUILD_SUBSCRIPTION_NAME)
-      tenantId: $(build.ACNCI_BUILD_TENANT_ID)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
-
-- task: AzureCLI@2
-  name: serviceconnection
-  displayName: "[Output] Build User ServiceConnection Details"
-  inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
-    scriptType: bash
-    scriptLocation: inlineScript
-    addSpnToEnvironment: true
-    inlineScript: |
-      set -e
-      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-
-      # Select MI to use
-      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
-      IDX=$(( "$RANDOM_SELECT" % "$SC_LIST_LENGTH" ))
-      SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
-
-      echo "$SC_DATA"
-      exit 1
-      SC_ID=$(echo "$SC_DATA" | jq -r '.id')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
-      SC_PRINCIPALID=$(echo "$SC_DATA" | jq -r '.principalId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_NAME;isoutput=true]$SC_PRINCIPALID"
-      SC_APPID=$(echo "$SC_DATA" | jq -r '.clientId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$SC_APPID"
-      SC_NAME=$(echo "$SC_DATA" | jq -r '.name')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$SC_NAME"
-  env:
-    SC_LIST: $(OUT_RESULT)
-    SC_LIST_LENGTH: $(OUT_RESULT_LENGTH)
+#- template: get-resources.steps.yaml
+#  parameters:
+#    resourceType: serviceconnection
+#    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+#    inputs: 
+#      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+#      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+#      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+##        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
+##        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
+##        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
+##        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
+##        SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
+#
+#- template: create-or-update-resource.steps.yaml
+#  parameters:
+#    resourceType: serviceconnection
+#    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+#    createCondition: |
+#      and(succeeded(),
+#          or(not(variables.OUT_RESULT_LENGTH),
+#             eq(variables.OUT_RESULT_LENGTH, 'null'),
+#             lt(variables.OUT_RESULT_LENGTH, 1)))
+#    updateCondition: False
+#    inputs:
+#      serviceConnectionName: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)-serviceconnection
+#      serviceConnectionPrincipalId: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
+#      subscriptionId: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
+#      subscriptionName: $(build.ACNCI_BUILD_SUBSCRIPTION_NAME)
+#      tenantId: $(build.ACNCI_BUILD_TENANT_ID)
+#      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+#      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+#      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+#
+#- task: AzureCLI@2
+#  name: serviceconnection
+#  displayName: "[Output] Build User ServiceConnection Details"
+#  inputs:
+#    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+#    scriptType: bash
+#    scriptLocation: inlineScript
+#    addSpnToEnvironment: true
+#    inlineScript: |
+#      set -e
+#      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+#
+#      # Select MI to use
+#      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
+#      IDX=$(( "$RANDOM_SELECT" % "$SC_LIST_LENGTH" ))
+#      SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
+#
+#      echo "$SC_DATA"
+#      exit 1
+#      SC_ID=$(echo "$SC_DATA" | jq -r '.id')
+#      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
+#      SC_PRINCIPALID=$(echo "$SC_DATA" | jq -r '.principalId')
+#      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_NAME;isoutput=true]$SC_PRINCIPALID"
+#      SC_APPID=$(echo "$SC_DATA" | jq -r '.clientId')
+#      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$SC_APPID"
+#      SC_NAME=$(echo "$SC_DATA" | jq -r '.name')
+#      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$SC_NAME"
+#  env:
+#    SC_LIST: $(OUT_RESULT)
+#    SC_LIST_LENGTH: $(OUT_RESULT_LENGTH)
 
 #        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
 #        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
@@ -286,7 +286,6 @@ steps:
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
-
 
 # storage accounts
 
@@ -419,3 +418,25 @@ steps:
     MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
     STORAGEACCOUNT_ID: $(artifact_storage.ACNCI_STORAGEACCOUNT_ID)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
+
+- task: AzureCLI@2
+  displayName: "[Test] Blob Access"
+  continueOnError: true
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set +x
+      az login --service-principal --username "$MI_NAME" --tenant "$MI_TENANT"
+      az storage blob download --auth-mode login --container-name "STORAGECONTAINER_NAME" --account-name "$STORAGEACCOUNT_NAME" --name "$STORAGEBLOB_PATH/.created" --file output
+      cat ./output
+  env:
+    RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+    STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
+    STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
+    MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
+    STORAGEBLOB_PATH: $(Build.BuildId)/$(System.JobAttempt)
+    MI_NAME: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)
+    MI_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 

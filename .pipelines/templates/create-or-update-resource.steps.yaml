@@ -141,6 +141,10 @@ steps:
           az config set extension.use_dynamic_install=yes_without_prompt
           #az devops login --identity "$SERVICECONNECTION_PRINCIPALID"
           az config set extension.dynamic_install_allow_preview=true
+          #jq '.requiredResourceAccess = "$STORAGECONTAINER_ID"'
+          #jq '.appId = "$MANAGEDIDENTITY_APPID"'
+          #jq '.tags["$BUILDTAG_APPID"] = "$APPID"'
+          #jq '.tags["$BUILDTAG_DEFINITIONID"] = "$SYSTEM_DEFINITIONID"'
           az devops login
           az devops service-endpoint azurerm create \
             --org "https://dev.azure.com/msazure/" \
@@ -188,7 +192,7 @@ steps:
       scriptType: bash
       scriptLocation: inlineScript
       addSpnToEnvironment: true
-    
+ 
       ${{ if eq(parameters.resourceType, 'roledefinition') }}:
         inlineScript: |
           set -e
