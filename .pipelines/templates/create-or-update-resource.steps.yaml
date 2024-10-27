@@ -178,7 +178,7 @@ steps:
             resourceGroupName: ${{ parameters.inputs.resourceGroupName }}
 
 
-- ${{ if and(parameters.updateCondition, eq(parameters.resourceType, 'roledefinition')) }}:
+- ${{ if and(parameters.updateCondition, or( eq(parameters.resourceType, 'roledefinition'), eq(parameters.resourceType, 'managedidentity') )) }}:
   - task: AzureCLI@2
     displayName: "[Update] ARM Details - (${{ parameters.resourceType }})"
     condition: ${{ parameters.updateCondition }}
@@ -186,6 +186,11 @@ steps:
     env:
       ${{ if eq(parameters.resourceType, 'roledefinition') }}:
         ROLEDEFINITION_JSON: ${{ parameters.inputs.roleDefinitionJson }}
+
+      ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
+        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+        MANAGEDIDENTITY_NAME: ${{ parameters.inputs.managedIdentityName }}
+        MANAGEDIDENTITY_FEDCRED_NAME: ${{ parameters.inputs.managedIdentityName }}-cred
 
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
@@ -199,3 +204,17 @@ steps:
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
           az role definition update --role-definition "$ROLEDEFINITION_JSON"
+
+      ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
+        inlineScript: |
+          set -e
+          [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+          FEDCRED_DETAILS=$(az identity federated-credential create \
+            --name "$MANAGEDIDENTITY_FEDCRED_NAME" \
+            --identity-name "$MANAGEDIDENTITY_NAME" \
+            --resource-group "$RESOURCEGROUP_NAME" \
+            --issuer "https://VisualStudio/SPN" \
+            --subject "user_impersonation" \
+            --audience "api://AzureADMyOrg")
+          echo $FEDCRED_DETAILS
