@@ -409,11 +409,13 @@ steps:
     inlineScript: |
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+      az upgrade
+      az role assignment create --help
 
       az role assignment create \
         --role "Storage Blob Data Contributor" \
-        --assignee "$MANAGEDIDENTITY_OBJECTID" \
-        --assignee-principal-type "ServicePrincipal" \
+        --assignee-object-id "$MANAGEDIDENTITY_OBJECTID" \
+        --assignee-principal-type ServicePrincipal \
         --scope "$STORAGEACCOUNT_ID/blobServices/default/containers/$STORAGECONTAINER_NAME"
   env:
     MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
