@@ -391,6 +391,7 @@ steps:
         --name "$STORAGEBLOB_PATH/.created" \
         --container-name "$STORAGECONTAINER_NAME" \
         --account-name "$STORAGEACCOUNT_NAME" \
+        --overwrite \
         --auth-mode login
   env:
     RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
