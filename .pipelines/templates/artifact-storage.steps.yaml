@@ -86,19 +86,20 @@ steps:
 
 ## MI Service Connection
 
-#- template: get-resources.steps.yaml
-#  parameters:
-#    resourceType: serviceconnection
-#    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-#    inputs: 
-#      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-#      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-#      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-##        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
-##        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
-##        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
-##        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
-##        SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
+- template: get-resources.steps.yaml
+  parameters:
+    resourceType: serviceconnection
+    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    inputs: 
+      serviceConnectionName: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
+      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+#        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
+#        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
+#        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
+#        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
+#        SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
 #
 #- template: create-or-update-resource.steps.yaml
 #  parameters:
@@ -120,110 +121,142 @@ steps:
 #      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
 #      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
 #
-#- task: AzureCLI@2
-#  name: serviceconnection
-#  displayName: "[Output] Build User ServiceConnection Details"
-#  inputs:
-#    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
-#    scriptType: bash
-#    scriptLocation: inlineScript
-#    addSpnToEnvironment: true
-#    inlineScript: |
-#      set -e
-#      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-#
-#      # Select MI to use
-#      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
-#      IDX=$(( "$RANDOM_SELECT" % "$SC_LIST_LENGTH" ))
-#      SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
-#
-#      echo "$SC_DATA"
-#      exit 1
-#      SC_ID=$(echo "$SC_DATA" | jq -r '.id')
-#      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
-#      SC_PRINCIPALID=$(echo "$SC_DATA" | jq -r '.principalId')
-#      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_NAME;isoutput=true]$SC_PRINCIPALID"
-#      SC_APPID=$(echo "$SC_DATA" | jq -r '.clientId')
-#      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$SC_APPID"
-#      SC_NAME=$(echo "$SC_DATA" | jq -r '.name')
-#      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$SC_NAME"
-#  env:
-#    SC_LIST: $(OUT_RESULT)
-#    SC_LIST_LENGTH: $(OUT_RESULT_LENGTH)
+- task: AzureCLI@2
+  name: serviceconnection
+  displayName: "[Output] Build User ServiceConnection Details"
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-#        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
-#        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
-#        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
-#        SERVICECONNECTION_TENANTID: ${{ parameters.inputs.tenantId }}
-#        SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
+      # Select MI to use
+      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
+      IDX=$(( "$RANDOM_SELECT" % "$SC_LIST_LENGTH" ))
+      SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
+
+      SC_ID=$(echo "$SC_DATA" | jq -rc '.id')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
+      SC_NAME=$(echo "$SC_DATA" | jq -rc '.name')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_NAME;isoutput=true]$SC_NAME"
+      SC_APP_OID=$(echo "$SC_DATA" | jq -rc '.data.spnObjectId')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_APP_OID;isoutput=true]$SC_APP_OID"
+      SC_APPID=$(echo "$SC_DATA" | jq -rc '.authorization.parameters.serviceprincipalid')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID;isoutput=true]$SC_APPID"
+  env:
+    SC_LIST: $(OUT_RESULT)
+    SC_LIST_LENGTH: $(OUT_RESULT_LENGTH)
 
 ## MI Role Definition ##
 
+#- template: get-resources.steps.yaml
+  #parameters:
+    #resourceType: roledefinition
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #inputs: 
+      #roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      #roleDefinitionFileLocation: ./azure-container-networking/.pipelines/templates/mi-build-role.json
+      #subscriptionId: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+#
+#- template: create-or-update-resource.steps.yaml
+  #parameters:
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #resourceType: roledefinition
+    #refreshAfterCreation: True 
+    #createCondition: |
+      #and(succeeded(),
+          #or(not(variables.OUT_RESULT_LENGTH),
+             #lt(variables.OUT_RESULT_LENGTH, 1)))
+    #updateCondition: |
+      #and(succeeded(),
+          #gt(variables.OUT_RESULT_LENGTH, 0))
+    #inputs:
+      #roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      #roleDefinitionJson: $(OUT_RESULT)
+      #roleDefinitionFileLocation: ./azure-container-networking/.pipelines/templates/mi-build-role.json
+      #resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      #subscriptionId: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      #buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
+#
+#
+### Provision MI Roles
+#
+#- template: get-resources.steps.yaml
+  #parameters:
+    #resourceType: roleassignments
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #inputs: 
+      #roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      #managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
+      #resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+#
+#- template: create-or-update-resource.steps.yaml
+  #parameters:
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #resourceType: roleassignments
+    #createCondition: |
+      #and(succeeded(),
+          #or(not(variables.OUT_RESULT_LENGTH),
+             #eq(variables.OUT_RESULT, 'null'),
+             #lt(variables.OUT_RESULT_LENGTH, 1)))
+    #updateCondition: False
+    #inputs:
+      #roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
+      #managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
+      #resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
+      #resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      #buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
+
+## Enable Build User Service Connection Access
+
 - template: get-resources.steps.yaml
   parameters:
-    resourceType: roledefinition
+    resourceType: serviceconnection
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     inputs: 
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
-      roleDefinitionFileLocation: ./azure-container-networking/.pipelines/templates/mi-build-role.json
-      subscriptionId: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-
-- template: create-or-update-resource.steps.yaml
-  parameters:
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    resourceType: roledefinition
-    refreshAfterCreation: True 
-    createCondition: |
-      and(succeeded(),
-          or(not(variables.OUT_RESULT_LENGTH),
-             lt(variables.OUT_RESULT_LENGTH, 1)))
-    updateCondition: |
-      and(succeeded(),
-          gt(variables.OUT_RESULT_LENGTH, 0))
-    inputs:
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
-      roleDefinitionJson: $(OUT_RESULT)
-      roleDefinitionFileLocation: ./azure-container-networking/.pipelines/templates/mi-build-role.json
-      resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      subscriptionId: $(build.ACNCI_BUILD_SUBSCRIPTION_ID)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
-
-
-## Provision MI Roles
-
-- template: get-resources.steps.yaml
-  parameters:
-    resourceType: roleassignments
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    inputs: 
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
-      managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
+      serviceConnectionName: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
 
-- template: create-or-update-resource.steps.yaml
-  parameters:
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    resourceType: roleassignments
-    createCondition: |
-      and(succeeded(),
-          or(not(variables.OUT_RESULT_LENGTH),
-             eq(variables.OUT_RESULT, 'null'),
-             lt(variables.OUT_RESULT_LENGTH, 1)))
-    updateCondition: False
-    inputs:
-      roleName: $(ACNCI_BUILDUSER_ROLE_NAME)
-      managedIdentityObjectId: $(build.ACNCI_BUILD_SP_APP_OID)
-      resourceGroupId: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)  
+- task: AzureCLI@2
+  name: serviceconnection
+  displayName: "[Output] Build User ServiceConnection Details"
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+      # Select MI to use
+      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
+      IDX=$(( "$RANDOM_SELECT" % "$SC_LIST_LENGTH" ))
+      SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
+
+      SC_ID=$(echo "$SC_DATA" | jq -rc '.id')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
+      SC_NAME=$(echo "$SC_DATA" | jq -rc '.name')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_NAME;isoutput=true]$SC_NAME"
+      SC_APP_OID=$(echo "$SC_DATA" | jq -rc '.data.spnObjectId')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_APP_OID;isoutput=true]$SC_APP_OID"
+      SC_APPID=$(echo "$SC_DATA" | jq -rc '.authorization.parameters.serviceprincipalid')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID;isoutput=true]$SC_APPID"
+  env:
+    SC_LIST: $(OUT_RESULT)
+    SC_LIST_LENGTH: $(OUT_RESULT_LENGTH)
 
 # storage accounts
 
@@ -255,6 +288,7 @@ steps:
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
       buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)  
+      buildTagBuildUserAppId: $(ACNCI_BUILDTAG_BUILDUSER_APPID)
 
 - task: AzureCLI@2
   name: artifact_storage
@@ -336,68 +370,95 @@ steps:
     RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
+    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
+
 
 ## Managed Identity ##
 
-- template: get-resources.steps.yaml
-  parameters:
-    resourceType: managedidentity
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    inputs: 
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-
-- template: create-or-update-resource.steps.yaml
-  parameters:
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    resourceType: managedidentity
-    refreshAfterCreation: True 
-    createCondition: |
-      and(succeeded(),
-          or(not(variables.OUT_RESULT_LENGTH),
-             eq(variables.OUT_RESULT_LENGTH, 'null'),
-             lt(variables.OUT_RESULT_LENGTH, 1)))
-    updateCondition: False
-    inputs:
-      managedIdentityList: $(OUT_RESULT)
-      managedIdentityCount: $(OUT_RESULT_LENGTH)
-      managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
-      managedIdentityLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+#- template: get-resources.steps.yaml
+  #parameters:
+    #resourceType: managedidentity
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #inputs: 
+      #resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+#
+#- template: create-or-update-resource.steps.yaml
+  #parameters:
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #resourceType: managedidentity
+    #refreshAfterCreation: True 
+    #createCondition: |
+      #and(succeeded(),
+          #or(not(variables.OUT_RESULT_LENGTH),
+             #eq(variables.OUT_RESULT_LENGTH, 'null'),
+             #lt(variables.OUT_RESULT_LENGTH, 1)))
+    #updateCondition: False
+    #inputs:
+      #managedIdentityList: $(OUT_RESULT)
+      #managedIdentityCount: $(OUT_RESULT_LENGTH)
+      #managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
+      #managedIdentityLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
+      #resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      #buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+#
+#- task: AzureCLI@2
+  #name: managedidentity
+  #displayName: "[Output] Build User ManagedIdentity Details"
+  #inputs:
+    #azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    #scriptType: bash
+    #scriptLocation: inlineScript
+    #addSpnToEnvironment: true
+    #inlineScript: |
+      #set -e
+      #[[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+#
+      ## Select MI to use
+      #RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
+      #IDX=$(( "$RANDOM_SELECT" % "$MI_LIST_LENGTH" ))
+      #MI_DATA=$(echo "$MI_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
+#
+      #MI_ID=$(echo "$MI_DATA" | jq -r '.id')
+      #echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_ID;isoutput=true]$MI_ID"
+      #MI_PRINCIPALID=$(echo "$MI_DATA" | jq -r '.principalId')
+      #echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_OBJECTID;isoutput=true]$MI_PRINCIPALID"
+      #MI_APPID=$(echo "$MI_DATA" | jq -r '.clientId')
+      #echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_APPID"
+      #MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
+      #echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
+  #env:
+    #ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+    #MI_LIST: $(OUT_RESULT)
+    #MI_LIST_LENGTH: $(OUT_RESULT_LENGTH)
 
 - task: AzureCLI@2
-  name: managedidentity
-  displayName: "[Output] Build User ManagedIdentity Details"
+  displayName: "[Test] Blob Access Should Fail"
+  continueOnError: true
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
     scriptType: bash
     scriptLocation: inlineScript
     addSpnToEnvironment: true
     inlineScript: |
-      set -e
-      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-
-      # Select MI to use
-      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
-      IDX=$(( "$RANDOM_SELECT" % "$MI_LIST_LENGTH" ))
-      MI_DATA=$(echo "$MI_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
-
-      MI_ID=$(echo "$MI_DATA" | jq -r '.id')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_ID;isoutput=true]$MI_ID"
-      MI_PRINCIPALID=$(echo "$MI_DATA" | jq -r '.principalId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_OBJECTID;isoutput=true]$MI_PRINCIPALID"
-      MI_APPID=$(echo "$MI_DATA" | jq -r '.clientId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_APPID"
-      MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
+      set -x
+      az login --service-principal --username "$SP_ID" --tenant "$SP_TENANT"
+      az storage blob download \
+        --auth-mode login \
+        --container-name "STORAGECONTAINER_NAME" \
+        --account-name "$STORAGEACCOUNT_NAME" \
+        --name "$STORAGEBLOB_PATH/.created" \
+        --file output
+      cat ./output
   env:
-    ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-    MI_LIST: $(OUT_RESULT)
-    MI_LIST_LENGTH: $(OUT_RESULT_LENGTH)
+    STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
+    STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
+    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
+    SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
+    SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
 
 - task: AzureCLI@2
   displayName: "[Provision] Build User Access Permissions"
@@ -411,34 +472,25 @@ steps:
       set -e
       [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
       az upgrade --yes
-      az role assignment create --help
 
+      CONDITION="(@Resource[Microsoft.Storage/storageAccounts/blobServices/containers:Name] stringEquals '$STORAGECONTAINER_NAME') AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:Name] stringStartsWith '$EXPECTED_STORAGEBLOB_PREFIX')"
       az role assignment create \
         --role "Storage Blob Data Contributor" \
-        --assignee-object-id "$MANAGEDIDENTITY_OBJECTID" \
+        --assignee-object-id "$SP_ID" \
         --assignee-principal-type ServicePrincipal \
-        --scope "$STORAGEACCOUNT_ID/blobServices/default/containers/$STORAGECONTAINER_NAME"
+        --scope "$STORAGEACCOUNT_ID/blobServices/default/containers/$STORAGECONTAINER_NAME" \
+        --condition "$CONDITION" \
+        --condition-version '2.0'
   env:
-    MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
     STORAGEACCOUNT_ID: $(artifact_storage.ACNCI_STORAGEACCOUNT_ID)
+    STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
-
-- template: create-or-update-resource.steps.yaml
-  parameters:
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    resourceType: managedidentity
-    refreshAfterCreation: True 
-    createCondition: False
-    updateCondition: succeeded()
-    inputs:
-      managedIdentityName: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+    EXPECTED_STORAGEBLOB_PREFIX: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)
+    SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
+    SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
 
 - task: AzureCLI@2
-  displayName: "[Test] Blob Access"
+  displayName: "[Test] Blob Access Should Succeed"
   continueOnError: true
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
@@ -446,15 +498,54 @@ steps:
     scriptLocation: inlineScript
     addSpnToEnvironment: true
     inlineScript: |
-      set +x
-      az login --service-principal --username "$MI_NAME" --tenant "$MI_TENANT"
-      az storage blob download --auth-mode login --container-name "STORAGECONTAINER_NAME" --account-name "$STORAGEACCOUNT_NAME" --name "$STORAGEBLOB_PATH/.created" --file output
+      set -xe
+      az login --service-principal --username "$SP_ID" --tenant "$SP_TENANT"
+      az storage blob download \
+        --auth-mode login \
+        --account-name "$STORAGEACCOUNT_NAME" \
+        --container-name "STORAGECONTAINER_NAME" \
+        --name "$STORAGEBLOB_PATH/.created" \
+        --file output
       cat ./output
   env:
-    RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
-    MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
-    STORAGEBLOB_PATH: $(Build.BuildId)/$(System.JobAttempt)
-    MI_NAME: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)
-    MI_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
+    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
+    SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
+    SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
+
+#- template: create-or-update-resource.steps.yaml
+  #parameters:
+    #serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    #resourceType: managedidentity
+    #refreshAfterCreation: True 
+    #createCondition: False
+    #updateCondition: succeeded()
+    #inputs:
+      #managedIdentityName: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)
+      #resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      #buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      #buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      #buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+#
+#- task: AzureCLI@2
+  #displayName: "[Test] Blob Access"
+  #continueOnError: true
+  #inputs:
+    #azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    #scriptType: bash
+    #scriptLocation: inlineScript
+    #addSpnToEnvironment: true
+    #inlineScript: |
+      #set +x
+      #az login --service-principal --username "$MI_NAME" --tenant "$MI_TENANT"
+      #az storage blob download --auth-mode login --container-name "STORAGECONTAINER_NAME" --account-name "$STORAGEACCOUNT_NAME" --name "$STORAGEBLOB_PATH/.created" --file output
+      #cat ./output
+  #env:
+    #RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+    #STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
+    #STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
+    #MANAGEDIDENTITY_OBJECTID: $(managedidentity.ACNCI_MANAGEDIDENTITY_OBJECTID)
+    #STORAGEBLOB_PATH: $(Build.BuildId)/$(System.JobAttempt)
+    #MI_NAME: $(managedidentity.ACNCI_MANAGEDIDENTITY_NAME)
+    #MI_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 

@@ -57,7 +57,6 @@ steps:
 
     ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
       # Allows use of az devops commands
-      AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_KEY: $(System.AccessToken)
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
       SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
 
@@ -101,7 +100,6 @@ steps:
         MI_ROLE_DATA=$(az role assignment list \
           --role "$ROLE_NAME" \
           --assignee "$MANAGEDIDENTITY_NAME" \
-          --resource-group "$RESOURCEGROUP_NAME" \
           --scope "$MI_SCOPE" \
           --output json | jq -rc '.')
         echo $MI_ROLE_DATA
@@ -191,11 +189,14 @@ steps:
         R_QUERY="[? name == '$SERVICECONNECTION_NAME' ]"
         # JSON of Returned Results
         R_LIST=$(az devops service-endpoint list \
+          --org "https://dev.azure.com/msazure/" \
+          --project One \
           --query "$R_QUERY" \
           -ojson | \
-        jq -rc '.')
+          jq -rc '.')
         DEF=$(echo "$R_LIST" | jq -rc .[0])
         DEFS_FOUND=$(echo "$R_LIST" | jq length)
+        echo "$DEF" | jq '.'
           
         # Export the available storage account list..
         #  uses custom variable naming if specified.

@@ -140,22 +140,24 @@ steps:
           set -e
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-          az config set extension.use_dynamic_install=yes_without_prompt
-          #az devops login --identity "$SERVICECONNECTION_PRINCIPALID"
-          az config set extension.dynamic_install_allow_preview=true
-          #jq '.requiredResourceAccess = "$STORAGECONTAINER_ID"'
-          #jq '.appId = "$MANAGEDIDENTITY_APPID"'
-          #jq '.tags["$BUILDTAG_APPID"] = "$APPID"'
-          #jq '.tags["$BUILDTAG_DEFINITIONID"] = "$SYSTEM_DEFINITIONID"'
-          az devops login
-          az devops service-endpoint azurerm create \
-            --org "https://dev.azure.com/msazure/" \
-            --azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
-            --azure-rm-subscription-id "$SUBSCRIPTION_ID" \
-            --azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
-            --azure-rm-tenant-id "$SERVICECONNECTION_TENANT_ID"\
-            --name "$SERVICECONNECTION_NAME" \
-            --project "One" --debug
+          ## Requires manual creation
+
+          #az config set extension.use_dynamic_install=yes_without_prompt
+          ##az devops login --identity "$SERVICECONNECTION_PRINCIPALID"
+          #az config set extension.dynamic_install_allow_preview=true
+          ##jq '.requiredResourceAccess = "$STORAGECONTAINER_ID"'
+          ##jq '.appId = "$MANAGEDIDENTITY_APPID"'
+          ##jq '.tags["$BUILDTAG_APPID"] = "$APPID"'
+          ##jq '.tags["$BUILDTAG_DEFINITIONID"] = "$SYSTEM_DEFINITIONID"'
+          #az devops login
+          #az devops service-endpoint azurerm create \
+            #--org "https://dev.azure.com/msazure/" \
+            #--azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
+            #--azure-rm-subscription-id "$SUBSCRIPTION_ID" \
+            #--azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
+            #--azure-rm-tenant-id "$SERVICECONNECTION_TENANT_ID"\
+            #--name "$SERVICECONNECTION_NAME" \
+            #--project "One" --debug
 
 
 
@@ -235,11 +237,14 @@ steps:
           set -e
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
+          CONDITION="(@Resource[Microsoft.Storage/storageAccounts/blobServices/containers:Name] stringEquals '$STORAGECONTAINER_NAME' AND (!(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) OR @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags:'$BUILDTAG_BUILDUSER_APPID'<\$key_case_sensitive\$>] StringEquals '$MANAGEDIDENTITY_APPID'))"
           az role assignment update \
             --role "$ROLE_NAME" \
             --assignee "$MANAGEDIDENTITY_NAME" \
-            --resource-group "$RESOURCEGROUP_NAME" \
-            --scope "$MI_SCOPE"
+            --scope "$RESOURCEGROUP_ID" \
+            --description "Enable access to build user blobs." \
+            --condition "$CONDITION" \
+            --condition-version "2.0"
 
           #FEDCRED_DETAILS=$(az identity federated-credential create \
             #--name "$MANAGEDIDENTITY_FEDCRED_NAME" \
