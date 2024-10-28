@@ -1,4 +1,4 @@
-kind: CiliumClusterWideNetworkPolicy
+kind: CiliumClusterwideNetworkPolicy
 apiVersion: cilium.io/v2
 metadata:
   name: TEMP_NAME
