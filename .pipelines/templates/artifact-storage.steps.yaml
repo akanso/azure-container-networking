@@ -84,68 +84,6 @@ steps:
     INFRA_RG_LENGTH: $(OUT_RESULT_LENGTH)
     
 
-## Managed Identity ##
-
-- template: get-resources.steps.yaml
-  parameters:
-    resourceType: managedidentity
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    inputs: 
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-
-- template: create-or-update-resource.steps.yaml
-  parameters:
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    resourceType: managedidentity
-    refreshAfterCreation: True 
-    createCondition: |
-      and(succeeded(),
-          or(not(variables.OUT_RESULT_LENGTH),
-             eq(variables.OUT_RESULT_LENGTH, 'null'),
-             lt(variables.OUT_RESULT_LENGTH, 1)))
-    updateCondition: False
-    inputs:
-      managedIdentityList: $(OUT_RESULT)
-      managedIdentityCount: $(OUT_RESULT_LENGTH)
-      managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
-      managedIdentityLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
-      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
-
-- task: AzureCLI@2
-  name: managedidentity
-  displayName: "[Output] Build User ManagedIdentity Details"
-  inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
-    scriptType: bash
-    scriptLocation: inlineScript
-    addSpnToEnvironment: true
-    inlineScript: |
-      set -e
-      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-
-      # Select MI to use
-      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
-      IDX=$(( "$RANDOM_SELECT" % "$MI_LIST_LENGTH" ))
-      MI_DATA=$(echo "$MI_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
-
-      MI_ID=$(echo "$MI_DATA" | jq -r '.id')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_ID;isoutput=true]$MI_ID"
-      MI_PRINCIPALID=$(echo "$MI_DATA" | jq -r '.principalId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_OBJECTID;isoutput=true]$MI_PRINCIPALID"
-      MI_APPID=$(echo "$MI_DATA" | jq -r '.clientId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_APPID"
-      MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
-  env:
-    ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-    MI_LIST: $(OUT_RESULT)
-    MI_LIST_LENGTH: $(OUT_RESULT_LENGTH)
-
 ## MI Service Connection
 
 #- template: get-resources.steps.yaml
@@ -358,6 +296,7 @@ steps:
         # - Local Use Only -
         # SA Object
         echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT]$SA_DATA"
+        echo $SA_DATA
       else
         echo >&2 "##[error]No storage accounts available for use."
         exit 1
@@ -397,6 +336,68 @@ steps:
     RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
+
+## Managed Identity ##
+
+- template: get-resources.steps.yaml
+  parameters:
+    resourceType: managedidentity
+    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    inputs: 
+      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+
+- template: create-or-update-resource.steps.yaml
+  parameters:
+    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    resourceType: managedidentity
+    refreshAfterCreation: True 
+    createCondition: |
+      and(succeeded(),
+          or(not(variables.OUT_RESULT_LENGTH),
+             eq(variables.OUT_RESULT_LENGTH, 'null'),
+             lt(variables.OUT_RESULT_LENGTH, 1)))
+    updateCondition: False
+    inputs:
+      managedIdentityList: $(OUT_RESULT)
+      managedIdentityCount: $(OUT_RESULT_LENGTH)
+      managedIdentityName: '$(ACNCI_MANAGEDIDENTITY_PREFIX)$(LOCAL_ACNCI_UNIQUE_ID)-$(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)'
+      managedIdentityLocation: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_LOCATION)
+      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
+      buildTagCreatedByBuildIdKey: $(ACNCI_BUILDTAG_CREATEDBYBUILDID)
+
+- task: AzureCLI@2
+  name: managedidentity
+  displayName: "[Output] Build User ManagedIdentity Details"
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    addSpnToEnvironment: true
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+      # Select MI to use
+      RANDOM_SELECT=`tr -dc '1-9' < /dev/urandom | head -c${1:-7}`
+      IDX=$(( "$RANDOM_SELECT" % "$MI_LIST_LENGTH" ))
+      MI_DATA=$(echo "$MI_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
+
+      MI_ID=$(echo "$MI_DATA" | jq -r '.id')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_ID;isoutput=true]$MI_ID"
+      MI_PRINCIPALID=$(echo "$MI_DATA" | jq -r '.principalId')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_OBJECTID;isoutput=true]$MI_PRINCIPALID"
+      MI_APPID=$(echo "$MI_DATA" | jq -r '.clientId')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_APPID;isoutput=true]$MI_APPID"
+      MI_NAME=$(echo "$MI_DATA" | jq -r '.name')
+      echo >&2 "##vso[task.setvariable variable=ACNCI_MANAGEDIDENTITY_NAME;isoutput=true]$MI_NAME"
+  env:
+    ACNCI_BUILD_RESOURCEGROUP: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
+    MI_LIST: $(OUT_RESULT)
+    MI_LIST_LENGTH: $(OUT_RESULT_LENGTH)
 
 - task: AzureCLI@2
   displayName: "[Provision] Build User Access Permissions"

@@ -90,9 +90,9 @@ steps:
     
           az role assignment create \
             --role "$ROLE_NAME" \
-            --assignee-object-id "$MANAGEDIDENTITY_OBJECTID" \
-            --assignee-principal-type ServicePrincipal \
-            --scope "$RESOURCEGROUP_ID"
+            --assignee "$MANAGEDIDENTITY_NAME" \
+            --resource-group "$RESOURCEGROUP_NAME" \
+            --scope "$MI_SCOPE"
 
       ${{ elseif eq(parameters.resourceType, 'resourcegroups') }}:
         inlineScript: |
@@ -200,6 +200,8 @@ steps:
         MANAGEDIDENTITY_NAME: ${{ parameters.inputs.managedIdentityName }}
         MANAGEDIDENTITY_FEDCRED_NAME: ${{ parameters.inputs.managedIdentityName }}-cred
 
+      
+
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       scriptType: bash
@@ -212,6 +214,11 @@ steps:
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
           az role definition update --role-definition "$ROLEDEFINITION_JSON"
+
+      ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
+        inlineScript: |
+          set -e
+          [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
       ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
         inlineScript: |
@@ -228,11 +235,17 @@ steps:
           set -e
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-          FEDCRED_DETAILS=$(az identity federated-credential create \
-            --name "$MANAGEDIDENTITY_FEDCRED_NAME" \
-            --identity-name "$MANAGEDIDENTITY_NAME" \
+          az role assignment update \
+            --role "$ROLE_NAME" \
+            --assignee "$MANAGEDIDENTITY_NAME" \
             --resource-group "$RESOURCEGROUP_NAME" \
-            --issuer "https://VisualStudio/SPN" \
-            --subject "user_impersonation" \
-            --audience "api://AzureADMyOrg")
-          echo $FEDCRED_DETAILS
+            --scope "$MI_SCOPE"
+
+          #FEDCRED_DETAILS=$(az identity federated-credential create \
+            #--name "$MANAGEDIDENTITY_FEDCRED_NAME" \
+            #--identity-name "$MANAGEDIDENTITY_NAME" \
+            #--resource-group "$RESOURCEGROUP_NAME" \
+            #--issuer "https://VisualStudio/SPN" \
+            #--subject "user_impersonation" \
+            #--audience "api://AzureADMyOrg")
+          #echo $FEDCRED_DETAILS

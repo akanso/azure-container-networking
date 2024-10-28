@@ -35,7 +35,11 @@ steps:
       ROLEDEFINITION_FILEPATH: ${{ parameters.inputs.roleDefinitionFileLocation }}
 
     ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
-      MANAGEDIDENTITY_OBJECTID: ${{ parameters.inputs.managedIdentityObjectId }}
+      #MANAGEDIDENTITY_OBJECTID: ${{ parameters.inputs.managedIdentityObjectId }}
+      #RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+      #ROLE_NAME: ${{ parameters.inputs.roleName }}
+      MANAGEDIDENTITY_NAME: ${{ parameters.inputs.managedIdentityObjectId }}
+      MANAGEDIDENTITY_SCOPE: ${{ parameters.inputs.scope }}
       RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
       ROLE_NAME: ${{ parameters.inputs.roleName }}
 
@@ -94,12 +98,19 @@ steps:
         set -e
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
-        R_QUERY="[? principalId == '$MANAGEDIDENTITY_OBJECTID' ]"
         MI_ROLE_DATA=$(az role assignment list \
           --role "$ROLE_NAME" \
+          --assignee "$MANAGEDIDENTITY_NAME" \
           --resource-group "$RESOURCEGROUP_NAME" \
-          --query "$R_QUERY" \
+          --scope "$MI_SCOPE" \
           --output json | jq -rc '.')
+        echo $MI_ROLE_DATA
+        #R_QUERY="[? name == '$MANAGEDIDENTITY_OBJECTID' ]"
+        #MI_ROLE_DATA=$(az role assignment list \
+        #  --role "$ROLE_NAME" \
+        #  --resource-group "$RESOURCEGROUP_NAME" \
+        #  --query "$R_QUERY" \
+        #  --output json | jq -rc '.')
         MI_ROLE_DATA_LENGTH=$(echo "$MI_ROLE_DATA" | jq length)
   
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$MI_ROLE_DATA"
