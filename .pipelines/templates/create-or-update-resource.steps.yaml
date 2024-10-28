@@ -180,7 +180,7 @@ steps:
             resourceGroupName: ${{ parameters.inputs.resourceGroupName }}
 
 
-- ${{ if and(parameters.updateCondition, or( eq(parameters.resourceType, 'roledefinition'), eq(parameters.resourceType, 'managedidentity') )) }}:
+- ${{ if and(parameters.updateCondition, or( eq(parameters.resourceType, 'roledefinition'), eq(parameters.resourceType, 'storageaccounts') )) }}:
   - task: AzureCLI@2
     displayName: "[Update] ARM Details - (${{ parameters.resourceType }})"
     condition: ${{ parameters.updateCondition }}
