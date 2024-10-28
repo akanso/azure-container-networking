@@ -186,8 +186,14 @@ steps:
     condition: ${{ parameters.updateCondition }}
 
     env:
+      BUILDTAG_DEFINITIONID: ${{ parameters.inputs.buildTagDefinitionIdKey }}
+      BUILDTAG_CREATEDBYAPPID: ${{ parameters.inputs.buildTagCreatedByAppIdKey }}
       ${{ if eq(parameters.resourceType, 'roledefinition') }}:
         ROLEDEFINITION_JSON: ${{ parameters.inputs.roleDefinitionJson }}
+
+      ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
+        RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+        STORAGEACCOUNT_NAME: ${{ parameters.inputs.storageAccountName }}
 
       ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
         RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
@@ -206,6 +212,16 @@ steps:
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
           az role definition update --role-definition "$ROLEDEFINITION_JSON"
+
+      ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
+        inlineScript: |
+          set -e
+          [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+          az storage account update \
+            --name "$STORAGEACCOUNT_NAME" \
+            --resource-group "$RESOURCEGROUP_NAME" \
+            --assign-identity
 
       ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
         inlineScript: |

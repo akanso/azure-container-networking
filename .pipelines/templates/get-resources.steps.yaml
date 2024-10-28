@@ -45,6 +45,8 @@ steps:
 
     ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
       RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
+      ${{ if parameters.inputs.storageAccountName }}:
+        STORAGEACCOUNT_NAME: ${{ parameters.inputs.storageAccountName }}
 
     ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
       RESOURCEGROUP_NAME: ${{ parameters.inputs.resourceGroupName }}
@@ -128,9 +130,6 @@ steps:
         # Query for Test Storage Accounts
         R_QUERY="[? tags.\""$BUILDTAG_DEFINITIONID"\" && tags.\""$BUILDTAG_CREATEDBYAPPID"\"]"
         # JSON of Returned Results
-        az storage account list \
-          --resource-group "$RESOURCEGROUP_NAME" \
-          --query "$R_QUERY" 
         R_LIST=$(az storage account list \
           --resource-group "$RESOURCEGROUP_NAME" \
           --query "$R_QUERY" | \
@@ -140,6 +139,10 @@ steps:
             --arg BUILDTAG_DEFINITIONID "$BUILDTAG_DEFINITIONID" \
             --arg DEFINITIONID "$SYSTEM_DEFINITIONID" \
           '[ .[] | select(.tags[$BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
+
+        if [[ -n "$STORAGEACCOUNT_NAME" ]]; then
+          R_LIST=$(echo "$R_LIST" | | jq -rc --arg STORAGEACCOUNT_NAME "$STORAGEACCOUNT_NAME" '[.[] | select(.name == $STORAGEACCOUNT_NAME)]')
+        fi
         # Length of resource list
         R_LIST_LENGTH=$(echo "$R_LIST" | jq length)
   
