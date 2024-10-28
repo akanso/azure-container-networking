@@ -124,7 +124,7 @@ steps:
 
     ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
       inlineScript: |
-        set -eu
+        set -e
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
         # Query for Test Storage Accounts
