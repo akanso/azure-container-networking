@@ -187,6 +187,13 @@ steps:
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
         R_QUERY="[? name == '$SERVICECONNECTION_NAME' ]"
+        echo $R_QUERY
+
+        az devops service-endpoint list \
+          --org "https://dev.azure.com/msazure/" \
+          --project One \
+          --query "$R_QUERY" \
+          -ojson
         # JSON of Returned Results
         R_LIST=$(az devops service-endpoint list \
           --org "https://dev.azure.com/msazure/" \
@@ -194,11 +201,10 @@ steps:
           --query "$R_QUERY" \
           -ojson | \
           jq -rc '.')
-        DEF=$(echo "$R_LIST" | jq -rc .[0])
         DEFS_FOUND=$(echo "$R_LIST" | jq length)
-        echo "$DEF" | jq '.'
+        echo "$R_LIST" | jq '.'
           
         # Export the available storage account list..
         #  uses custom variable naming if specified.
-        echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$DEF"
+        echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$R_LIST"
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$DEFS_FOUND"
