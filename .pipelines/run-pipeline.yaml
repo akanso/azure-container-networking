@@ -55,7 +55,6 @@ stages:
       - job: resources
         displayName: "[Infra] Configure Artifact Resources"
         variables:
-          ACNCI_BUILDUSER_SERVICECONNECTION_NAME: acnci-builduser-9b8218f9-902a-4d20-a65c-e98acec5362f-serviceconnection
           ACNCI_BUILDUSER_ROLE_NAME: "ACN CI/CD Build Environment Owner"
           ACNCI_MANAGEDIDENTITY_PREFIX: acnci-builds-
           ACNCI_RG_PREFIX: acnci-builds-
@@ -75,6 +74,26 @@ stages:
         steps:
         - checkout: ACNTools
           clean: true
+
+        - task: AzureCLI@2
+          displayName: "[Test] Service Connection"
+          inputs:
+            azureSubscription: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
+            scriptType: bash
+            scriptLocation: inlineScript
+            addSpnToEnvironment: true
+            inlineScript: |
+              echo "OK."
+
+        - task: AzureCLI@2
+          displayName: "[Test] Service Connection"
+          inputs:
+            azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+            scriptType: bash
+            scriptLocation: inlineScript
+            addSpnToEnvironment: true
+            inlineScript: |
+              echo "OK."
   
         - template: templates/artifact-storage.steps.yaml@ACNTools
 
