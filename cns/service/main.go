@@ -872,24 +872,30 @@ func main() {
 		}
 	}
 
+	// AzureHost channelmode indicates Nodesubnet. IPs are to be fetched from NMagent.
 	if config.ChannelMode == cns.AzureHost {
 		if !cnsconfig.ManageEndpointState {
-			logger.Errorf("[Azure CNS] ManageEndpointState must be set to true for AzureHost mode")
+			logger.Errorf("ManageEndpointState must be set to true for AzureHost mode")
 			return
-		} else {
-			// If cns manageendpointstate is true, then cns maintains its own state and reconciles from it.
-			// in this case, cns maintains state with containerid as key and so in-memory cache can lookup
-			// and update based on container id.
-			cns.GlobalPodInfoScheme = cns.InfraIDPodInfoScheme
 		}
 
-		podInfoByIPProvider, err := getPodInfoByIPProvider(rootCtx, cnsconfig, httpRemoteRestService, nil, "")
+		// If cns manageendpointstate is true, then cns maintains its own state and reconciles from it.
+		// in this case, cns maintains state with containerid as key and so in-memory cache can lookup
+		// and update based on container id.
+		cns.GlobalPodInfoScheme = cns.InfraIDPodInfoScheme
+
+		var podInfoByIPProvider cns.PodInfoByIPProvider
+		podInfoByIPProvider, err = getPodInfoByIPProvider(rootCtx, cnsconfig, httpRemoteRestService, nil, "")
 		if err != nil {
 			logger.Errorf("[Azure CNS] Failed to get PodInfoByIPProvider: %v", err)
 			return
 		}
 
-		httpRemoteRestService.InitializeNodeSubnet(rootCtx, podInfoByIPProvider)
+		err = httpRemoteRestService.InitializeNodeSubnet(rootCtx, podInfoByIPProvider)
+		if err != nil {
+			logger.Errorf("[Azure CNS] Failed to initialize node subnet: %v", err)
+			return
+		}
 	}
 
 	// Initialize multi-tenant controller if the CNS is running in MultiTenantCRD mode.
@@ -1042,6 +1048,8 @@ func main() {
 	}
 
 	if config.ChannelMode == cns.AzureHost {
+		// at this point, rest service is running, and any pending async deletes have been submitted to the rest
+		// service. We can now start serving new requests.
 		httpRemoteRestService.StartNodeSubnet(rootCtx)
 	}
 
@@ -1502,7 +1510,14 @@ func InitializeCRDState(ctx context.Context, httpRestService cns.HTTPService, cn
 	return nil
 }
 
-func getPodInfoByIPProvider(ctx context.Context, cnsconfig *configuration.CNSConfig, httpRestServiceImplementation *restserver.HTTPRestService, clientset *kubernetes.Clientset, nodeName string) (podInfoByIPProvider cns.PodInfoByIPProvider, err error) {
+// getPodInfoByIPProvider returns a PodInfoByIPProvider that reads endpoint state from the configured source
+func getPodInfoByIPProvider(
+	ctx context.Context,
+	cnsconfig *configuration.CNSConfig,
+	httpRestServiceImplementation *restserver.HTTPRestService,
+	clientset *kubernetes.Clientset,
+	nodeName string,
+) (podInfoByIPProvider cns.PodInfoByIPProvider, err error) {
 	switch {
 	case cnsconfig.ManageEndpointState:
 		logger.Printf("Initializing from self managed endpoint store")
