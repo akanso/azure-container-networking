@@ -186,21 +186,18 @@ steps:
         set -eu
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
-        R_QUERY="[? name == '$SERVICECONNECTION_NAME' ]"
-        echo $R_QUERY
-
-        az devops service-endpoint list \
+        az devops service-endpoint show \
+          --id "$SERVICECONNECTION_ID" \
           --org "https://dev.azure.com/msazure/" \
           --project One \
-          --query "$R_QUERY" \
-          -ojson
+          -ojson --debug
         # JSON of Returned Results
-        R_LIST=$(az devops service-endpoint list \
+        R_LIST=$(az devops service-endpoint show \
+          --id "$SERVICECONNECTION_ID" \
           --org "https://dev.azure.com/msazure/" \
           --project One \
-          --query "$R_QUERY" \
           -ojson | \
-          jq -rc '.')
+          jq -rc '[.]')
         DEFS_FOUND=$(echo "$R_LIST" | jq length)
         echo "$R_LIST" | jq '.'
           

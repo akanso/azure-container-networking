@@ -86,15 +86,6 @@ steps:
 
 ## MI Service Connection
 
-- template: get-resources.steps.yaml
-  parameters:
-    resourceType: serviceconnection
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
-    inputs: 
-      serviceConnectionName: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
-      resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
-      buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
-      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
 #        SERVICECONNECTION_PRINCIPALID: ${{ parameters.inputs.serviceConnectionPrincipalId }}
 #        SUBSCRIPTION_ID: ${{ parameters.inputs.subscriptionId }}
 #        SUBSCRIPTION_NAME: ${{ parameters.inputs.subscriptionName }}
@@ -200,6 +191,7 @@ steps:
       serviceConnectionName: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
+      buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)
 
 - task: AzureCLI@2
   name: serviceconnection
