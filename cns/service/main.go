@@ -896,6 +896,8 @@ func main() {
 			logger.Errorf("[Azure CNS] Failed to initialize node subnet: %v", err)
 			return
 		}
+
+		httpRemoteRestService.StartNodeSubnet(rootCtx)
 	}
 
 	// Initialize multi-tenant controller if the CNS is running in MultiTenantCRD mode.
@@ -1045,12 +1047,6 @@ func main() {
 				httpRemoteRestService.SyncNodeStatus(ep, vnet, node, json.RawMessage{})
 			}
 		}(privateEndpoint, infravnet, nodeID)
-	}
-
-	if config.ChannelMode == cns.AzureHost {
-		// at this point, rest service is running, and any pending async deletes have been submitted to the rest
-		// service. We can now start serving new requests.
-		httpRemoteRestService.StartNodeSubnet(rootCtx)
 	}
 
 	// mark the service as "ready"
