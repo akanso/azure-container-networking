@@ -57,7 +57,6 @@ steps:
         pwd
         kubectl cluster-info
         kubectl get po -owide -A
-        CILIUM_VERSION_TAG=${CILIUM_NODE_SUBNET_VERSION}
         echo "install Cilium ${CILIUM_VERSION_TAG}"
         export DIR=$(echo ${CILIUM_VERSION_TAG#v} | cut -d. -f1,2)
         echo "installing files from ${DIR}"
