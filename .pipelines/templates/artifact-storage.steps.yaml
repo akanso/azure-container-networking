@@ -334,7 +334,7 @@ steps:
     RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
-    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
+    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
 
 
 ## Managed Identity ##
@@ -418,10 +418,11 @@ steps:
         --file output
       cat ./output
   env:
+    AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
-    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
-    SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
+    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
+    SP_ID: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)
     SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
 
 - task: AzureCLI@2
@@ -449,8 +450,8 @@ steps:
     STORAGEACCOUNT_ID: $(artifact_storage.ACNCI_STORAGEACCOUNT_ID)
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
-    EXPECTED_STORAGEBLOB_PREFIX: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)
-    SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
+    EXPECTED_STORAGEBLOB_PREFIX: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)
+    SP_ID: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)
     SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
 
 - task: AzureCLI@2
@@ -474,7 +475,7 @@ steps:
   env:
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
-    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
+    STORAGEBLOB_PATH: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
     SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
     SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
 
