@@ -1046,6 +1046,8 @@ func main() {
 	}
 
 	if config.ChannelMode == cns.AzureHost {
+		// at this point, rest service is running, and any pending async deletes have been submitted to the rest
+		// service. We can now start serving new requests.
 		httpRemoteRestService.StartNodeSubnet(rootCtx)
 	}
 

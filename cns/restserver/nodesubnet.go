@@ -29,8 +29,9 @@ func (service *HTTPRestService) UpdateIPsForNodeSubnet(secondaryIPs []netip.Addr
 
 	logger.Debugf("IP change processed successfully")
 
-	// saved NC successfully, generate conflist to indicate CNS is ready
-	go service.MustGenerateCNIConflistOnce()
+	// saved NC successfully. UpdateIPsForNodeSubnet is called only when IPs are fetched from NMAgent.
+	// We now have IPs to serve IPAM requests. Generate conflist to indicate CNS is ready
+	service.MustGenerateCNIConflistOnce()
 	return nil
 }
 
