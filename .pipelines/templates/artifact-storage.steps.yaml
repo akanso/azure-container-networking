@@ -186,7 +186,7 @@ steps:
 - template: get-resources.steps.yaml
   parameters:
     resourceType: serviceconnection
-    serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
+    serviceConnection: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
     inputs: 
       serviceConnectionId: $(ACNCI_BUILDUSER_SERVICECONNECTION_ID)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
@@ -197,7 +197,7 @@ steps:
   name: serviceconnection
   displayName: "[Output] Build User ServiceConnection Details"
   inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    azureSubscription: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
     scriptType: bash
     scriptLocation: inlineScript
     addSpnToEnvironment: true
@@ -403,13 +403,12 @@ steps:
   displayName: "[Test] Blob Access Should Fail"
   continueOnError: true
   inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    azureSubscription: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
     scriptType: bash
     scriptLocation: inlineScript
     addSpnToEnvironment: true
     inlineScript: |
       set -x
-      az login --service-principal --username "$SP_ID" --tenant "$SP_TENANT"
       az storage blob download \
         --auth-mode login \
         --container-name "$STORAGECONTAINER_NAME" \
@@ -458,13 +457,12 @@ steps:
   displayName: "[Test] Blob Access Should Succeed"
   continueOnError: true
   inputs:
-    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    azureSubscription: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
     scriptType: bash
     scriptLocation: inlineScript
     addSpnToEnvironment: true
     inlineScript: |
       set -xe
-      az login --service-principal --username "$SP_ID" --tenant "$SP_TENANT"
       az storage blob download \
         --auth-mode login \
         --account-name "$STORAGEACCOUNT_NAME" \
