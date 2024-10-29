@@ -188,7 +188,7 @@ steps:
     resourceType: serviceconnection
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     inputs: 
-      serviceConnectionName: $(ACNCI_BUILDUSER_SERVICECONNECTION_NAME)
+      serviceConnectionId: $(ACNCI_BUILDUSER_SERVICECONNECTION_ID)
       resourceGroupName: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
       buildTagDefinitionIdKey: $(ACNCI_BUILDTAG_DEFINITIONID)
       buildTagCreatedByAppIdKey: $(ACNCI_BUILDTAG_CREATEDBYAPPID)

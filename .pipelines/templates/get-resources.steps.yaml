@@ -58,7 +58,7 @@ steps:
     ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
       # Allows use of az devops commands
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
-      SERVICECONNECTION_NAME: ${{ parameters.inputs.serviceConnectionName }}
+      SERVICECONNECTION_ID: ${{ parameters.inputs.serviceConnectionId }}
 
   inputs:
     azureSubscription: ${{ parameters.serviceConnection }}
