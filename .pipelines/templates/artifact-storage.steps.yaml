@@ -412,7 +412,7 @@ steps:
       az login --service-principal --username "$SP_ID" --tenant "$SP_TENANT"
       az storage blob download \
         --auth-mode login \
-        --container-name "STORAGECONTAINER_NAME" \
+        --container-name "$STORAGECONTAINER_NAME" \
         --account-name "$STORAGEACCOUNT_NAME" \
         --name "$STORAGEBLOB_PATH/.created" \
         --file output
@@ -468,7 +468,7 @@ steps:
       az storage blob download \
         --auth-mode login \
         --account-name "$STORAGEACCOUNT_NAME" \
-        --container-name "STORAGECONTAINER_NAME" \
+        --container-name "$STORAGECONTAINER_NAME" \
         --name "$STORAGEBLOB_PATH/.created" \
         --file output
       cat ./output
@@ -504,7 +504,7 @@ steps:
     #inlineScript: |
       #set +x
       #az login --service-principal --username "$MI_NAME" --tenant "$MI_TENANT"
-      #az storage blob download --auth-mode login --container-name "STORAGECONTAINER_NAME" --account-name "$STORAGEACCOUNT_NAME" --name "$STORAGEBLOB_PATH/.created" --file output
+      #az storage blob download --auth-mode login --container-name "$STORAGECONTAINER_NAME" --account-name "$STORAGEACCOUNT_NAME" --name "$STORAGEBLOB_PATH/.created" --file output
       #cat ./output
   #env:
     #RESOURCEGROUP_NAME: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP)
