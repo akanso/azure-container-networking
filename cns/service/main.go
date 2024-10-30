@@ -1046,8 +1046,9 @@ func main() {
 	}
 
 	if config.ChannelMode == cns.AzureHost {
-		// at this point, rest service is running, and any pending async deletes have been submitted to the rest
-		// service. We can now start serving new requests.
+		// at this point, rest service is running. We can now start serving new requests. So call StartNodeSubnet, which
+		// will fetch secondary IPs and generate conflist. Do not move this all before rest service start - this will cause
+		// CNI to start sending requests, and if the service doesn't start successfully, the requests will fail.
 		httpRemoteRestService.StartNodeSubnet(rootCtx)
 	}
 
