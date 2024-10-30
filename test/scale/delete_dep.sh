@@ -17,3 +17,9 @@ for CiliumNetworkPolicy_name in $CiliumNetworkPolicies; do
     kubectl delete -n scale-test ciliumnetworkpolicy $CiliumNetworkPolicy_name
     sleep 2s
 done
+
+CiliumClusterwideNetworkPolicies=$(kubectl -n scale-test get ciliumclusterwidenetworkpolicies -o jsonpath='{.items[*].metadata.name}')
+for CiliumClusterwideNetworkPolicy_name in $CiliumClusterwideNetworkPolicies; do
+    kubectl delete -n scale-test ciliumclusterwidenetworkpolicy $CiliumClusterwideNetworkPolicy_name
+    sleep 2s
+done
