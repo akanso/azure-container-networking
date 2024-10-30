@@ -211,9 +211,9 @@ steps:
       SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
 
       SC_ID=$(echo "$SC_DATA" | jq -rc '.id')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_ID;isoutput=true]$SC_ID"
       SC_NAME=$(echo "$SC_DATA" | jq -rc '.name')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_SERVICECONNECTION_NAME;isoutput=true]$SC_NAME"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_NAME;isoutput=true]$SC_NAME"
       SC_APP_OID=$(echo "$SC_DATA" | jq -rc '.data.spnObjectId')
       echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_APP_OID;isoutput=true]$SC_APP_OID"
       SC_APPID=$(echo "$SC_DATA" | jq -rc '.authorization.parameters.serviceprincipalid')
@@ -474,7 +474,7 @@ steps:
     STORAGEACCOUNT_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_NAME)
     STORAGECONTAINER_NAME: $(artifact_storage.ACNCI_STORAGEACCOUNT_CONTAINER_NAME)
     STORAGEBLOB_PATH: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)/$(Build.BuildId)/$(System.JobAttempt)
-    SP_ID: $(serviceconnection.ACNCI_SERVICECONNECTION_CLIENTID)
+    SP_ID: $(serviceconnection.ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID)
     SP_TENANT: $(build.ACNCI_BUILD_TENANT_ID) 
 
 #- template: create-or-update-resource.steps.yaml
