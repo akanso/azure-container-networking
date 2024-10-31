@@ -307,6 +307,27 @@ steps:
     STORAGECONTAINER_NAME: "azure-container-networking-pr"
     STORAGEBLOB_PATH: $(Build.BuildId)/$(System.JobAttempt)
 
+
+- task: AzureCLI@2
+  name: build_storage
+  displayName: "[Provision] Give Test Permissions to Primary"
+  inputs:
+    azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      set -e
+      [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
+
+      az role assignment create \
+        --role "Storage Blob Data Contributor" \
+        --assignee-object-id "$servicePrincipalId" \
+        --assignee-principal-type "ServicePrincipal" \
+        --scope "$RESOURCEGROUP_ID"
+  env:
+    RESOURCEGROUP_ID: $(resourcegroups.ACNCI_BUILD_RESOURCEGROUP_ID)
+
+
 - task: AzureCLI@2
   name: build_storage
   displayName: "[Provision] Establish Build Storage"
