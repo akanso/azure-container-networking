@@ -63,7 +63,7 @@ stages:
         parameters:
           depend: ${{ parameters.name }}_linux
           clusterName: ${{ parameters.clusterName }}-$(commitID)
-          vmSize: "Standard_D2_v3"
+          vmSize: "Standard_D4s_v6"
       - job: ${{ parameters.name }}_windows
         displayName: DualStack Overlay Test Suite | Windows - (${{ parameters.name }})
         timeoutInMinutes: 120
