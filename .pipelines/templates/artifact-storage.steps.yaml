@@ -210,19 +210,14 @@ steps:
       IDX=$(( "$RANDOM_SELECT" % "$SC_LIST_LENGTH" ))
       SC_DATA=$(echo "$SC_LIST" | jq --argjson IDX "$IDX" -rc '.[$IDX]')
 
-      echo "az ad app show --id $servicePrincipalId"
-      az ad app show --id $servicePrincipalId
-      echo "az ad sp show --id $servicePrincipalId"
-      az ad sp show --id $servicePrincipalId
-      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_ID;isoutput=true]$servicePrincipalId"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_ID;isoutput=true]$ACNCI_BUILDUSER_SERVICECONNECTION_ID"
       echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_KEY;isoutput=true;issecret=true]$servicePrincipalKey"
       echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_TENANTID;isoutput=true;issecret=true]$tenantId"
       SC_NAME=$(echo "$SC_DATA" | jq -rc '.name')
       echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_NAME;isoutput=true]$SC_NAME"
-      SC_APP_OID=$(echo "$SC_DATA" | jq -rc '.data.spnObjectId')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_APP_OID;isoutput=true]$SC_APP_OID"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_APP_OID;isoutput=true]$ACNCI_BUILDUSER_SERVICECONNECTION_APP_OID"
       SC_APPID=$(echo "$SC_DATA" | jq -rc '.authorization.parameters.serviceprincipalid')
-      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID;isoutput=true]$SC_APPID"
+      echo >&2 "##vso[task.setvariable variable=ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID;isoutput=true]$ACNCI_BUILDUSER_SERVICECONNECTION_CLIENTID"
   env:
     SC_LIST: $(OUT_RESULT)
     SC_LIST_LENGTH: $(OUT_RESULT_LENGTH)
