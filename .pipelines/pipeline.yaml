@@ -309,15 +309,16 @@ stages:
         dependsOn: "containerize"
 
     # Azure Overlay E2E Stateless CNI tests
-    - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
-      parameters:
-        name: "azure_overlay_stateless_e2e"
-        displayName: Azure Stateless CNI Overlay
-        os: windows
-        clusterType: overlay-byocni-up
-        clusterName: "statelesswin"
-        vmSize: Standard_D4s_v6
-        dependsOn: "containerize"
+    # AKS windows does not support hypervisor gen 2 images (needed for OVL2)
+    # - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
+    #   parameters:
+    #     name: "azure_overlay_stateless_e2e"
+    #     displayName: Azure Stateless CNI Overlay
+    #     os: windows
+    #     clusterType: overlay-byocni-up
+    #     clusterName: "statelesswin"
+    #     vmSize: Standard_D4s_v6
+    #     dependsOn: "containerize"
 
     # AKS Swift E2E tests
     - template: singletenancy/aks-swift/e2e-job-template.yaml
@@ -402,7 +403,7 @@ stages:
       dependsOn:
         - setup
         - azure_overlay_e2e
-        - azure_overlay_stateless_e2e
+        # - azure_overlay_stateless_e2e
         - aks_swift_e2e
         - cilium_e2e
         - cilium_overlay_e2e
@@ -438,10 +439,10 @@ stages:
                 name: azure_overlay_e2e
                 clusterName: "azovere2e"
                 region: $(REGION_AKS_CLUSTER_TEST)
-              azure_overlay_stateless_e2e:
-                name: azure_overlay_stateless_e2e
-                clusterName: "statelesswin"
-                region: $(REGION_AKS_CLUSTER_TEST)
+              # azure_overlay_stateless_e2e:
+              #   name: azure_overlay_stateless_e2e
+              #   clusterName: "statelesswin"
+              #   region: $(REGION_AKS_CLUSTER_TEST)
               aks_swift_e2e:
                 name: aks_swift_e2e
                 clusterName: "swifte2e"
