@@ -23,7 +23,11 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		podIPInfo.Routes = append(podIPInfo.Routes, route)
 
 		// add routes for infraNIC
-		podIPInfo.Routes = append(podIPInfo.Routes, k.SetInfraRoutes())
+		routes, err := k.SetInfraRoutes()
+		if err != nil {
+			return errors.Wrap("failed to set infra routes")
+		}
+		podIPInfo.Routes = append(podIPInfo.Routes, routes)
 		podIPInfo.SkipDefaultRoutes = true
 	}
 	return nil

@@ -6,6 +6,7 @@ import (
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/crd/multitenancy/api/v1alpha1"
+	"github.com/pkg/errors"
 )
 
 // setRoutes sets the routes for podIPInfo used in SWIFT V2 scenario.
@@ -26,7 +27,11 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		routes = append(routes, virtualGWRoute, route)
 
 	case cns.InfraNIC:
-		routes = k.SetInfraRoutes()
+		infraRoutes, err := k.SetInfraRoutes()
+		if err != nil {
+			return errors.Wrap("failed to set infra routes")
+		}
+		routes = append(routes, infraRoutes)
 		podIPInfo.SkipDefaultRoutes = true
 
 	case cns.NodeNetworkInterfaceBackendNIC: //nolint:exhaustive // ignore exhaustive types check
