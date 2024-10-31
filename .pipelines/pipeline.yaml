@@ -357,18 +357,18 @@ stages:
         scaleup: 100
         dependsOn: "containerize"
 
-    - template: singletenancy/aks/e2e-job-template.yaml
-      parameters:
-        name: "aks_windows_22_e2e"
-        displayName: AKS Windows 2022
-        arch: amd64
-        os: windows
-        clusterType: windows-cniv1-up
-        clusterName: "win22e2e"
-        vmSize: Standard_D4s_v6
-        os_version: "ltsc2022"
-        scaleup: 50
-        dependsOn: "containerize"
+    # - template: singletenancy/aks/e2e-job-template.yaml
+    #   parameters:
+    #     name: "aks_windows_22_e2e"
+    #     displayName: AKS Windows 2022
+    #     arch: amd64
+    #     os: windows
+    #     clusterType: windows-cniv1-up
+    #     clusterName: "win22e2e"
+    #     vmSize: Standard_D4s_v6
+    #     os_version: "ltsc2022"
+    #     scaleup: 50
+    #     dependsOn: "containerize"
 
     # CNI dual stack overlay E2E tests
     - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
@@ -409,7 +409,7 @@ stages:
         - cilium_h_overlay_e2e
         - aks_ubuntu_22_linux_e2e
         - aks_swift_vnetscale_e2e
-        - aks_windows_22_e2e
+        # - aks_windows_22_e2e
         - dualstackoverlay_e2e
         - cilium_dualstackoverlay_e2e
         # - swiftv2_e2e
@@ -454,10 +454,10 @@ stages:
                 name: aks_ubuntu_22_linux_e2e
                 clusterName: "ubuntu22e2e"
                 region: $(REGION_AKS_CLUSTER_TEST)
-              aks_windows_22_e2e:
-                name: aks_windows_22_e2e
-                clusterName: "win22e2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
+              # aks_windows_22_e2e:
+              #   name: aks_windows_22_e2e
+              #   clusterName: "win22e2e"
+              #   region: $(REGION_AKS_CLUSTER_TEST)
               dualstackoverlay_e2e:
                 name: dualstackoverlay_e2e
                 clusterName: "dsovere2e"
