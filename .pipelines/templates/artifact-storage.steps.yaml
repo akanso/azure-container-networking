@@ -279,7 +279,7 @@ steps:
         SA_NAME=$(echo "$SA_DATA" | jq -r '.name')
         echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_NAME;isoutput=true]$SA_NAME"
         # Storage Account Subscription
-        SA_SUBSCRIPTION=$(echo "$SA_DATA" | jq -r '.subscription')
+        SA_SUBSCRIPTION=$(echo "$SA_DATA" | jq -r '.subscriptionId')
         echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_SUBSCRIPTION;isoutput=true]$SA_SUBSCRIPTION"
         # Service Connection
         echo >&2 "##vso[task.setvariable variable=ACNCI_STORAGEACCOUNT_SERVICECONNECTION;isoutput=true]$SA_SERVICE_CONN"
@@ -312,6 +312,7 @@ steps:
   displayName: "[Provision] Give Test Permissions to Primary"
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
+    addSpnToEnvironment: true
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
