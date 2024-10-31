@@ -46,7 +46,7 @@ steps:
     createCondition: |
       and(succeeded(),
           or(not(variables.OUT_RESULT_LENGTH),
-             lt(variables.OUT_RESULT_LENGTH, variables.ACNCI_POOL_SIZE)))
+             lt(variables.OUT_RESULT_LENGTH, variables.ACNCI_RG_POOL_SIZE)))
     updateCondition: False
     inputs:
       resourceGroupList: $(OUT_RESULT)
