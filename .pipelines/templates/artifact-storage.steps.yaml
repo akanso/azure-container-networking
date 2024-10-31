@@ -43,6 +43,7 @@ steps:
   parameters:
     serviceConnection: $(ACN_TEST_SERVICE_CONNECTION)
     resourceType: resourcegroups
+    refreshAfterCreation: True 
     createCondition: |
       and(succeeded(),
           or(not(variables.OUT_RESULT_LENGTH),
