@@ -309,7 +309,6 @@ steps:
 
 
 - task: AzureCLI@2
-  name: build_storage
   displayName: "[Provision] Give Test Permissions to Primary"
   inputs:
     azureSubscription: $(ACN_TEST_SERVICE_CONNECTION)
