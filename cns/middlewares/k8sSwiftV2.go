@@ -247,3 +247,14 @@ func (k *K8sSWIFTv2Middleware) getIPConfig(ctx context.Context, podInfo cns.PodI
 func (k *K8sSWIFTv2Middleware) Type() cns.SWIFTV2Mode {
 	return cns.K8sSWIFTV2
 }
+
+func (k *K8sSWIFTv2Middleware) AddRoutes(cidrs []string, gatewayIP string) []cns.Route {
+	routes := make([]cns.Route, len(cidrs))
+	for i, cidr := range cidrs {
+		routes[i] = cns.Route{
+			IPAddress:        cidr,
+			GatewayIPAddress: gatewayIP,
+		}
+	}
+	return routes
+}

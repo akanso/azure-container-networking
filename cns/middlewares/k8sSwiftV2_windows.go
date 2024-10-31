@@ -61,13 +61,13 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		}
 
 		if ip.Is4() {
-			podIPInfo.Routes = append(podIPInfo.Routes, addRoutes(podCIDRsV4, overlayGatewayv4)...)
-			podIPInfo.Routes = append(podIPInfo.Routes, addRoutes(serviceCIDRsV4, overlayGatewayv4)...)
-			podIPInfo.Routes = append(podIPInfo.Routes, addRoutes(infraVNETCIDRsv4, overlayGatewayv4)...)
+			podIPInfo.Routes = append(podIPInfo.Routes, k.AddRoutes(podCIDRsV4, overlayGatewayv4)...)
+			podIPInfo.Routes = append(podIPInfo.Routes, k.AddRoutes(serviceCIDRsV4, overlayGatewayv4)...)
+			podIPInfo.Routes = append(podIPInfo.Routes, k.AddRoutes(infraVNETCIDRsv4, overlayGatewayv4)...)
 		} else {
-			podIPInfo.Routes = append(podIPInfo.Routes, addRoutes(podCIDRv6, overlayGatewayV6)...)
-			podIPInfo.Routes = append(podIPInfo.Routes, addRoutes(serviceCIDRsV6, overlayGatewayV6)...)
-			podIPInfo.Routes = append(podIPInfo.Routes, addRoutes(infraVNETCIDRsv6, overlayGatewayV6)...)
+			podIPInfo.Routes = append(podIPInfo.Routes, k.AddRoutes(podCIDRv6, overlayGatewayV6)...)
+			podIPInfo.Routes = append(podIPInfo.Routes, k.AddRoutes(serviceCIDRsV6, overlayGatewayV6)...)
+			podIPInfo.Routes = append(podIPInfo.Routes, k.AddRoutes(infraVNETCIDRsv6, overlayGatewayV6)...)
 		}
 
 		podIPInfo.SkipDefaultRoutes = true

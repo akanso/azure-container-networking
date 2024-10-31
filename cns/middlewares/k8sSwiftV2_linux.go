@@ -66,13 +66,13 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		}
 
 		if ip.Is4() {
-			routes = append(routes, addRoutes(podCIDRsV4, overlayGatewayv4)...)
-			routes = append(routes, addRoutes(serviceCIDRsV4, overlayGatewayv4)...)
-			routes = append(routes, addRoutes(infraVNETCIDRsv4, overlayGatewayv4)...)
+			routes = append(routes, k.AddRoutes(podCIDRsV4, overlayGatewayv4)...)
+			routes = append(routes, k.AddRoutes(serviceCIDRsV4, overlayGatewayv4)...)
+			routes = append(routes, k.AddRoutes(infraVNETCIDRsv4, overlayGatewayv4)...)
 		} else {
-			routes = append(routes, addRoutes(podCIDRv6, overlayGatewayV6)...)
-			routes = append(routes, addRoutes(serviceCIDRsV6, overlayGatewayV6)...)
-			routes = append(routes, addRoutes(infraVNETCIDRsv6, overlayGatewayV6)...)
+			routes = append(routes, k.AddRoutes(podCIDRv6, overlayGatewayV6)...)
+			routes = append(routes, k.AddRoutes(serviceCIDRsV6, overlayGatewayV6)...)
+			routes = append(routes, k.AddRoutes(infraVNETCIDRsv6, overlayGatewayV6)...)
 		}
 		podIPInfo.SkipDefaultRoutes = true
 
@@ -84,17 +84,6 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 
 	podIPInfo.Routes = routes
 	return nil
-}
-
-func addRoutes(cidrs []string, gatewayIP string) []cns.Route {
-	routes := make([]cns.Route, len(cidrs))
-	for i, cidr := range cidrs {
-		routes[i] = cns.Route{
-			IPAddress:        cidr,
-			GatewayIPAddress: gatewayIP,
-		}
-	}
-	return routes
 }
 
 // assignSubnetPrefixLengthFields is a no-op for linux swiftv2 as the default prefix-length is sufficient
