@@ -27,11 +27,11 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		routes = append(routes, virtualGWRoute, route)
 
 	case cns.InfraNIC:
-		infraRoutes, err := k.SetInfraRoutes()
+		infraRoutes, err := k.SetInfraRoutes(podIPInfo)
 		if err != nil {
 			return errors.Wrap(err, "failed to set routes for infraNIC interface")
 		}
-		routes = append(routes, infraRoutes)
+		routes = infraRoutes
 		podIPInfo.SkipDefaultRoutes = true
 
 	case cns.NodeNetworkInterfaceBackendNIC: //nolint:exhaustive // ignore exhaustive types check

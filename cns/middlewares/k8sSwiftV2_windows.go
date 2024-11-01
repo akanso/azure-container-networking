@@ -1,8 +1,9 @@
 package middlewares
 
 import (
+	"fmt"
+
 	"github.com/Azure/azure-container-networking/cns"
-	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/middlewares/utils"
 	"github.com/Azure/azure-container-networking/crd/multitenancy/api/v1alpha1"
 	"github.com/pkg/errors"
@@ -12,8 +13,6 @@ import (
 // default route is set for secondary interface NIC(i.e,delegatedNIC)
 func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 	if podIPInfo.NICType == cns.InfraNIC {
-		logger.Printf("[SWIFTv2Middleware] skip setting default route on InfraNIC interface")
-
 		// as a workaround, set a default route with gw 0.0.0.0 to avoid HNS setting default route to infraNIC interface
 		// TODO: remove this once HNS supports custom routes adding to the pod
 		route := cns.Route{
@@ -23,11 +22,12 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		podIPInfo.Routes = append(podIPInfo.Routes, route)
 
 		// add routes for infraNIC
-		routes, err := k.SetInfraRoutes()
+		routes, err := k.SetInfraRoutes(podIPInfo)
+		fmt.Printf("routes are %v", routes)
 		if err != nil {
 			return errors.Wrap(err, "failed to set routes for infraNIC interface")
 		}
-		podIPInfo.Routes = append(podIPInfo.Routes, routes)
+		podIPInfo.Routes = routes
 		podIPInfo.SkipDefaultRoutes = true
 	}
 	return nil

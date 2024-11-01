@@ -1,10 +1,12 @@
 package middlewares
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cns"
+	"github.com/Azure/azure-container-networking/cns/configuration"
 	"github.com/Azure/azure-container-networking/cns/middlewares/mock"
 	"github.com/Azure/azure-container-networking/crd/multitenancy/api/v1alpha1"
 	"gotest.tools/v3/assert"
@@ -12,6 +14,9 @@ import (
 
 func TestSetRoutesSuccess(t *testing.T) {
 	middleware := K8sSWIFTv2Middleware{Cli: mock.NewClient()}
+	t.Setenv(configuration.EnvPodCIDRs, "10.0.1.10/24,16A0:0010:AB00:001E::2/32")
+	t.Setenv(configuration.EnvServiceCIDRs, "10.0.0.0/16,16A0:0010:AB00:0000::/32")
+	t.Setenv(configuration.EnvInfraVNETCIDRs, "10.240.0.1/16,16A0:0020:AB00:0000::/32")
 
 	podIPInfo := []cns.PodIpInfo{
 		{
@@ -32,6 +37,7 @@ func TestSetRoutesSuccess(t *testing.T) {
 	}
 	for i := range podIPInfo {
 		ipInfo := &podIPInfo[i]
+		fmt.Printf("ipInfo is %v", ipInfo)
 		err := middleware.setRoutes(ipInfo)
 		assert.Equal(t, err, nil)
 		if ipInfo.NICType == cns.InfraNIC {

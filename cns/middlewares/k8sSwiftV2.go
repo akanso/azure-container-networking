@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/configuration"
@@ -259,7 +260,7 @@ func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string, gatewayIP string) []cns
 	return routes
 }
 
-func (k *K8sSWIFTv2Middleware) SetInfraRoutes() ([]cns.Route, error) {
+func (k *K8sSWIFTv2Middleware) SetInfraRoutes(podIPInfo *cns.PodIpInfo) ([]cns.Route, error) {
 	var routes []cns.Route
 
 	// Get and parse infraVNETCIDRs from env
