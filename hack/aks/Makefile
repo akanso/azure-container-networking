@@ -19,7 +19,7 @@ OS_SKU_WIN      ?= Windows2022
 REGION          ?= westus2
 VM_SIZE	        ?= Standard_B2s
 VM_SIZE_WIN     ?= Standard_B2s
-IP_TAG          ?= FirstPartyUsage=/TestTagging-O365
+IP_TAG          ?= FirstPartyUsage=/DelegatedNetworkControllerTest
 IP_PREFIX       ?= serviceTaggedIp
 PUBLIC_IP       ?= $(IP_PREFIX)-$(CLUSTER)
 
