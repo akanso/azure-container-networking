@@ -127,9 +127,7 @@ overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
 		--os-sku $(OS_SKU) \
-		--yes \
-		--enable-secure-boot \
-		--enable-vtpm
+		--yes
 ifeq ($(OS),windows)
 	@$(MAKE) windows-nodepool-up
 endif
@@ -355,9 +353,7 @@ windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
 		--windows-admin-username $(WINDOWS_USERNAME) \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
-		--yes \     
-		--enable-secure-boot \
-		--enable-vtpm
+		--yes
 	@$(MAKE) windows-nodepool-up
 	@$(MAKE) set-kubeconf
 
@@ -451,9 +447,7 @@ windows-nodepool-up: ## Add windows node pool
 		--os-sku $(OS_SKU_WIN) \
 		--max-pods 250 \
 		--subscription $(SUB) \
-		--aks-custom-headers UseWindowsGen2VM=true \
-		--enable-vtpm \
-		--enable-secure-boot
+		--aks-custom-headers UseWindowsGen2VM=true
 
 windows-swift-nodepool-up: ## Add windows node pool
 	$(AZCLI) aks nodepool add -g $(GROUP) -n npwin \
