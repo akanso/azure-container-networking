@@ -378,10 +378,9 @@ func TestSetRoutesFailure(t *testing.T) {
 }
 
 func TestAddRoutes(t *testing.T) {
-	middleware := K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	cidrs := []string{"10.0.0.0/24", "20.0.0.0/24"}
 	gatewayIP := "192.168.1.1"
-	routes := middleware.addRoutes(cidrs, gatewayIP)
+	routes := addRoutes(cidrs, gatewayIP)
 	expectedRoutes := []cns.Route{
 		{
 			IPAddress:        "10.0.0.0/24",
