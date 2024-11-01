@@ -1,8 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
-
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/middlewares/utils"
 	"github.com/Azure/azure-container-networking/crd/multitenancy/api/v1alpha1"
@@ -23,7 +21,6 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 
 		// add routes for infraNIC
 		routes, err := k.SetInfraRoutes(podIPInfo)
-		fmt.Printf("routes are %v", routes)
 		if err != nil {
 			return errors.Wrap(err, "failed to set routes for infraNIC interface")
 		}

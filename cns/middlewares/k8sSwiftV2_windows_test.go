@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -37,13 +36,33 @@ func TestSetRoutesSuccess(t *testing.T) {
 	}
 	for i := range podIPInfo {
 		ipInfo := &podIPInfo[i]
-		fmt.Printf("ipInfo is %v", ipInfo)
 		err := middleware.setRoutes(ipInfo)
 		assert.Equal(t, err, nil)
 		if ipInfo.NICType == cns.InfraNIC {
 			assert.Equal(t, ipInfo.SkipDefaultRoutes, true)
 		} else {
 			assert.Equal(t, ipInfo.SkipDefaultRoutes, false)
+		}
+	}
+}
+
+func TestSetRoutesFailure(t *testing.T) {
+	// Failure due to env var not set
+	middleware := K8sSWIFTv2Middleware{Cli: mock.NewClient()}
+	podIPInfo := []cns.PodIpInfo{
+		{
+			PodIPConfig: cns.IPSubnet{
+				IPAddress:    "10.0.1.10",
+				PrefixLength: 32,
+			},
+			NICType: cns.InfraNIC,
+		},
+	}
+	for i := range podIPInfo {
+		ipInfo := &podIPInfo[i]
+		err := middleware.setRoutes(ipInfo)
+		if err == nil {
+			t.Errorf("SetRoutes should fail due to env var not set")
 		}
 	}
 }
