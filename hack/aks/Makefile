@@ -90,7 +90,7 @@ overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.10.0.0/16 -o none
 
 create-tagged-ip:
-	$(AZCLI) network public-ip create --name $(TAGGED_IP_PREFIX)-$(CLUSTER) --resource-group $(GROUP) --allocation-method static --ip-tags FirstPartyUsage=/TestTagging-O365 --version IPV4 --sku Standard --location $(REGION) --tier regional
+	$(AZCLI) network public-ip create --name $(TAGGED_IP_PREFIX)-$(CLUSTER) --resource-group $(GROUP) --allocation-method static --ip-tags FirstPartyUsage=/DelegatedNetworkControllerTest --version IPV4 --sku Standard --location $(REGION) --tier regional
 
 ##@ AKS Clusters
 
