@@ -1049,6 +1049,13 @@ func main() {
 		}(privateEndpoint, infravnet, nodeID)
 	}
 
+	if config.ChannelMode == cns.AzureHost {
+		// at this point, rest service is running. We can now start serving new requests. So call StartNodeSubnet, which
+		// will fetch secondary IPs and generate conflist. Do not move this all before rest service start - this will cause
+		// CNI to start sending requests, and if the service doesn't start successfully, the requests will fail.
+		httpRemoteRestService.StartNodeSubnet(rootCtx)
+	}
+
 	// mark the service as "ready"
 	close(readyCh)
 	// block until process exiting

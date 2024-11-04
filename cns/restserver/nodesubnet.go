@@ -50,7 +50,7 @@ func (service *HTTPRestService) InitializeNodeSubnet(ctx context.Context, podInf
 		return errors.Wrap(err, "reconcile initial CNS state")
 	}
 	// statefile (if any) is reconciled. Initialize the IP fetcher. Start the IP fetcher only after the service is started,
-	// and any pending async delete operations are completed.
+	// because starting the IP fetcher will generate conflist, which should be done only once we are ready to respond to IPAM requests.
 	service.nodesubnetIPFetcher = nodesubnet.NewIPFetcher(service.nma, service, 0, 0, logger.Log)
 
 	return nil
