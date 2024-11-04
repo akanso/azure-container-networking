@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-npm
+  namespace: kube-system
+  labels:
+    app: azure-npm
+    addonmanager.kubernetes.io/mode: EnsureExists
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: azure-npm
+  template:
+    metadata:
+      labels:
+        k8s-app: azure-npm
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+        azure.npm/scrapeable: ""
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: "Exists"
+          effect: NoExecute
+        - operator: "Exists"
+          effect: NoSchedule
+        - key: CriticalAddonsOnly
+          operator: Exists
+      containers:
+        - name: azure-npm
+          image: acnpublic.azurecr.io/azure-npm:11-14-2024-test-nft-commands-only
+          resources:
+            limits:
+              cpu: 250m
+              memory: 400Mi
+            requests:
+              cpu: 50m
+              memory: 300Mi
+          securityContext:
+            privileged: false
+            capabilities:
+              add:
+              - NET_ADMIN
+            readOnlyRootFilesystem: true
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: NPM_CONFIG
+              value: /etc/azure-npm/azure-npm.json
+          volumeMounts:
+            - name: log
+              mountPath: /var/log
+            - name: xtables-lock
+              mountPath: /run/xtables.lock
+            - name: protocols
+              mountPath: /etc/protocols
+            - name: azure-npm-config
+              mountPath: /etc/azure-npm
+            - name: tmp
+              mountPath: /tmp
+      hostNetwork: true
+      hostUsers: false
+      nodeSelector:
+        kubernetes.io/os: linux
+        azure-npm-debug: "true"
+      volumes:
+        - name: log
+          hostPath:
+            path: /var/log
+            type: Directory
+        - name: xtables-lock
+          hostPath:
+            path: /run/xtables.lock
+            type: File
+        - name: protocols
+          hostPath:
+            path: /etc/protocols
+            type: File
+        - name: azure-npm-config
+          configMap:
+            name: azure-npm-config
+        - name: tmp
+          emptyDir: {}
+      serviceAccountName: azure-npm

@@ -4,10 +4,13 @@ package util
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
+	"os"
+	"time"
 
 	"github.com/Azure/azure-container-networking/common"
+
+	"k8s.io/klog"
+	utilexec "k8s.io/utils/exec"
 )
 
 // kubernetes related constants.
@@ -273,61 +276,42 @@ const (
 )
 
 func DetectIptablesVersion(ioShim *common.IOShim) {
-	cmd := ioShim.Exec.Command(IptablesSaveNft, "-t", "mangle")
+	listChainArgs := []string{"-w", "60", "-t", "mangle", "-n", "-L"}
+	hintArgs := make([]string, 0, len(listChainArgs)+1)
+	hintArgs = append(hintArgs, listChainArgs...)
+	hintArgs = append(hintArgs, "KUBE-IPTABLES-HINT")
+	canaryArgs := make([]string, 0, len(listChainArgs)+1)
+	canaryArgs = append(canaryArgs, listChainArgs...)
+	canaryArgs = append(canaryArgs, "KUBE-KUBELET-CANARY")
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Printf("Error running iptables-nft-save: %s", err)
+	cmdHint := ioShim.Exec.Command(IptablesNft, hintArgs...)
+	cmdCanary := ioShim.Exec.Command(IptablesNft, canaryArgs...)
+
+	hintOutput, hintErr := cmdHint.CombinedOutput()
+	canaryOutput, canaryErr := cmdCanary.CombinedOutput()
+	if hintErr != nil && canaryErr != nil {
+		klog.Infof("DEBUGME: iptables-nft hint failed. hintErr: %s. canaryErr: %s", hintErr.Error(), canaryErr.Error())
 		return
 	}
 
-	if strings.Contains(string(output), "KUBE-IPTABLES-HINT") || strings.Contains(string(output), "KUBE-KUBELET-CANARY") {
-		Iptables = IptablesNft
-		IptablesSave = IptablesSaveNft
-		IptablesRestore = IptablesRestoreNft
-	} else {
-		lCmd := ioShim.Exec.Command(IptablesSaveLegacy, "-t", "mangle")
-
-		loutput, err := lCmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Error running iptables-legacy-save: %s", err)
-			return
-		}
-
-		if strings.Contains(string(loutput), "KUBE-IPTABLES-HINT") || strings.Contains(string(loutput), "KUBE-KUBELET-CANARY") {
-			Iptables = IptablesLegacy
-			IptablesSave = IptablesSaveLegacy
-			IptablesRestore = IptablesRestoreLegacy
-		} else {
-			lsavecmd := ioShim.Exec.Command(IptablesSaveNft)
-			lsaveoutput, err := lsavecmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("Error running iptables-nft-save: %s", err)
-				return
-			}
-
-			lcount := countLines(lsaveoutput)
-
-			savecmd := ioShim.Exec.Command(IptablesSaveLegacy)
-			saveoutput, err := savecmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("Error running iptables-legacy-save: %s", err)
-				return
-			}
-
-			count := countLines(saveoutput)
-
-			if lcount > count {
-				Iptables = IptablesLegacy
-				IptablesSave = IptablesSaveLegacy
-				IptablesRestore = IptablesRestoreLegacy
-			} else {
-				Iptables = IptablesNft
-				IptablesSave = IptablesSaveNft
-				IptablesRestore = IptablesRestoreNft
-			}
-		}
+	if hintErr != nil {
+		klog.Infof("DEBUGME: iptables-nft hint failed: %v", hintErr)
+	} else if canaryErr != nil {
+		klog.Infof("DEBUGME: iptables-nft canary failed: %v", canaryErr)
 	}
+
+	klog.Info("DEBUGME: found matches")
+
+	klog.Info("DEBUGME: line count (hint): %d", len(bytes.Split(hintOutput, []byte("\n"))))
+	klog.Info("DEBUGME: line count (canary): %d", len(bytes.Split(canaryOutput, []byte("\n"))))
+
+	Iptables = IptablesNft
+	IptablesSave = IptablesSaveNft
+	IptablesRestore = IptablesRestoreNft
+
+	time.Sleep(30 * time.Second)
+	klog.Info("DEBUGME: crashing for test image after running iptables-nft commands")
+	os.Exit(1)
 }
 
 func countLines(output []byte) int {
@@ -338,4 +322,33 @@ func countLines(output []byte) int {
 		}
 	}
 	return count
+}
+
+func pipeCommandToGrep(command, grepCommand utilexec.Cmd) (searchResults []byte, gotMatches bool, commandError error) {
+	pipe, commandError := command.StdoutPipe()
+	if commandError != nil {
+		return
+	}
+	closePipe := func() { _ = pipe.Close() } // appease go lint
+	defer closePipe()
+
+	grepCommand.SetStdin(pipe)
+	commandError = command.Start()
+	if commandError != nil {
+		return
+	}
+
+	// Without this wait, defunct iptable child process are created
+	wait := func() { _ = command.Wait() } // appease go lint
+	defer wait()
+
+	output, err := grepCommand.CombinedOutput()
+	if err != nil {
+		// grep returns err status 1 if nothing is found
+		// but the other command's exit status gets propagated through this CombinedOutput, so we might have errors undetected
+		return
+	}
+	searchResults = output
+	gotMatches = true
+	return
 }
