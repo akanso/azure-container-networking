@@ -23,7 +23,6 @@ stages:
     dependsOn: pre_build
     variables:
       ACN_DIR: $(Build.SourcesDirectory)
-      SYSTEM_DEBUG: $[ coalesce(variables.SYSTEM_DEBUG, 'False') ]
     jobs:
       - job: env
         displayName: Setup
@@ -53,7 +52,7 @@ stages:
             displayName: "Set environmental variables"
 
       - job: resources
-        displayName: "[Infra] Configure Artifact Resources"
+        displayName: "[Infra] Configure Build Resources"
         variables:
           ACNCI_BUILDUSER_ROLE_NAME: "ACN CI/CD Build Environment Owner"
           ACNCI_MANAGEDIDENTITY_PREFIX: acnci-builds-
@@ -184,7 +183,6 @@ stages:
         - test
       variables:
         ACN_DIR: $(Build.SourcesDirectory)
-        SYSTEM_DEBUG: $[ coalesce(variables.SYSTEM_DEBUG, 'False') ]
       jobs:
         - job: containerize_amd64
           displayName: Build Images
@@ -346,7 +344,6 @@ stages:
       variables:
         Packaging.EnableSBOMSigning: false
         ACN_DIR: $(Build.SourcesDirectory)
-        SYSTEM_DEBUG: $[ coalesce(variables.SYSTEM_DEBUG, 'False') ]
       jobs:
         - job: manifest
           displayName: Compile Manifests
@@ -553,7 +550,6 @@ stages:
       variables:
         ACN_DIR: $(Build.SourcesDirectory)
         commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
-        SYSTEM_DEBUG: $[ coalesce(variables.SYSTEM_DEBUG, 'False') ]
       jobs:
         - job: delete
           displayName: Delete Cluster

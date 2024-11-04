@@ -112,8 +112,15 @@ steps:
           #[[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
           az upgrade -y
 
-          echo "az storage account create --name "$STORAGEACCOUNT_NAME" --location "$STORAGEACCOUNT_LOCATION" --resource-group "$RESOURCEGROUP_NAME" --allow-blob-public-access false --allow-shared-key-access false --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId""
-          az storage account create --name "$STORAGEACCOUNT_NAME" --location "$STORAGEACCOUNT_LOCATION" --resource-group "$RESOURCEGROUP_NAME" --allow-blob-public-access false --allow-shared-key-access false --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
+          az storage account create \
+            --name "$STORAGEACCOUNT_NAME" \
+            --location "$STORAGEACCOUNT_LOCATION" \
+            --resource-group "$RESOURCEGROUP_NAME" \
+            --allow-blob-public-access false \
+            --allow-shared-key-access false \
+            --tags "$BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
+                   "$BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
+                   "$BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
     
       ${{ elseif eq(parameters.resourceType, 'roledefinition') }}:
         inlineScript: |
@@ -134,30 +141,6 @@ steps:
             --tags "$ACNCI_BUILDTAG_DEFINITIONID"="$SYSTEM_DEFINITIONID" \
                    "$ACNCI_BUILDTAG_CREATEDBYBUILDID"="$BUILD_BUILDID" \
                    "$ACNCI_BUILDTAG_CREATEDBYAPPID"="$servicePrincipalId"
-  
-      ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
-        inlineScript: |
-          set -e
-          [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
-
-          ## Requires manual creation
-
-          #az config set extension.use_dynamic_install=yes_without_prompt
-          ##az devops login --identity "$SERVICECONNECTION_PRINCIPALID"
-          #az config set extension.dynamic_install_allow_preview=true
-          ##jq '.requiredResourceAccess = "$STORAGECONTAINER_ID"'
-          ##jq '.appId = "$MANAGEDIDENTITY_APPID"'
-          ##jq '.tags["$BUILDTAG_APPID"] = "$APPID"'
-          ##jq '.tags["$BUILDTAG_DEFINITIONID"] = "$SYSTEM_DEFINITIONID"'
-          #az devops login
-          #az devops service-endpoint azurerm create \
-            #--org "https://dev.azure.com/msazure/" \
-            #--azure-rm-service-principal-id "$SERVICECONNECTION_PRINCIPALID" \
-            #--azure-rm-subscription-id "$SUBSCRIPTION_ID" \
-            #--azure-rm-subscription-name "$SUBSCRIPTION_NAME" \
-            #--azure-rm-tenant-id "$SERVICECONNECTION_TENANT_ID"\
-            #--name "$SERVICECONNECTION_NAME" \
-            #--project "One" --debug
 
 
 
@@ -222,6 +205,14 @@ steps:
           set -e
           [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
 
+          echo "$ROLEASSIGNMENTS_LIST" | \
+            jq -rc \
+              --arg RA_NAME "$RA_NAME" \
+              --arg RA_PRINCIPAL_ID "$RA_PRINCIPAL_ID" \
+              --arg RA_SCOPE "$RA_SCOPE" \
+              '. | select(.roleDefinitionName == $RA_NAME && .principalId == $RA_PRINCIPAL_ID && .scope == $RA_SCOPE)'
+          
+
       ${{ elseif eq(parameters.resourceType, 'storageaccounts') }}:
         inlineScript: |
           set -e
@@ -240,7 +231,8 @@ steps:
           CONDITION="(@Resource[Microsoft.Storage/storageAccounts/blobServices/containers:Name] stringEquals '$STORAGECONTAINER_NAME' AND (!(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) OR @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs/tags:'$BUILDTAG_BUILDUSER_APPID'<\$key_case_sensitive\$>] StringEquals '$MANAGEDIDENTITY_APPID'))"
           az role assignment update \
             --role "$ROLE_NAME" \
-            --assignee "$MANAGEDIDENTITY_NAME" \
+            --assignee-object-id "$SERVICEPRINCIPAL_CLIENTID" \
+            --assignee-principl-type "ServicePrincipal" \
             --scope "$RESOURCEGROUP_ID" \
             --description "Enable access to build user blobs." \
             --condition "$CONDITION" \

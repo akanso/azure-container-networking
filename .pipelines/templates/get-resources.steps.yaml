@@ -161,25 +161,20 @@ steps:
         echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$R_LIST_LENGTH"
 
 
-    ${{ elseif eq(parameters.resourceType, 'managedidentity') }}:
+    ${{ elseif eq(parameters.resourceType, 'roleassignments') }}:
       inlineScript: |
         set -e
         [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ $IS_TRUE ]] && set -x || set +x
   
-        R_QUERY="[? tags.\""$BUILDTAG_DEFINITIONID"\" && tags.\""$BUILDTAG_CREATEDBYAPPID"\"]"
-        MI_LIST=$(az identity list \
-          --resource-group "$RESOURCEGROUP_NAME" \
-          --query "$R_QUERY" -o json | \
-          jq -rc \
-            --arg BUILDTAG_CREATEDBYAPPID "$BUILDTAG_CREATEDBYAPPID" \
-            --arg APPID "$servicePrincipalId" \
-            --arg BUILDTAG_DEFINITIONID "$BUILDTAG_DEFINITIONID" \
-            --arg DEFINITIONID "$SYSTEM_DEFINITIONID" \
-          '[ .[] | select(.tags[$BUILDTAG_DEFINITIONID] == $DEFINITIONID ) | select( .tags[$BUILDTAG_CREATEDBYAPPID] == $APPID) ]')
-        MI_LIST_LENGTH=$(echo "$MI_LIST" | jq length)
+        RA_LIST=$(az role assignment list \
+          --assignee "$ASSIGNEE_ID" \
+          --include-groups \
+          --include-inherited)
+
+        RA_LIST_LENGTH=$(echo "$RA_LIST" | jq length)
   
-        echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$MI_LIST"
-        echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$MI_LIST_LENGTH"
+        echo >&2 "##vso[task.setvariable variable=${VAR_NAME};]$RA_LIST"
+        echo >&2 "##vso[task.setvariable variable=${VAR_NAME}_LENGTH;]$RA_LIST_LENGTH"
 
     ${{ elseif eq(parameters.resourceType, 'serviceconnection') }}:
       inlineScript: |
