@@ -1,9 +1,12 @@
 package middlewares
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cns"
+	"github.com/Azure/azure-container-networking/cns/configuration"
 	"github.com/Azure/azure-container-networking/cns/middlewares/mock"
 	"github.com/Azure/azure-container-networking/crd/multitenancy/api/v1alpha1"
 	"gotest.tools/v3/assert"
@@ -11,6 +14,9 @@ import (
 
 func TestSetRoutesSuccess(t *testing.T) {
 	middleware := K8sSWIFTv2Middleware{Cli: mock.NewClient()}
+	t.Setenv(configuration.EnvPodCIDRs, "10.0.1.10/24,16A0:0010:AB00:001E::2/32")
+	t.Setenv(configuration.EnvServiceCIDRs, "10.0.0.0/16,16A0:0010:AB00:0000::/32")
+	t.Setenv(configuration.EnvInfraVNETCIDRs, "10.240.0.1/16,16A0:0020:AB00:0000::/32")
 
 	podIPInfo := []cns.PodIpInfo{
 		{
@@ -53,9 +59,17 @@ func TestAssignSubnetPrefixSuccess(t *testing.T) {
 		MacAddress: "12:34:56:78:9a:bc",
 	}
 
+	gatewayIP := "20.240.1.1"
 	intInfo := v1alpha1.InterfaceInfo{
-		GatewayIP:          "20.240.1.1",
+		GatewayIP:          gatewayIP,
 		SubnetAddressSpace: "20.240.1.0/16",
+	}
+
+	routes := []cns.Route{
+		{
+			IPAddress:        "0.0.0.0/0",
+			GatewayIPAddress: gatewayIP,
+		},
 	}
 
 	ipInfo := podIPInfo
@@ -65,4 +79,9 @@ func TestAssignSubnetPrefixSuccess(t *testing.T) {
 	assert.Equal(t, ipInfo.PodIPConfig.PrefixLength, uint8(16))
 	assert.Equal(t, ipInfo.HostPrimaryIPInfo.Gateway, intInfo.GatewayIP)
 	assert.Equal(t, ipInfo.HostPrimaryIPInfo.Subnet, intInfo.SubnetAddressSpace)
+
+	// compare two slices of routes
+	if !reflect.DeepEqual(ipInfo.Routes, routes) {
+		t.Errorf("got '%+v', expected '%+v'", ipInfo.Routes, routes)
+	}
 }
