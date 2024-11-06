@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -463,9 +464,9 @@ func sendRegisterNodeRequest(ctx context.Context, httpClient httpDoer, httpRestS
 	return nil
 }
 
-func startTelemetryService(ctx context.Context) {
+func startTelemetryService(ctx context.Context, wg *sync.WaitGroup) {
 	var config aitelemetry.AIConfig
-
+	log.Printf("startTelemetryService")
 	tb := telemetry.NewTelemetryBuffer(nil)
 	err := tb.CreateAITelemetryHandle(config, false, false, false)
 	if err != nil {
@@ -484,6 +485,7 @@ func startTelemetryService(ctx context.Context) {
 		return
 	}
 	tb.PushData(ctx)
+	defer wg.Done()
 }
 
 // Main is the entry point for CNS.
@@ -672,8 +674,35 @@ func main() {
 	}
 
 	if telemetryDaemonEnabled {
+		var wg sync.WaitGroup
 		logger.Printf("CNI Telemetry is enabled")
-		go startTelemetryService(rootCtx)
+		wg.Add(1) //nolint:gomnd // in favor of readability
+		//go startTelemetryService(rootCtx, &wg)
+		go func(ctx context.Context) {
+			var config aitelemetry.AIConfig
+			logger.Printf("startTelemetryService")
+			tb := telemetry.NewTelemetryBuffer(nil)
+			err := tb.CreateAITelemetryHandle(config, false, false, false)
+			if err != nil {
+				logger.Errorf("AI telemetry handle creation failed..:%s", err.Error())
+				return
+			}
+
+			tbtemp := telemetry.NewTelemetryBuffer(nil)
+			//nolint:errcheck // best effort to cleanup leaked pipe/socket before start
+			tbtemp.Cleanup(telemetry.FdName)
+
+			err = tb.StartServer()
+			logger.Printf("Telemetry service for CNI started")
+			if err != nil {
+				logger.Errorf("Telemetry service failed to start: %s", err.Error())
+				return
+			}
+			tb.PushData(ctx)
+			defer wg.Done()
+		}(rootCtx)
+		wg.Wait()
+		logger.Printf("CNI telemetry started")
 	}
 
 	// Log platform information.
