@@ -9,4 +9,5 @@ spec:
       app: scale-test
       TEMP_LABEL_NAME: val
   egress:
-  - {}
+    - toEndpoints:
+      - {}
