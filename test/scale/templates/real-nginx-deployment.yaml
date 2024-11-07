@@ -4,19 +4,19 @@ metadata:
   name: TEMP_NAME
   namespace: scale-test
   labels:
-    app: scale-test
+    app: nginx
     is-real: "true"
     name: TEMP_NAME
 spec:
   replicas: TEMP_REPLICAS
   selector:
     matchLabels:
-      app: scale-test
+      app: nginx
       is-real: "true"OTHER_LABELS_6_SPACES
   template:
     metadata:
       labels:
-        app: scale-test
+        app: nginx
         name: TEMP_NAME
         is-real: "true"OTHER_LABELS_8_SPACES
     spec:
@@ -25,7 +25,7 @@ spec:
       containers:
       - name: nginx
         image: mcr.microsoft.com/mirror/docker/library/nginx:1.25
-        command: ["sh", "-c", "while true; do curl -s google.com; sleep 60; done"]
+        command: ["sh", "-c", "while true; do curl -s google.com; sleep 10; done"]
         ports:
         - name: http
           containerPort: 80
