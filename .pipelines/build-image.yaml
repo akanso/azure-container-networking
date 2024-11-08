@@ -1,0 +1,129 @@
+trigger:
+  tags:
+    include:
+      - "*"
+
+stages:
+  - stage: containerize
+    displayName: Build Images
+    dependsOn:
+      - setup
+      - test
+    jobs:
+      - job: containerize_amd64
+        displayName: Build Images
+        pool:
+          name: "$(BUILD_POOL_NAME_LINUX_AMD64)"
+        strategy:
+          matrix:
+            azure_ipam_linux_amd64:
+              arch: amd64
+              name: azure-ipam
+              os: linux
+            azure_ipam_windows2019_amd64:
+              arch: amd64
+              name: azure-ipam
+              os: windows
+              os_version: ltsc2019
+            azure_ipam_windows2022_amd64:
+              arch: amd64
+              name: azure-ipam
+              os: windows
+              os_version: ltsc2022
+            cni_linux_amd64:
+              arch: amd64
+              name: cni
+              os: linux
+            cni_windows2019_amd64:
+              arch: amd64
+              name: cni
+              os: windows
+              os_version: ltsc2019
+            cni_windows2022_amd64:
+              arch: amd64
+              name: cni
+              os: windows
+              os_version: ltsc2022
+            cni_windows2025_amd64:
+              arch: amd64
+              name: cni
+              os: windows
+              os_version: ltsc2025
+            cns_linux_amd64:
+              arch: amd64
+              name: cns
+              os: linux
+            cns_windows2019_amd64:
+              arch: amd64
+              name: cns
+              os: windows
+              os_version: ltsc2019
+            cns_windows2022_amd64:
+              arch: amd64
+              name: cns
+              os: windows
+              os_version: ltsc2022
+            cns_windows2025_amd64:
+              arch: amd64
+              name: cns
+              os: windows
+              os_version: ltsc2025
+            ipv6_hp_bpf_linux_amd64:
+              arch: amd64
+              name: ipv6-hp-bpf
+              os: linux
+            npm_linux_amd64:
+              arch: amd64
+              name: npm
+              os: linux
+            npm_windows2022_amd64:
+              arch: amd64
+              name: npm
+              os: windows
+              os_version: ltsc2022
+        steps:
+          - template: containers/container-template.yaml
+            parameters:
+              arch: $(arch)
+              name: $(name)
+              os: $(os)
+              os_version: $(os_version)
+      - job: containerize_linux_arm64
+        displayName: Build Images
+        pool:
+          name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
+        strategy:
+          matrix:
+            azure_ipam_linux_arm64:
+              arch: arm64
+              name: azure-ipam
+              os: linux
+            cni_linux_arm64:
+              arch: arm64
+              name: cni
+              os: linux
+            cns_linux_arm64:
+              arch: arm64
+              name: cns
+              os: linux
+            ipv6_hp_bpf_linux_arm64:
+              arch: arm64
+              name: ipv6-hp-bpf
+              os: linux
+            npm_linux_arm64:
+              arch: arm64
+              name: npm
+              os: linux
+        steps:
+          # clone repository based off specified git sha
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            fetchTags: true
+            ref: refs/tags/$(GIT_TAG)
+
+          - template: containers/container-template.yaml
+            parameters:
+              arch: $(arch)
+              name: $(name)
+              os: $(os)
