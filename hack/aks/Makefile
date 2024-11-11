@@ -399,10 +399,11 @@ cilium-dualstack-up: rg-up overlay-net-up ## Brings up a Cilium Dualstack Overla
 		--network-dataplane cilium \
 		--subscription $(SUB) \
 		--ip-families ipv4,ipv6 \
+		--pod-cidr 100.64.0.0/10  \
 		--load-balancer-sku standard \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/AzureOverlayDualStackPreview \
 		--no-ssh-key \
-		--enable-acns \
+		--tier standard \
 		--yes
 	@$(MAKE) set-kubeconf
 
