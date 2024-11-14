@@ -356,6 +356,7 @@ type NmAgentSupportedApisResponse struct {
 type HomeAzResponse struct {
 	IsSupported bool `json:"isSupported"`
 	HomeAz      uint `json:"homeAz"`
+	APIVersion  uint `json:"apiVersion"`
 }
 
 type GetHomeAzResponse struct {

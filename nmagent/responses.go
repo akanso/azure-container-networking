@@ -38,7 +38,8 @@ type NCVersionList struct {
 }
 
 type AzResponse struct {
-	HomeAz uint `json:"homeAz"`
+	HomeAz     uint `json:"homeAz"`
+	APIVersion uint `json:"apiVersion"`
 }
 
 type NodeIP struct {
