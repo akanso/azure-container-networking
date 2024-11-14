@@ -5,7 +5,7 @@ metadata:
 spec:
   endpointSelector: 
     matchLabels:
-      app: scale-test
+      app: nginx
       TEMP_LABEL_NAME: val
   egress:
   - toEndpoints:
