@@ -24,10 +24,10 @@ func TestHomeAzMonitor(t *testing.T) {
 		{
 			"happy path",
 			&fakes.NMAgentClientFake{
-				SupportedAPIsF: func(ctx context.Context) ([]string, error) {
+				SupportedAPIsF: func(_ context.Context) ([]string, error) {
 					return []string{"GetHomeAz"}, nil
 				},
-				GetHomeAzF: func(ctx context.Context) (nmagent.AzResponse, error) {
+				GetHomeAzF: func(_ context.Context) (nmagent.AzResponse, error) {
 					return nmagent.AzResponse{HomeAz: uint(1), APIVersion: uint(2)}, nil
 				},
 			},
@@ -37,10 +37,10 @@ func TestHomeAzMonitor(t *testing.T) {
 		{
 			"getHomeAz is not supported in nmagent",
 			&fakes.NMAgentClientFake{
-				SupportedAPIsF: func(ctx context.Context) ([]string, error) {
+				SupportedAPIsF: func(_ context.Context) ([]string, error) {
 					return []string{"dummy"}, nil
 				},
-				GetHomeAzF: func(ctx context.Context) (nmagent.AzResponse, error) {
+				GetHomeAzF: func(_ context.Context) (nmagent.AzResponse, error) {
 					return nmagent.AzResponse{}, nil
 				},
 			},
@@ -50,10 +50,10 @@ func TestHomeAzMonitor(t *testing.T) {
 		{
 			"api supported but home az value is not valid",
 			&fakes.NMAgentClientFake{
-				SupportedAPIsF: func(ctx context.Context) ([]string, error) {
+				SupportedAPIsF: func(_ context.Context) ([]string, error) {
 					return []string{GetHomeAzAPIName}, nil
 				},
-				GetHomeAzF: func(ctx context.Context) (nmagent.AzResponse, error) {
+				GetHomeAzF: func(_ context.Context) (nmagent.AzResponse, error) {
 					return nmagent.AzResponse{HomeAz: 0}, nil
 				},
 			},
@@ -63,10 +63,10 @@ func TestHomeAzMonitor(t *testing.T) {
 		{
 			"api supported but apiVersion value is not valid",
 			&fakes.NMAgentClientFake{
-				SupportedAPIsF: func(ctx context.Context) ([]string, error) {
+				SupportedAPIsF: func(_ context.Context) ([]string, error) {
 					return []string{GetHomeAzAPIName}, nil
 				},
-				GetHomeAzF: func(ctx context.Context) (nmagent.AzResponse, error) {
+				GetHomeAzF: func(_ context.Context) (nmagent.AzResponse, error) {
 					return nmagent.AzResponse{HomeAz: uint(1), APIVersion: uint(3)}, nil
 				},
 			},
@@ -76,10 +76,10 @@ func TestHomeAzMonitor(t *testing.T) {
 		{
 			"api supported but got unexpected errors",
 			&fakes.NMAgentClientFake{
-				SupportedAPIsF: func(ctx context.Context) ([]string, error) {
+				SupportedAPIsF: func(_ context.Context) ([]string, error) {
 					return []string{GetHomeAzAPIName}, nil
 				},
-				GetHomeAzF: func(ctx context.Context) (nmagent.AzResponse, error) {
+				GetHomeAzF: func(_ context.Context) (nmagent.AzResponse, error) {
 					return nmagent.AzResponse{}, errors.New("unexpected error")
 				},
 			},
