@@ -22,10 +22,10 @@ jobs:
         # run cyclonus tests in parallel for NPM with the given ConfigMaps
         profile:
           [
-            v4-apply-on-need.yaml,
-            v4-background.yaml,
-            v4-foreground.yaml,
-            v4-place-first.yaml,
+            v2-apply-on-need.yaml,
+            v2-background.yaml,
+            v2-foreground.yaml,
+            v2-place-first.yaml,
           ]
     steps:
       - name: Checkout
