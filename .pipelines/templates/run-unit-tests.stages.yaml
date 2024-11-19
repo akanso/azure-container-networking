@@ -35,15 +35,15 @@ stages:
   displayName: Test ACN Windows
   dependsOn:
     - setup
+  pool:
+    name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS)"
+    os: windows
+    image: acn-runner-vmss-image-windows-1es-v2.0
   jobs:
   - job: test
     displayName: Run Tests
     variables:
       STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-    pool:
-      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS)"
-      os: windows
-      image: acn-runner-vmss-image-windows-1es-v2.0
     steps:
       - task: GoTool@0
         inputs:

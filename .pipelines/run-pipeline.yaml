@@ -26,7 +26,7 @@ stages:
             name: "EnvironmentalVariables"
             displayName: "Set environmental variables"
 
-  - template: templates/unit-tests.stages.yaml
+  - template: templates/run-unit-tests.stages.yaml
 
   #- ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
   - stage: binaries
