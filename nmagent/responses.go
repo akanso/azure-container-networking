@@ -42,6 +42,15 @@ type AzResponse struct {
 	APIVersion uint `json:"apiVersion"`
 }
 
+func (az AzResponse) Valid() bool {
+	// 0 should be valid when NMA version is old and does not have the apiVersion value in home az response
+	return az.APIVersion == 0 || az.APIVersion == 2
+}
+
+func (az AzResponse) NmaAppliedTheIPV6Fix() bool {
+	return az.APIVersion == 2
+}
+
 type NodeIP struct {
 	Address   IPAddress `xml:"Address,attr"`
 	IsPrimary bool      `xml:"IsPrimary,attr"`

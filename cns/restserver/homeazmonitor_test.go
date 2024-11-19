@@ -31,7 +31,7 @@ func TestHomeAzMonitor(t *testing.T) {
 					return nmagent.AzResponse{HomeAz: uint(1), APIVersion: uint(2)}, nil
 				},
 			},
-			cns.HomeAzResponse{IsSupported: true, HomeAz: uint(1), APIVersion: uint(2)},
+			cns.HomeAzResponse{IsSupported: true, HomeAz: uint(1), NmaAppliedTheIPV6Fix: true},
 			false,
 		},
 		{

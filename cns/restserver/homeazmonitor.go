@@ -154,15 +154,14 @@ func (h *HomeAzMonitor) Populate(ctx context.Context) {
 		h.update(returnCode, returnMessage, cns.HomeAzResponse{IsSupported: true})
 		return
 	}
-	// validate APIVersion, APIVersion is a uint, so its value >=0
-	// 0 should be valid when NMA version is old and does not have the apiVersion value in home az response
-	if azResponse.APIVersion > 0 && azResponse.APIVersion != 2 {
+	// validate APIVersion value
+	if !azResponse.Valid() {
 		returnMessage := fmt.Sprintf("[HomeAzMonitor] invalid APIVersion value from nmagent: %d", azResponse.APIVersion)
 		returnCode := types.UnexpectedError
 		h.update(returnCode, returnMessage, cns.HomeAzResponse{IsSupported: true})
 		return
 	}
-	h.update(types.Success, "Get Home Az succeeded", cns.HomeAzResponse{IsSupported: true, HomeAz: azResponse.HomeAz, APIVersion: azResponse.APIVersion})
+	h.update(types.Success, "Get Home Az succeeded", cns.HomeAzResponse{IsSupported: true, HomeAz: azResponse.HomeAz, NmaAppliedTheIPV6Fix: azResponse.NmaAppliedTheIPV6Fix()})
 }
 
 // update constructs a GetHomeAzResponse entity and update its cache
