@@ -21,9 +21,6 @@ jobs:
       - registry: acnpublic.azurecr.io
         identity: ManagedIdentity
         clientId: ${{ parameters.containerRegistry.clientId }}
-      - registry: onebranch.azurecr.io
-        tenant: AME
-        identity: 1ESPipelineIdentity
 
     steps:
     - task: GoTool@0
