@@ -62,7 +62,10 @@ extends:
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:
             enabledOnNonDefaultBranches: true
       suppression:
-        suppressionFile: $(Build.SourcesDirectory)\.config\.gdnsuppress
+        suppressionFile: $(Build.SourcesDirectory)/.config/.gdnsuppress
         suppressionSet: default
+      credscan:
+        enabled: true
+        suppressionsFileForArtifacts: $(Build.SourcesDirectory)/.config/credScanSuppressions.json
     stages:
     - template: /.pipelines/run-pipeline.yaml
