@@ -67,7 +67,7 @@ func TestHomeAzMonitor(t *testing.T) {
 					return []string{GetHomeAzAPIName}, nil
 				},
 				GetHomeAzF: func(_ context.Context) (nmagent.AzResponse, error) {
-					return nmagent.AzResponse{HomeAz: uint(1), APIVersion: uint(3)}, nil
+					return nmagent.AzResponse{HomeAz: uint(1), APIVersion: uint(1)}, nil
 				},
 			},
 			cns.HomeAzResponse{IsSupported: true},

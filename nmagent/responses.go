@@ -50,7 +50,7 @@ func (az AzResponse) Valid() bool {
 
 func (az AzResponse) NmaAppliedTheIPV6Fix() bool {
 	//nolint:gomnd // this magic number is made by nma design
-	return az.APIVersion == 2
+	return az.APIVersion >= 2
 }
 
 type NodeIP struct {
