@@ -345,7 +345,7 @@ acncli-dockerfile-path:
 	$(eval DOCKERFILE_PATH := $(ACNCLI_DIR)/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
-acncli-build-args:
+acncli-docker-build-args:
 	$(eval DOCKER_BUILD_ARGS := ;)
 	@echo $(DOCKER_BUILD_ARGS)
 
@@ -383,7 +383,7 @@ azure-ipam-dockerfile-path:
 	$(eval DOCKERFILE_PATH := $(AZURE_IPAM_DIR)/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
-azure-ipam-build-args:
+azure-ipam-docker-build-args:
 	$(eval DOCKER_BUILD_ARGS := ;)
 	@echo $(DOCKER_BUILD_ARGS)
 
@@ -424,7 +424,7 @@ ipv6-hp-bpf-dockerfile-path:
 	$(eval DOCKERFILE_PATH := $(IPV6_HP_BPF_DIR)/$(OS).Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
-ipv6-hp-bpf-build-args:
+ipv6-hp-bpf-docker-build-args:
 	$(eval DOCKER_BUILD_ARGS := '--build-arg OS=$(OS) --build-arg ARCH=$(ARCH) --build-arg DEBUG=$(DEBUG)')
 	@echo $(DOCKER_BUILD_ARGS)
 
@@ -461,11 +461,11 @@ cni-image-build-context:
 	$(eval BUILD_CONTEXT := $(REPO_ROOT))
 	@echo "$(BUILD_CONTEXT)"
 
-cni-image-dockerfile-path:
+cni-dockerfile-path:
 	$(eval DOCKERFILE_PATH := $(CNI_BUILD_DIR)/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
-cni-image-build-args:
+cni-docker-build-args:
 	$(eval DOCKER_BUILD_ARGS='--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)')
 	@echo $(DOCKER_BUILD_ARGS)
 
@@ -503,11 +503,11 @@ cns-image-build-context:
 	$(eval BUILD_CONTEXT := $(REPO_ROOT))
 	@echo "$(BUILD_CONTEXT)"
 
-cns-image-dockerfile-path:
+cns-dockerfile-path:
 	$(eval DOCKERFILE_PATH := $(CNS_BUILD_DIR)/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
-cns-image-build-args:
+cns-docker-build-args:
 	$(eval DOCKER_BUILD_ARGS='--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)')
 	@echo $(DOCKER_BUILD_ARGS)
 
@@ -544,11 +544,11 @@ npm-image-build-context:
 	$(eval BUILD_CONTEXT := $(REPO_ROOT))
 	@echo "$(BUILD_CONTEXT)"
 
-npm-image-dockerfile-path:
+npm-dockerfile-path:
 	$(eval DOCKERFILE_PATH := $(NPM_BUILD_DIR)/$(OS).Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
-npm-image-build-args:
+npm-docker-build-args:
 	$(eval DOCKER_BUILD_ARGS='--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)')
 	@echo $(DOCKER_BUILD_ARGS)
 

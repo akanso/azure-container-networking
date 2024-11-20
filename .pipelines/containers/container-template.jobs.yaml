@@ -56,8 +56,8 @@ jobs:
         VAR_ID: ${{ image }}
         MAKE_BUILD_CONTEXT: ${{ image }}-image-build-context
         MAKE_IMG_NAME_AND_TAG: ${{ image }}-image-name-and-tag
-        MAKE_DOCKERFILE_PATH: ${{ image }}-image-dockerfile-path
-        MAKE_EXTRA_BUILD_ARGS: ${{ image }}-image-build-args
+        MAKE_DOCKERFILE_PATH: ${{ image }}-dockerfile-path
+        MAKE_EXTRA_BUILD_ARGS: ${{ image }}-docker-build-args
 
     - template: container-template.steps.yaml
       parameters:
