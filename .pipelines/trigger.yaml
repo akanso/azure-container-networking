@@ -61,5 +61,8 @@ extends:
           # Enables CodeQL on PR branches
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:
             enabledOnNonDefaultBranches: true
+      suppression:
+        suppressionFile: $(Build.SourcesDirectory)\.config\.gdnsuppress
+        suppressionSet: default
     stages:
     - template: /.pipelines/run-pipeline.yaml
