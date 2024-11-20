@@ -18,9 +18,7 @@ jobs:
     displayName: Build Image - (${{ image }} ${{ parameters.os }}/${{ parameters.arch }})
     templateContext:
       authenticatedContainerRegistries:
-      - registry: acnpublic.azurecr.io
-        identity: ManagedIdentity
-        clientId: ${{ parameters.containerRegistry.clientId }}
+      - serviceConnection: $(ACR_SERVICECONNECTION)
 
     steps:
     - task: GoTool@0
