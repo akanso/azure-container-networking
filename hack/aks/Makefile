@@ -210,7 +210,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
+		--load-balancer-sku standard \
 		--network-plugin none \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
