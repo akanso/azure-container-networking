@@ -11,7 +11,7 @@
     "d7e55b5f3e54f9253a2fec595f97520ab0ffece607981d2db0fcfe4dae4cd490": {
       "signature": "d7e55b5f3e54f9253a2fec595f97520ab0ffece607981d2db0fcfe4dae4cd490",
       "alternativeSignatures": [],
-      "target": "**/testdata/dummy.pem",
+      "target": "keyvault/testdata/dummy.pem",
       "memberOf": [
         "default"
       ],
