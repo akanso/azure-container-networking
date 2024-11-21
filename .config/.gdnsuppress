@@ -3,24 +3,22 @@
   "suppressionSets": {
     "default": {
       "name": "default",
-      "createdDate": "2022-11-28 20:04:38Z",
-      "lastUpdatedDate": "2022-11-28 20:04:38Z"
+      "createdDate": "2024-11-21 01:58:07Z",
+      "lastUpdatedDate": "2024-11-21 01:58:07Z"
     }
   },
   "results": {
-    "d7e55b5f3e54f9253a2fec595f97520ab0ffece607981d2db0fcfe4dae4cd490": {
-      "signature": "d7e55b5f3e54f9253a2fec595f97520ab0ffece607981d2db0fcfe4dae4cd490",
+    "9a675be4784d448ece481deb7f6f1429fd6606a08b9598f33f23c2123c581520": {
+      "signature": "9a675be4784d448ece481deb7f6f1429fd6606a08b9598f33f23c2123c581520",
       "alternativeSignatures": [],
       "target": "keyvault/testdata/dummy.pem",
+      "line": 1,
       "memberOf": [
         "default"
       ],
       "tool": "credscan",
       "ruleId": "CSCAN-GENERAL0020",
-      "justification": null,
-      "createdDate": "2022-11-28 20:04:38Z",
-      "expirationDate": null,
-      "type": null
+      "createdDate": "2024-11-21 01:58:07Z"
     }
   }
 }
