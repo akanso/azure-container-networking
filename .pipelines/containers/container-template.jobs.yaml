@@ -30,14 +30,9 @@ jobs:
     - bash: |
         set -e
         
-        if ! $(which sudo); then
-          apt-get update -y
-          apt-get install -y sudo net-tools
-        fi
-        ifconfig
         ip address
-        sudo systemctl status docker
-        sudo systemctl restart docker
+        systemctl status docker
+        systemctl restart docker
 
         BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
         echo >&2 "##vso[task.setvariable variable=BUILD_CONTEXT_${VAR_ID};]$BUILD_CONTEXT"
