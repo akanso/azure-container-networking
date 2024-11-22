@@ -32,7 +32,7 @@ jobs:
         
         ip address
         /usr/bin/dockerd -D &
-        systemctl status docker
+        systemctl status docker.socket
         #systemctl restart docker
 
         BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
