@@ -32,6 +32,15 @@ func SetupIngressFilter(ifaceIndex int, objs *IngressObjects, logger *zap.Logger
 			}
 			break
 		}
+		// Delete the old filter for cilium if priority is 1. This is to avoid duplicate filters after restarting the daemonset in the 
+		// singlestack -> dualstack migration scenario.
+		if filter, ok := filter.(*netlink.BpfFilter); ok && filter.Name == "cil_from_netdev-eth0" && filter.Priority == 1 {
+			if err := netlink.FilterDel(filter); err != nil {
+				logger.Error("Failed to delete filter", zap.Error(err))
+				return err
+			}
+			break
+		}
 	}
 
 	ingressFilter := &netlink.BpfFilter{
