@@ -23,11 +23,6 @@ jobs:
     steps:
     - checkout: self
 
-    - task: DockerInstaller@0
-      inputs:
-        version: 17.09.0-ce
-        releaseType: stable
-
     - task: GoTool@0
       inputs:
         version: $(GO_VERSION)
