@@ -21,6 +21,8 @@ jobs:
       - serviceConnection: $(ACR_SERVICECONNECTION)
 
     steps:
+    - checkout: self
+
     - task: GoTool@0
       inputs:
         version: $(GO_VERSION)

@@ -56,7 +56,6 @@ stages:
         find . -name '*.zip' -print -exec mv -t ./bins/ {} +
         shopt -s extglob
         rm -rf !("bins")
-      name: "PrepareArtifacts"
       displayName: "Prepare Artifacts"
 
     - task: CopyFiles@2

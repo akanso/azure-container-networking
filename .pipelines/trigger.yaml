@@ -45,10 +45,6 @@ extends:
       name: $(BUILD_POOL_NAME_DEFAULT)
       os: linux
       image: acn-runner-vmss-image-1es-v3.0
-    #authenticatedContainerRegistries:
-    #- registry: onebranch.azurecr.io
-      #tenant: AME
-      #identity: 1ESPipelineIdentity
     sdl:
       sourceAnalysisPool: 
         name: $(BUILD_POOL_NAME_DEFAULT_WINDOWS)
@@ -61,6 +57,9 @@ extends:
         suppression:
           suppressionFile: $(Build.SourcesDirectory)\.config\.gdnsuppress
           suppressionSet: default
+        credscan:
+          enabled: true
+          suppressionsFileForArtifacts: $(Build.SourcesDirectory)/.config/credScanSuppressions.json
       codeql:
         # Enables CodeQL on the main branch
         compiled:
@@ -68,11 +67,5 @@ extends:
           # Enables CodeQL on PR branches
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:
             enabledOnNonDefaultBranches: true
-      suppression:
-        suppressionFile: $(Build.SourcesDirectory)/.config/.gdnsuppress
-        suppressionSet: default
-      credscan:
-        enabled: true
-        suppressionsFileForArtifacts: $(Build.SourcesDirectory)/.config/credScanSuppressions.json
     stages:
     - template: /.pipelines/run-pipeline.yaml
