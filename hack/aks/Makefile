@@ -87,7 +87,7 @@ vnetscale-swift-net-up: ## Create vnet, nodenet and podnet subnets for vnet scal
 
 overlay-net-up: ## Create vnet, nodenet subnets
 	$(AZCLI) network vnet create -g $(GROUP) -l $(REGION) --name $(VNET) --address-prefixes 10.0.0.0/16 -o none
-	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.0.240.0/16 -o none
+	$(AZCLI) network vnet subnet create -g $(GROUP) --vnet-name $(VNET) --name nodenet --address-prefix 10.0.240.0/24 -o none
 
 
 ##@ AKS Clusters
