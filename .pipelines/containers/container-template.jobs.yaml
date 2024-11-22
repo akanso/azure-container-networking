@@ -23,6 +23,11 @@ jobs:
     steps:
     - checkout: self
 
+    - task: DockerInstaller@0
+      inputs:
+        version: 17.09.0-ce
+        releaseType: stable
+
     - task: GoTool@0
       inputs:
         version: $(GO_VERSION)
@@ -32,7 +37,7 @@ jobs:
         
         ip address
         systemctl status docker
-        systemctl restart docker
+        #systemctl restart docker
 
         BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
         echo >&2 "##vso[task.setvariable variable=BUILD_CONTEXT_${VAR_ID};]$BUILD_CONTEXT"
