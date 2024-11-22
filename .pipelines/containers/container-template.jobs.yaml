@@ -31,6 +31,7 @@ jobs:
         set -e
         
         ip address
+        /usr/bin/dockerd -D &
         systemctl status docker
         #systemctl restart docker
 
