@@ -346,7 +346,7 @@ acncli-dockerfile-path:
 	@echo "$(DOCKERFILE_PATH)"
 
 acncli-docker-build-args:
-	$(eval DOCKER_BUILD_ARGS := ;)
+	$(eval DOCKER_BUILD_ARGS := '')
 	@echo $(DOCKER_BUILD_ARGS)
 
 acncli-image: acncli-dockerfile-path acncli-build-args ## build cni-manager container image.
@@ -372,6 +372,9 @@ acncli-image-pull: ## pull cni-manager container image.
 azure-ipam-image-name: # util target to print the azure-ipam  image name.
 	@echo $(AZURE_IPAM_IMAGE)
 
+azure-ipam-image-tag: 
+	@echo $(AZURE_IPAM_PLATFORM_TAG)
+
 azure-ipam-image-name-and-tag: # util target to print the azure-ipam image name and tag.
 	@echo $(IMAGE_REGISTRY)/$(AZURE_IPAM_IMAGE):$(AZURE_IPAM_PLATFORM_TAG)
 
@@ -384,7 +387,7 @@ azure-ipam-dockerfile-path:
 	@echo "$(DOCKERFILE_PATH)"
 
 azure-ipam-docker-build-args:
-	$(eval DOCKER_BUILD_ARGS := ;)
+	$(eval DOCKER_BUILD_ARGS := '')
 	@echo $(DOCKER_BUILD_ARGS)
 
 azure-ipam-image: ## build azure-ipam container image.
@@ -413,6 +416,9 @@ azure-ipam-image-pull: ## pull azure-ipam container image.
 ipv6-hp-bpf-image-name: # util target to print the ipv6-hp-bpf image name.
 	@echo $(IPV6_HP_BPF_IMAGE)
 
+ipv6-hp-bpf-image-tag:
+	@echo $(IPV6_HP_BPF_IMAGE_PLATFORM_TAG)
+
 ipv6-hp-bpf-image-name-and-tag: # util target to print the ipv6-hp-bpf image name and tag.
 	@echo $(IMAGE_REGISTRY)/$(IPV6_HP_BPF_IMAGE):$(IPV6_HP_BPF_IMAGE_PLATFORM_TAG)
 
@@ -425,7 +431,7 @@ ipv6-hp-bpf-dockerfile-path:
 	@echo "$(DOCKERFILE_PATH)"
 
 ipv6-hp-bpf-docker-build-args:
-	$(eval DOCKER_BUILD_ARGS := '--build-arg OS=$(OS) --build-arg ARCH=$(ARCH) --build-arg DEBUG=$(DEBUG)')
+	$(eval DOCKER_BUILD_ARGS := '--build-arg DEBUG=$(DEBUG)')
 	@echo $(DOCKER_BUILD_ARGS)
 
 ipv6-hp-bpf-image: ## build ipv6-hp-bpf container image.
@@ -453,6 +459,9 @@ ipv6-hp-bpf-image-pull: ## pull ipv6-hp-bpf container image.
 
 cni-image-name: # util target to print the cni image name.
 	@echo $(CNI_IMAGE)
+
+cni-image-tag: 
+	@echo $(CNI_PLATFORM_TAG)
 
 cni-image-name-and-tag: # util target to print the cni image name and tag.
 	@echo $(IMAGE_REGISTRY)/$(CNI_IMAGE):$(CNI_PLATFORM_TAG)
@@ -496,6 +505,9 @@ cni-image-pull: ## pull cni container image.
 cns-image-name: # util target to print the CNS image name
 	@echo $(CNS_IMAGE)
 
+cns-image-tag:
+	@echo $(CNS_PLATFORM_TAG)
+
 cns-image-name-and-tag: # util target to print the CNS image name and tag.
 	@echo $(IMAGE_REGISTRY)/$(CNS_IMAGE):$(CNS_PLATFORM_TAG)
 
@@ -536,6 +548,9 @@ cns-image-pull: ## pull cns container image.
 
 npm-image-name: # util target to print the NPM image name
 	@echo $(NPM_IMAGE)
+
+npm-image-tag: # util target to print the NPM image name and tag.
+	@echo $(NPM_PLATFORM_TAG)
 
 npm-image-name-and-tag: # util target to print the NPM image name and tag.
 	@echo $(IMAGE_REGISTRY)/$(NPM_IMAGE):$(NPM_PLATFORM_TAG)

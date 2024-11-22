@@ -26,18 +26,6 @@ jobs:
     - task: GoTool@0
       inputs:
         version: $(GO_VERSION)
-    
-    - task: AzureCLI@2
-      displayName: "Docker Login"
-      inputs:
-        azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
-        scriptLocation: "inlineScript"
-        scriptType: "bash"
-        addSpnToEnvironment: true
-        inlineScript: |
-          ls -la /bin
-      env:
-        ACR: ${{ parameters.containerRegistry.name }}
 
     - bash: |
         set -e
@@ -45,7 +33,10 @@ jobs:
         BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
         echo >&2 "##vso[task.setvariable variable=BUILD_CONTEXT_${VAR_ID};]$BUILD_CONTEXT"
 
-        IMAGE_NAME_AND_TAG=$(make "$MAKE_IMG_NAME_AND_TAG")
+        IMAGE_PLATFORM_TAG=$(make "$MAKE_IMAGE_TAG")
+        echo >&2 "##vso[task.setvariable variable=IMAGE_PLATFORM_TAG_${VAR_ID};]$IMAGE_PLATFORM_TAG"
+
+        IMAGE_NAME_AND_TAG=$(make "$MAKE_IMAGE_NAME_AND_TAG")
         echo >&2 "##vso[task.setvariable variable=IMAGE_NAME_AND_TAG_${VAR_ID};]$IMAGE_NAME_AND_TAG"
 
         DOCKERFILE_PATH=$(make "$MAKE_DOCKERFILE_PATH")
@@ -53,11 +44,12 @@ jobs:
 
         EXTRA_BUILD_ARGS=$(make "$MAKE_EXTRA_BUILD_ARGS")
         echo >&2 "##vso[task.setvariable variable=EXTRA_BUILD_ARGS_${VAR_ID};]$EXTRA_BUILD_ARGS"
-      displayName: "Get Image Name"
+      displayName: "Get Image Build Data"
       env:
         VAR_ID: ${{ image }}
+        MAKE_IMAGE_TAG: ${{ image }}-image-tag
         MAKE_BUILD_CONTEXT: ${{ image }}-image-build-context
-        MAKE_IMG_NAME_AND_TAG: ${{ image }}-image-name-and-tag
+        MAKE_IMAGE_NAME_AND_TAG: ${{ image }}-image-name-and-tag
         MAKE_DOCKERFILE_PATH: ${{ image }}-dockerfile-path
         MAKE_EXTRA_BUILD_ARGS: ${{ image }}-docker-build-args
 

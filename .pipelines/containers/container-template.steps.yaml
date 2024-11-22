@@ -29,8 +29,8 @@ steps:
   inputs:
     image: $(IMAGE_NAME_AND_TAG_${{ parameters.name }})
     dockerfile: $(DOCKERFILE_PATH_${{ parameters.name }})
-    path: $(BUILD_CONTEXT_${{ parameters.name }})
-    buildArguments: TARGET=${{ parameters.os }} OS=${{ parameters.os }} PLATFORM=${{ parameters.os }} ARCH=${{ parameters.arch }} $(EXTRA_BUILD_ARGS_${{ parameters.name }})
+    path: $(Build.SourcesDirectory)
+    buildArguments: --platform "${{ parameters.os }}/${{ parameters.arch }}" --build-arg ARCH="${{ parameters.arch }}" --build-arg OS="${{ parameters.os }}" --build-arg PLATFORM="${{ parameters.os }}/${{ parameters.arch }}" --build-arg VERSION="$(IMAGE_PLATFORM_TAG_${{ parameters.name }})" --target "${{ parameters.os }}" $(EXTRA_BUILD_ARGS_${{ parameters.name }})
     enableNetwork: true
     enablePull: false
     enableCache: true
