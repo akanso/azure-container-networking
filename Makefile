@@ -471,7 +471,7 @@ cni-image-build-context:
 	@echo "$(BUILD_CONTEXT)"
 
 cni-dockerfile-path:
-	$(eval DOCKERFILE_PATH := $(CNI_BUILD_DIR)/Dockerfile)
+	$(eval DOCKERFILE_PATH := $(REPO_ROOT)/cni/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
 cni-docker-build-args:
@@ -516,7 +516,7 @@ cns-image-build-context:
 	@echo "$(BUILD_CONTEXT)"
 
 cns-dockerfile-path:
-	$(eval DOCKERFILE_PATH := $(CNS_BUILD_DIR)/Dockerfile)
+	$(eval DOCKERFILE_PATH := $(REPO_ROOT)/cns/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
 cns-docker-build-args:
@@ -560,7 +560,7 @@ npm-image-build-context:
 	@echo "$(BUILD_CONTEXT)"
 
 npm-dockerfile-path:
-	$(eval DOCKERFILE_PATH := $(NPM_BUILD_DIR)/$(OS).Dockerfile)
+	$(eval DOCKERFILE_PATH := $(REPO_ROOT)/npm/Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
 npm-docker-build-args:
