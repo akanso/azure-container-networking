@@ -29,11 +29,6 @@ jobs:
 
     - bash: |
         set -e
-        
-        ip address
-        /usr/bin/dockerd -D &
-        systemctl status docker.socket
-        #systemctl restart docker
 
         BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
         echo >&2 "##vso[task.setvariable variable=BUILD_CONTEXT_${VAR_ID};]$BUILD_CONTEXT"
@@ -60,6 +55,7 @@ jobs:
 
     - template: container-template.steps.yaml
       parameters:
-        arch: ${{ parameters.arch }}
         name: ${{ image }}
         os: ${{ parameters.os }}
+        arch: ${{ parameters.arch }}
+        platform: ${{ parameters.os }}/${{ parameters.arch }}

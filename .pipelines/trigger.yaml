@@ -30,11 +30,6 @@ resources:
 
 
 variables:
-  REPO_REF: $[ resources.repositories['azure-container-networking'].ref ]
-  REPO_COMMIT: $[ resources.repositories['azure-container-networking'].version ]
-  REPO_NAME: $[ resources.repositories['azure-container-networking'].name ]
-  REPO_TYPE: $[ resources.repositories['azure-container-networking'].type ]
-  CHANGESET_COMMIT: $[ resources.repositories['self'].version ]
   # Local analysis is only enabled on PR branches
   Codeql.AnalyzeInPipeline: $[startsWith(variables['Build.SourceBranch'], 'refs/pull/')]
 
@@ -48,11 +43,11 @@ extends:
     featureFlags:
       automaticContainerPatching: true
     sdl:
-      sourceAnalysisPool: 
+      sourceAnalysisPool:
         name: $(BUILD_POOL_NAME_DEFAULT_WINDOWS)
         os: windows
         image: acn-runner-vmss-image-windows-1es-v2.0
-      globalSdl: # https://aka.ms/obpipelines/sdl
+      globalSdl:
         #baseline:
           #baselineFile: $(Build.SourcesDirectory)\.config\.gdnbaselines
           #suppressionSet: default
