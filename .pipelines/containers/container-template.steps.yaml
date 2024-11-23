@@ -1,4 +1,6 @@
 parameters:
+- name: imageName
+  type: string
 - name: name
   type: string
   values:
@@ -8,39 +10,59 @@ parameters:
   - ipv6-hp-bpf
   - npm
 
-- name: arch
+- name: platformVersionTag
   type: string
   default: ""
+
+- name: targetPlatform
+  type: string
+  default: ""
+
+- name: buildOs
+  type: string
+  values:
+  - linux
+  - windows
+
+- name: buildArch
+  type: string
   values:
   - amd64
   - arm64
 
-- name: os
-  type: string
-  default: ""
-  values:
-  - windows
-  - linux
-
-- name: platform
-  type: string
+- name: addBuildArgs
+  type: object
   default: ""
 
 
 steps:
-- task: 1ES.BuildContainerImage@1
-  retryCountOnTaskFailure: 3
-  inputs:
-    image: $(IMAGE_NAME_AND_TAG_${{ parameters.name }})
-    dockerfile: $(DOCKERFILE_PATH_${{ parameters.name }})
-    path: $(Build.SourcesDirectory)
-    buildArguments: --platform "${{ parameters.platform }}" --build-arg ARCH="${{ parameters.arch }}" --build-arg OS="${{ parameters.os }}" --build-arg PLATFORM="${{ parameters.platform }}" --build-arg VERSION="$(IMAGE_PLATFORM_TAG_${{ parameters.name }})" --target "${{ parameters.os }}" $(EXTRA_BUILD_ARGS_${{ parameters.name }})
-    enableNetwork: true
-    enablePull: false
-    enableCache: true
-    useBuildKit: true
+#    path: $(Build.SourcesDirectory)
+#    buildArguments: --platform "${{ parameters.targetPlatform }}" --build-arg ARCH="${{ parameters.buildArch }}" --build-arg OS="${{ parameters.buildOs }}" --build-arg VERSION="$(IMAGE_PLATFORM_TAG_${{ parameters.name }})" --target "${{ parameters.os }}" $(EXTRA_BUILD_ARGS_${{ parameters.name }})
+#    enableNetwork: true
+#    enablePull: false
+#    enableCache: true
+#    useBuildKit: true
 
-- task: 1ES.PushContainerImage@1
-  condition: ${{ eq(parameters.os, 'windows') }}
-  inputs:
-    image: $(IMAGE_NAME_AND_TAG_${{ parameters.name }})
+    - task: 1ES.BuildContainerImage@1
+      retryCountOnTaskFailure: 3
+      inputs:
+        image: ${{ parameters.imageNameAndTag }}
+        dockerfile: ${{ parameters.dockerfilePath }}
+        path: ${{ parameters.targetPath }} $(Build.SourcesDirectory)
+        buildArguments: |
+          --build-arg PLATFORM="${{ parameters.buildPlatform }}" \
+          --build-arg ARCH="${{ parameters.buildArch }}" \
+          --build-arg OS="${{ parameters.buildOs }}" \
+          --build-arg VERSION="${{ parameters.platformVersionTag }}" \
+          --platform "${{ parameters.targetPlatform }}" \
+          --target "${{ parameters.targetOs }}" \
+          ${{ parameters.addBuildArgs }}
+        enableNetwork: true
+        enablePull: false
+        enableCache: true
+        useBuildKit: true
+    
+    - task: 1ES.PushContainerImage@1
+      condition: ${{ eq(parameters.os, 'windows') }}
+      inputs:
+        image: ${{ parameters.imageNameAndTag }}

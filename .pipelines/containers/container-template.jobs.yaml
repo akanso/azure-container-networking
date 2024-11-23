@@ -27,14 +27,6 @@ jobs:
     templateContext:
       authenticatedContainerRegistries:
       - serviceConnection: $(ACR_SERVICECONNECTION)
-      ${{ if eq(variables.Agent.OSArchitecture, 'ARM') }}:
-        buildArch: arm64
-      ${{ else }}:
-        buildArch: amd64
-      ${{ if eq(variables.Agent.OS, 'Linux') }}:
-        buildOs: linux
-      ${{ else }}:
-        buildOs: windows
 
     steps:
     - checkout: self
@@ -82,24 +74,56 @@ jobs:
         MAKE_DOCKERFILE_PATH: ${{ image }}-dockerfile-path
         MAKE_EXTRA_BUILD_ARGS: ${{ image }}-docker-build-args
 
-    - task: 1ES.BuildContainerImage@1
-      retryCountOnTaskFailure: 3
-      inputs:
-        image: $(IMAGE_NAME_AND_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+    - template: ./container-template.steps.yaml
+      parameters:
+        imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
         dockerfile: $(DOCKERFILE_PATH_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
         path: $(Build.SourcesDirectory)
-        buildArguments: |
-          --platform "${{ templateContext.targetOs }}/${{ templateContext.targetArch }}" \
-          --build-arg ARCH="${{ templateContext.buildArch }}" \
-          --build-arg OS="${{ templateContext.buildOs }}" \
-          --build-arg VERSION="$(IMAGE_PLATFORM_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})" \
-          --target "${{ parameters.os }}" $(EXTRA_BUILD_ARGS_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
-        enableNetwork: true
-        enablePull: false
-        enableCache: true
-        useBuildKit: true
-    
-    - task: 1ES.PushContainerImage@1
-      condition: ${{ eq(parameters.os, 'windows') }}
-      inputs:
-        image: $(IMAGE_NAME_AND_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+        targetVersion: $(IMAGE_PLATFORM_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+        targetOs: ${{ parameters.os }}
+        targetArch: ${{ parameters.arch }}
+        targetPlatform: "${{ templateContext.targetOs }}/${{ templateContext.targetArch }}" 
+        addBuildArgs: 
+        ${{ if eq(variables.Agent.OSArchitecture, 'ARM') }}:
+          buildArch: arm64
+
+          ${{ if eq(variables.Agent.OS, 'Linux') }}:
+            buildOs: linux
+            buildPlatform: linux/amd64
+          ${{ else }}:
+            buildOs: windows
+            buildPlatform: windows/amd64
+
+        ${{ else }}:
+          buildArch: amd64
+
+          ${{ if eq(variables.Agent.OS, 'Linux') }}:
+            buildOs: linux
+            buildPlatform: linux/amd64
+          ${{ else }}:
+            buildOs: windows
+            buildPlatform: windows/amd64
+
+#    - task: 1ES.BuildContainerImage@1
+#      retryCountOnTaskFailure: 3
+#      inputs:
+#        image: ${{ parameters.imageNameAndTag }}
+#        dockerfile: ${{ parameters.dockerfilePath }}
+#        path: ${{ parameters.targetPath }} $(Build.SourcesDirectory)
+#        buildArguments: |
+#          --build-arg PLATFORM="${{ parameters.buildPlatform }}" \
+#          --build-arg ARCH="${{ parameters.buildArch }}" \
+#          --build-arg OS="${{ parameters.buildOs }}" \
+#          --build-arg VERSION="${{ parameters.platformVersion }}" \
+#          --platform "${{ parameters.targetPlatform }}" \
+#          --target "${{ parameters.targetOs }}" \
+#          ${{ parameters.addBuildArgs }}
+#        enableNetwork: true
+#        enablePull: false
+#        enableCache: true
+#        useBuildKit: true
+#    
+#    - task: 1ES.PushContainerImage@1
+#      condition: ${{ eq(parameters.os, 'windows') }}
+#      inputs:
+#        image: ${{ parameters.imageNameAndTag }}
