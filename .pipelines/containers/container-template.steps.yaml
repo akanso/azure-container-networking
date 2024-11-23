@@ -5,7 +5,7 @@ parameters:
 - name: dockerfilePath
   type: string
 
-- name: platformVersionTag
+- name: targetVersion
   type: string
   default: ""
 
@@ -68,7 +68,7 @@ steps:
           --build-arg PLATFORM="${{ parameters.buildPlatform }}" \
           --build-arg ARCH="${{ parameters.buildArch }}" \
           --build-arg OS="${{ parameters.buildOs }}" \
-          --build-arg VERSION="${{ parameters.platformVersionTag }}" \
+          --build-arg VERSION="${{ parameters.targetVersion }}" \
           --platform "${{ parameters.targetPlatform }}" \
           --target "${{ parameters.targetOs }}" \
           ${{ parameters.addBuildArgs }}
