@@ -23,7 +23,7 @@ data:
       },
       "ChannelMode": "AzureHost",
       "InitializeFromCNI": false,
-      "MetricsBindAddress": ":10092"
+      "MetricsBindAddress": ":10092",
       "ManageEndpointState": true,
       "ProgramSNATIPTables" : false,
       "EnableCNIConflistGeneration": true,
