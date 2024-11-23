@@ -78,6 +78,6 @@ steps:
         useBuildKit: true
     
     - task: 1ES.PushContainerImage@1
-      condition: ${{ eq(parameters.os, 'windows') }}
+      condition: ${{ eq(parameters.targetOs, 'windows') }}
       inputs:
         image: ${{ parameters.imageNameAndTag }}
