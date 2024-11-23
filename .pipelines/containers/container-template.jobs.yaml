@@ -1,9 +1,17 @@
 parameters:
 - name: arch
   type: string
+  default: ""
+  values:
+  - amd64
+  - arm64
 
 - name: os
   type: string
+  default: ""
+  values:
+  - windows
+  - linux
 
 - name: images
   type: object
@@ -19,6 +27,14 @@ jobs:
     templateContext:
       authenticatedContainerRegistries:
       - serviceConnection: $(ACR_SERVICECONNECTION)
+      ${{ if eq(variables.Agent.OSArchitecture, 'ARM' }}:
+        buildArch: arm64
+      ${{ else }}:
+        buildArch: amd64
+      ${{ if eq(variables.Agent.OS, 'Linux') }}:
+        buildOs: linux
+      ${{ else }}:
+        buildOs: windows
 
     steps:
     - checkout: self
@@ -29,6 +45,16 @@ jobs:
 
     - bash: |
         set -e
+
+        echo >&2 "##vso[task.setvariable variable=${VAR_ID};]$VAR_ID"
+      displayName: "Get Image ID"
+      env:
+        VAR_ID: ${{ image }}_${{ parameters.os }}_${{ parameters.arch }}
+
+    - bash: |
+        set -e
+
+        VAR_ID="${IMAGE}_${OS}_${ARCH}"
 
         BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
         echo >&2 "##vso[task.setvariable variable=BUILD_CONTEXT_${VAR_ID};]$BUILD_CONTEXT"
@@ -46,16 +72,34 @@ jobs:
         echo >&2 "##vso[task.setvariable variable=EXTRA_BUILD_ARGS_${VAR_ID};]$EXTRA_BUILD_ARGS"
       displayName: "Get Image Build Data"
       env:
-        VAR_ID: ${{ image }}
+        IMAGE: ${{ image }}
+        OS: ${{ parameters.os }}
+        ARCH: ${{ parameters.arch }}
+        PLATFORM: ${{ parameters.os }}/${{ parameters.arch }}
         MAKE_IMAGE_TAG: ${{ image }}-image-tag
         MAKE_BUILD_CONTEXT: ${{ image }}-image-build-context
         MAKE_IMAGE_NAME_AND_TAG: ${{ image }}-image-name-and-tag
         MAKE_DOCKERFILE_PATH: ${{ image }}-dockerfile-path
         MAKE_EXTRA_BUILD_ARGS: ${{ image }}-docker-build-args
 
-    - template: container-template.steps.yaml
-      parameters:
-        name: ${{ image }}
-        os: ${{ parameters.os }}
-        arch: ${{ parameters.arch }}
-        platform: ${{ parameters.os }}/${{ parameters.arch }}
+    - task: 1ES.BuildContainerImage@1
+      retryCountOnTaskFailure: 3
+      inputs:
+        image: $(IMAGE_NAME_AND_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+        dockerfile: $(DOCKERFILE_PATH_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+        path: $(Build.SourcesDirectory)
+        buildArguments: |
+          --platform "${{ templateContext.targetOs }}/${{ templateContext.targetArch }}" \
+          --build-arg ARCH="${{ templateContext.buildArch }}" \
+          --build-arg OS="${{ templateContext.buildOs }}" \
+          --build-arg VERSION="$(IMAGE_PLATFORM_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})" \
+          --target "${{ parameters.os }}" $(EXTRA_BUILD_ARGS_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+        enableNetwork: true
+        enablePull: false
+        enableCache: true
+        useBuildKit: true
+    
+    - task: 1ES.PushContainerImage@1
+      condition: ${{ eq(parameters.os, 'windows') }}
+      inputs:
+        image: $(IMAGE_NAME_AND_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})

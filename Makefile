@@ -560,7 +560,7 @@ npm-image-build-context:
 	@echo "$(BUILD_CONTEXT)"
 
 npm-dockerfile-path:
-	$(eval DOCKERFILE_PATH := $(REPO_ROOT)/npm/Dockerfile)
+	$(eval DOCKERFILE_PATH := $(REPO_ROOT)/npm/$(OS).Dockerfile)
 	@echo "$(DOCKERFILE_PATH)"
 
 npm-docker-build-args:

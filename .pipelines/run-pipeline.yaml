@@ -84,9 +84,6 @@ stages:
       - cns
       - ipv6-hp-bpf
       - npm
-      containerRegistry:
-        name: $(ACR_NAME)
-        clientId: $(ACR_CLIENTID)
   - template: containers/container-template.jobs.yaml
     parameters:
       arch: arm64
@@ -97,9 +94,6 @@ stages:
       - cns
       - ipv6-hp-bpf
       - npm
-      containerRegistry:
-        name: $(ACR_NAME)
-        clientId: $(ACR_CLIENTID)
   - template: containers/container-template.jobs.yaml
     parameters:
       arch: amd64
@@ -109,9 +103,6 @@ stages:
       - cni
       - cns
       - npm
-      containerRegistry:
-        name: $(ACR_NAME)
-        clientId: $(ACR_CLIENTID)
 
 
 - stage: publish
