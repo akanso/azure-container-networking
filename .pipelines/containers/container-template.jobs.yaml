@@ -77,12 +77,12 @@ jobs:
     - template: ./container-template.steps.yaml
       parameters:
         imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
-        dockerfile: $(DOCKERFILE_PATH_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
-        path: $(Build.SourcesDirectory)
+        dockerfilePath: $(DOCKERFILE_PATH_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
+        buildContextPath: $(Build.SourcesDirectory)
         targetVersion: $(IMAGE_PLATFORM_TAG_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
         targetOs: ${{ parameters.os }}
         targetArch: ${{ parameters.arch }}
-        targetPlatform: "${{ parameters.targetOs }}/${{ parameters.targetArch }}" 
+        targetPlatform: "${{ parameters.os }}/${{ parameters.arch }}" 
         addBuildArgs: 
         ${{ if eq(variables.Agent.OSArchitecture, 'ARM') }}:
           buildArch: arm64

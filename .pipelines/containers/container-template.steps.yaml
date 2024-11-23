@@ -1,22 +1,33 @@
 parameters:
-- name: imageName
+- name: imageNameAndTag
   type: string
-- name: name
+
+- name: dockerfilePath
   type: string
-  values:
-  - azure-ipam
-  - cni
-  - cns
-  - ipv6-hp-bpf
-  - npm
 
 - name: platformVersionTag
+  type: string
+  default: ""
+
+- name: buildContextPath
   type: string
   default: ""
 
 - name: targetPlatform
   type: string
   default: ""
+
+- name: targetOs
+  type: string
+  values:
+  - linux
+  - windows
+
+- name: targetArch
+  type: string
+  values:
+  - amd64
+  - arm64
 
 - name: buildOs
   type: string
@@ -29,6 +40,10 @@ parameters:
   values:
   - amd64
   - arm64
+
+- name: buildPlatform
+  type: string
+  default: ""
 
 - name: addBuildArgs
   type: object
@@ -48,7 +63,7 @@ steps:
       inputs:
         image: ${{ parameters.imageNameAndTag }}
         dockerfile: ${{ parameters.dockerfilePath }}
-        path: ${{ parameters.targetPath }} $(Build.SourcesDirectory)
+        path: ${{ parameters.buildContextPath }}
         buildArguments: |
           --build-arg PLATFORM="${{ parameters.buildPlatform }}" \
           --build-arg ARCH="${{ parameters.buildArch }}" \
