@@ -27,7 +27,7 @@ jobs:
     templateContext:
       authenticatedContainerRegistries:
       - serviceConnection: $(ACR_SERVICECONNECTION)
-      ${{ if eq(variables.Agent.OSArchitecture, 'ARM' }}:
+      ${{ if eq(variables.Agent.OSArchitecture, 'ARM') }}:
         buildArch: arm64
       ${{ else }}:
         buildArch: amd64
