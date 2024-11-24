@@ -73,42 +73,48 @@ stages:
   dependsOn:
     - setup
     - test
-  templateContext:
-    buildArch: amd64
-    buildOs: linux
-    buildPlatform: linux/amd64
-    authenticatedContainerRegistries:
-    - serviceConnection: $(ACR_SERVICECONNECTION)
+  strategy:
+    matrix:
+      linux_amd64:
+        os: linux
+        arch: amd64
+        images:
+        - azure-ipam
+        - cni
+        - cns
+        - ipv6-hp-bpf
+        - npm
+      linux_arm64:
+        os: linux
+        arch: arm64
+        images:
+        - azure-ipam
+        - cni
+        - cns
+        - ipv6-hp-bpf
+        - npm
+      windows_amd64:
+        os: windows
+        arch: amd64
+        images:
+        - azure-ipam
+        - cni
+        - cns
+        - npm
   jobs:
-  - template: containers/container-template.jobs.yaml
+  - template: containerize.jobs.yaml
     parameters:
-      arch: amd64
-      os: linux
-      images:
-      - azure-ipam
-      - cni
-      - cns
-      - ipv6-hp-bpf
-      - npm
-  - template: containers/container-template.jobs.yaml
-    parameters:
-      arch: arm64
-      os: linux
-      images:
-      - azure-ipam
-      - cni
-      - cns
-      - ipv6-hp-bpf
-      - npm
-  - template: containers/container-template.jobs.yaml
-    parameters:
-      arch: amd64
-      os: windows
-      images:
-      - azure-ipam
-      - cni
-      - cns
-      - npm
+      targetOs: $(os)
+      targetArch: $(arch)
+      images: ${{ convertToJson(images) }}
+      supportedPlatforms:
+      - job: $(os)_$(arch)
+        templateContext:
+          buildArch: amd64
+          buildOs: linux
+          buildPlatform: linux/amd64
+          authenticatedContainerRegistries:
+          - serviceConnection: $(ACR_SERVICECONNECTION)
 
 
 - stage: publish
