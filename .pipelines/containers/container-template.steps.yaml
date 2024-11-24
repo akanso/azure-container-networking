@@ -65,12 +65,12 @@ steps:
         dockerfile: ${{ parameters.dockerfilePath }}
         path: ${{ parameters.buildContextPath }}
         buildArguments: |
-          --build-arg PLATFORM="${{ parameters.buildPlatform }}" \
-          --build-arg ARCH="${{ parameters.buildArch }}" \
-          --build-arg OS="${{ parameters.buildOs }}" \
-          --build-arg VERSION="${{ parameters.targetVersion }}" \
-          --platform "${{ parameters.targetPlatform }}" \
-          --target "${{ parameters.targetOs }}" \
+          --build-arg PLATFORM="${{ parameters.buildPlatform }}"
+          --build-arg ARCH="${{ parameters.buildArch }}"
+          --build-arg OS="${{ parameters.buildOs }}"
+          --build-arg VERSION="${{ parameters.targetVersion }}"
+          --platform "${{ parameters.targetPlatform }}"
+          --target "${{ parameters.targetOs }}"
           ${{ parameters.addBuildArgs }}
         enableNetwork: true
         enablePull: false
