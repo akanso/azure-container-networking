@@ -10,6 +10,23 @@ parameters:
   type: string
 
 
+- name: buildPlatform
+  type: string
+  default: ''
+
+- name: buildOs
+  type: string
+  values:
+  - linux
+  - windows
+
+- name: buildArch
+  type: string
+  values:
+  - amd64
+  - arm64
+
+
 jobs:
 - ${{ each supportedPlatformJob in parameters.supportedPlatforms }}:
   - ${{ each imageName in supportedPlatformJob.images }}:
