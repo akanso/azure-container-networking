@@ -676,6 +676,9 @@ func (service *HTTPRestService) attachOrDetachHelper(req cns.ConfigureContainerN
 
 	var returnCode types.ResponseCode
 	var returnMessage string
+	nc := service.state.ContainerStatus[req.NetworkContainerid]
+	defaultDenyACL := nc.CreateNetworkContainerRequest.DefaultDenyACL
+
 	switch service.state.OrchestratorType {
 	case cns.Batch:
 		podInfo, err := cns.UnmarshalPodInfo(existing.CreateNetworkContainerRequest.OrchestratorContext)
@@ -687,9 +690,9 @@ func (service *HTTPRestService) attachOrDetachHelper(req cns.ConfigureContainerN
 			netPluginConfig := service.getNetPluginDetails()
 			switch operation {
 			case attach:
-				err = nc.Attach(podInfo, req.Containerid, netPluginConfig)
+				err = nc.Attach(podInfo, req.Containerid, netPluginConfig, defaultDenyACL)
 			case detach:
-				err = nc.Detach(podInfo, req.Containerid, netPluginConfig)
+				err = nc.Detach(podInfo, req.Containerid, netPluginConfig, defaultDenyACL)
 			}
 			if err != nil {
 				returnCode = types.UnexpectedError

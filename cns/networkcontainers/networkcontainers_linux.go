@@ -64,7 +64,7 @@ func updateInterface(createNetworkContainerRequest cns.CreateNetworkContainerReq
 
 	logger.Printf("[Azure CNS] run time configuration for CNI plugin info %+v", rt)
 
-	netConfig, err := getNetworkConfig(netpluginConfig.networkConfigPath)
+	netConfig, err := getNetworkConfig(netpluginConfig.networkConfigPath, false)
 	if err != nil {
 		logger.Printf("[Azure CNS] Failed to build network configuration with error %v", err)
 		return err
@@ -85,7 +85,7 @@ func deleteInterface(networkContainerID string) error {
 	return nil
 }
 
-func configureNetworkContainerNetworking(operation, podName, podNamespace, dockerContainerid string, netPluginConfig *NetPluginConfiguration) (err error) {
+func configureNetworkContainerNetworking(operation, podName, podNamespace, dockerContainerid string, netPluginConfig *NetPluginConfiguration, defaultDenyACL bool) (err error) {
 	return fmt.Errorf("[Azure CNS] Operation is not supported in linux.")
 }
 

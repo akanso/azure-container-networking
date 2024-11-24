@@ -106,7 +106,7 @@ func DeleteLoopbackAdapter(adapterName string) error {
 }
 
 // This function gets the flattened network configuration (compliant with azure cni) in byte array format
-func getNetworkConfig(configFilePath string) ([]byte, error) {
+func getNetworkConfig(configFilePath string, defaultDenyACL bool) ([]byte, error) {
 	content, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return nil, err
@@ -134,34 +134,35 @@ func getNetworkConfig(configFilePath string) ([]byte, error) {
 	flatNetConfigMap[versionStr] = configMap[versionStr].(string)
 	flatNetConfigMap[nameStr] = configMap[nameStr].(string)
 
-	// TODO Check if default deny bool is enabled to true
-	// insert default dent policy here
-	defaultDenyOutACL := map[string]interface{}{
-		"Name": "EndpointPolicy",
-		"Value": map[string]interface{}{
-			"Type":      "ACL",
-			"Action":    "Block",
-			"Direction": "Out",
-			"Priority":  300,
-		},
-	}
+	if defaultDenyACL {
+		// insert default dent policy here
+		defaultDenyOutACL := map[string]interface{}{
+			"Name": "EndpointPolicy",
+			"Value": map[string]interface{}{
+				"Type":      "ACL",
+				"Action":    "Block",
+				"Direction": "Out",
+				"Priority":  300,
+			},
+		}
 
-	defaultDenyInACL := map[string]interface{}{
-		"Name": "EndpointPolicy",
-		"Value": map[string]interface{}{
-			"Type":      "ACL",
-			"Action":    "Block",
-			"Direction": "In",
-			"Priority":  300,
-		},
-	}
-	additionalArgsKey := "AdditionalArgs"
-	if _, exists := flatNetConfigMap[additionalArgsKey]; !exists {
-		flatNetConfigMap[additionalArgsKey] = []interface{}{}
-	}
+		defaultDenyInACL := map[string]interface{}{
+			"Name": "EndpointPolicy",
+			"Value": map[string]interface{}{
+				"Type":      "ACL",
+				"Action":    "Block",
+				"Direction": "In",
+				"Priority":  300,
+			},
+		}
+		additionalArgsKey := "AdditionalArgs"
+		if _, exists := flatNetConfigMap[additionalArgsKey]; !exists {
+			flatNetConfigMap[additionalArgsKey] = []interface{}{}
+		}
 
-	flatNetConfigMap[additionalArgsKey] = append(flatNetConfigMap[additionalArgsKey].([]interface{}), defaultDenyOutACL)
-	flatNetConfigMap[additionalArgsKey] = append(flatNetConfigMap[additionalArgsKey].([]interface{}), defaultDenyInACL)
+		flatNetConfigMap[additionalArgsKey] = append(flatNetConfigMap[additionalArgsKey].([]interface{}), defaultDenyOutACL)
+		flatNetConfigMap[additionalArgsKey] = append(flatNetConfigMap[additionalArgsKey].([]interface{}), defaultDenyInACL)
+	}
 
 	// convert into bytes format
 	netConfig, err := json.Marshal(flatNetConfigMap)
@@ -227,17 +228,17 @@ func execPlugin(rt *libcni.RuntimeConf, netconf []byte, operation, path string) 
 }
 
 // Attach - attaches network container to network.
-func (cn *NetworkContainers) Attach(podInfo cns.PodInfo, dockerContainerid string, netPluginConfig *NetPluginConfiguration) error {
+func (cn *NetworkContainers) Attach(podInfo cns.PodInfo, dockerContainerid string, netPluginConfig *NetPluginConfiguration, defaultDenyACL bool) error {
 	logger.Printf("[Azure CNS] NetworkContainers.Attach called")
-	err := configureNetworkContainerNetworking(cniAdd, podInfo.Name(), podInfo.Namespace(), dockerContainerid, netPluginConfig)
+	err := configureNetworkContainerNetworking(cniAdd, podInfo.Name(), podInfo.Namespace(), dockerContainerid, netPluginConfig, defaultDenyACL)
 	logger.Printf("[Azure CNS] NetworkContainers.Attach finished")
 	return err
 }
 
 // Detach - detaches network container from network.
-func (cn *NetworkContainers) Detach(podInfo cns.PodInfo, dockerContainerid string, netPluginConfig *NetPluginConfiguration) error {
+func (cn *NetworkContainers) Detach(podInfo cns.PodInfo, dockerContainerid string, netPluginConfig *NetPluginConfiguration, defaultDenyACL bool) error {
 	logger.Printf("[Azure CNS] NetworkContainers.Detach called")
-	err := configureNetworkContainerNetworking(cniDelete, podInfo.Name(), podInfo.Namespace(), dockerContainerid, netPluginConfig)
+	err := configureNetworkContainerNetworking(cniDelete, podInfo.Name(), podInfo.Namespace(), dockerContainerid, netPluginConfig, defaultDenyACL)
 	logger.Printf("[Azure CNS] NetworkContainers.Detach finished")
 	return err
 }

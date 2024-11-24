@@ -219,7 +219,7 @@ func deleteInterface(interfaceName string) error {
 	return err
 }
 
-func configureNetworkContainerNetworking(operation, podName, podNamespace, dockerContainerid string, netPluginConfig *NetPluginConfiguration) (err error) {
+func configureNetworkContainerNetworking(operation, podName, podNamespace, dockerContainerid string, netPluginConfig *NetPluginConfiguration, defaultDenyACL bool) (err error) {
 	cniRtConf := &libcni.RuntimeConf{
 		ContainerID: dockerContainerid,
 		NetNS:       "none",
@@ -231,7 +231,7 @@ func configureNetworkContainerNetworking(operation, podName, podNamespace, docke
 	}
 	logger.Printf("[Azure CNS] run time conf info %+v", cniRtConf)
 
-	netConfig, err := getNetworkConfig(netPluginConfig.networkConfigPath)
+	netConfig, err := getNetworkConfig(netPluginConfig.networkConfigPath, defaultDenyACL)
 	if err != nil {
 		logger.Printf("[Azure CNS] Failed to build network configuration with error %v", err)
 		return err
