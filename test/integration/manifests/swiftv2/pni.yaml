@@ -5,3 +5,4 @@ metadata:
 spec:
    podnetwork: aksswiftvnetv20425
    podIPReservationSize: 2
+   defaultDenyACL: false

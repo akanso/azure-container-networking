@@ -57,7 +57,7 @@ type PodNetworkInstanceSpec struct {
 	// +kubebuilder:validation:Optional
 	PodNetworkConfigs []PodNetworkConfig `json:"podNetworkConfigs"`
 	// DefaultDenyACL is a bool that specifies whether a "deny all" policy is applied to l1vh multi-tenant pods
-	DefaultDenyACL bool
+	DefaultDenyACL bool `json:"defaultDenyACL"`
 }
 
 // PodNetworkInstanceStatus defines the observed state of PodNetworkInstance
