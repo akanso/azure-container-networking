@@ -399,7 +399,7 @@ azure-ipam-image: ## build azure-ipam container image.
 		TARGET=$(OS) \
 		OS=$(OS) \
 		ARCH=$(ARCH) \
-		$(DOCKER_BUILD_ARGS)
+		EXTRA_BUILD_ARGS=$(DOCKER_BUILD_ARGS)
 
 azure-ipam-image-push: ## push azure-ipam container image.
 	$(MAKE) container-push \
@@ -438,7 +438,7 @@ ipv6-hp-bpf-image: ## build ipv6-hp-bpf container image.
 	$(MAKE) container \
 		DOCKERFILE=$(DOCKERFILE_PATH) \
 		IMAGE=$(IPV6_HP_BPF_IMAGE) \
-		EXTRA_BUILD_ARGS='$(DOCKER_BUILD_ARGS)'\
+		EXTRA_BUILD_ARGS=$(DOCKER_BUILD_ARGS) \
 		PLATFORM=$(PLATFORM) \
 		TAG=$(IPV6_HP_BPF_IMAGE_PLATFORM_TAG) \
 		TARGET=$(OS) \
@@ -475,7 +475,7 @@ cni-dockerfile-path:
 	@echo "$(DOCKERFILE_PATH)"
 
 cni-docker-build-args:
-	$(eval DOCKER_BUILD_ARGS='--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)')
+	$(eval DOCKER_BUILD_ARGS="--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)")
 	@echo $(DOCKER_BUILD_ARGS)
 
 cni-image: ## build cni container image.
@@ -487,7 +487,7 @@ cni-image: ## build cni container image.
 		TARGET=$(OS) \
 		OS=$(OS) \
 		ARCH=$(ARCH) \
-		EXTRA_BUILD_ARGS='$(DOCKER_BUILD_ARGS)'
+		EXTRA_BUILD_ARGS=$(DOCKER_BUILD_ARGS)
 
 cni-image-push: ## push cni container image.
 	$(MAKE) container-push \
@@ -520,14 +520,14 @@ cns-dockerfile-path:
 	@echo "$(DOCKERFILE_PATH)"
 
 cns-docker-build-args:
-	$(eval DOCKER_BUILD_ARGS='--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)')
+	$(eval DOCKER_BUILD_ARGS="--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)")
 	@echo $(DOCKER_BUILD_ARGS)
 
 cns-image: ## build cns container image.
 	$(MAKE) container \
 		DOCKERFILE=$(DOCKERFILE_PATH) \
 		IMAGE=$(CNS_IMAGE) \
-		EXTRA_BUILD_ARGS='$(DOCKER_BUILD_ARGS)' \
+		EXTRA_BUILD_ARGS=$(DOCKER_BUILD_ARGS) \
 		PLATFORM=$(PLATFORM) \
 		TAG=$(CNS_PLATFORM_TAG) \
 		TARGET=$(OS) \
@@ -564,14 +564,14 @@ npm-dockerfile-path:
 	@echo "$(DOCKERFILE_PATH)"
 
 npm-docker-build-args:
-	$(eval DOCKER_BUILD_ARGS='--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)')
+	$(eval DOCKER_BUILD_ARGS="--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)")
 	@echo $(DOCKER_BUILD_ARGS)
 
 npm-image: ## build the npm container image.
 	$(MAKE) container-$(CONTAINER_BUILDER) \
 		DOCKERFILE=$(DOCKERFILE_PATH) \
 		IMAGE=$(NPM_IMAGE) \
-		EXTRA_BUILD_ARGS='$(DOCKER_BUILD_ARGS)' \
+		EXTRA_BUILD_ARGS=$(DOCKER_BUILD_ARGS) \
 		PLATFORM=$(PLATFORM) \
 		TAG=$(NPM_PLATFORM_TAG) \
 		TARGET=$(OS) \
