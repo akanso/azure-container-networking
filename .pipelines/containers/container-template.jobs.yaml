@@ -83,7 +83,7 @@ jobs:
         targetOs: ${{ parameters.os }}
         targetArch: ${{ parameters.arch }}
         targetPlatform: "${{ parameters.os }}/${{ parameters.arch }}" 
-        addBuildArgs: 
+        addBuildArgs: $(EXTRA_BUILD_ARGS_${{ image }}_${{ parameters.os }}_${{ parameters.arch }})
         ${{ if eq(variables.Agent.OSArchitecture, 'ARM') }}:
           buildArch: arm64
 

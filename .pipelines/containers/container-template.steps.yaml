@@ -51,13 +51,6 @@ parameters:
 
 
 steps:
-#    path: $(Build.SourcesDirectory)
-#    buildArguments: --platform "${{ parameters.targetPlatform }}" --build-arg ARCH="${{ parameters.buildArch }}" --build-arg OS="${{ parameters.buildOs }}" --build-arg VERSION="$(IMAGE_PLATFORM_TAG_${{ parameters.name }})" --target "${{ parameters.os }}" $(EXTRA_BUILD_ARGS_${{ parameters.name }})
-#    enableNetwork: true
-#    enablePull: false
-#    enableCache: true
-#    useBuildKit: true
-
     - task: 1ES.BuildContainerImage@1
       retryCountOnTaskFailure: 3
       inputs:
