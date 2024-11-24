@@ -135,7 +135,7 @@ func getNetworkConfig(configFilePath string, defaultDenyACL bool) ([]byte, error
 	flatNetConfigMap[nameStr] = configMap[nameStr].(string)
 
 	if defaultDenyACL {
-		// insert default dent policy here
+		// insert default deny policies here
 		defaultDenyOutACL := map[string]interface{}{
 			"Name": "EndpointPolicy",
 			"Value": map[string]interface{}{
