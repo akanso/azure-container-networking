@@ -134,6 +134,35 @@ func getNetworkConfig(configFilePath string) ([]byte, error) {
 	flatNetConfigMap[versionStr] = configMap[versionStr].(string)
 	flatNetConfigMap[nameStr] = configMap[nameStr].(string)
 
+	// TODO Check if default deny bool is enabled to true
+	// insert default dent policy here
+	defaultDenyOutACL := map[string]interface{}{
+		"Name": "EndpointPolicy",
+		"Value": map[string]interface{}{
+			"Type":      "ACL",
+			"Action":    "Block",
+			"Direction": "Out",
+			"Priority":  300,
+		},
+	}
+
+	defaultDenyInACL := map[string]interface{}{
+		"Name": "EndpointPolicy",
+		"Value": map[string]interface{}{
+			"Type":      "ACL",
+			"Action":    "Block",
+			"Direction": "In",
+			"Priority":  300,
+		},
+	}
+	additionalArgsKey := "AdditionalArgs"
+	if _, exists := flatNetConfigMap[additionalArgsKey]; !exists {
+		flatNetConfigMap[additionalArgsKey] = []interface{}{}
+	}
+
+	flatNetConfigMap[additionalArgsKey] = append(flatNetConfigMap[additionalArgsKey].([]interface{}), defaultDenyOutACL)
+	flatNetConfigMap[additionalArgsKey] = append(flatNetConfigMap[additionalArgsKey].([]interface{}), defaultDenyInACL)
+
 	// convert into bytes format
 	netConfig, err := json.Marshal(flatNetConfigMap)
 	if err != nil {

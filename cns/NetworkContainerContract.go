@@ -127,6 +127,7 @@ type CreateNetworkContainerRequest struct {
 	EndpointPolicies           []NetworkContainerRequestPolicies
 	NCStatus                   v1alpha.NCStatus
 	NetworkInterfaceInfo       NetworkInterfaceInfo //nolint // introducing new field for backendnic, to be used later by cni code
+	DefaultDenyACL             bool                 // specifies whether a "deny all" policy is applied to l1vh multi-tenant pods
 }
 
 func (req *CreateNetworkContainerRequest) Validate() error {
@@ -487,6 +488,7 @@ type GetNetworkContainerResponse struct {
 	AllowHostToNCCommunication bool
 	AllowNCToHostCommunication bool
 	NetworkInterfaceInfo       NetworkInterfaceInfo
+	DefaultDenyACL             bool // specifies whether a "deny all" policy is applied to l1vh multi-tenant pods
 }
 
 type PodIpInfo struct {

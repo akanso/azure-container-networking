@@ -112,6 +112,7 @@ type EndpointInfo struct {
 	IsIPv6Enabled                 bool
 	HostSubnetPrefix              string // can be used later to add an external interface
 	PnPID                         string
+	DefaultDenyACL                bool
 }
 
 // RouteInfo contains information about an IP route.

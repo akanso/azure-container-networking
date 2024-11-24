@@ -531,6 +531,7 @@ func (service *HTTPRestService) getAllNetworkContainerResponses(
 			AllowHostToNCCommunication: savedReq.AllowHostToNCCommunication,
 			AllowNCToHostCommunication: savedReq.AllowNCToHostCommunication,
 			NetworkInterfaceInfo:       savedReq.NetworkInterfaceInfo,
+			DefaultDenyACL:             savedReq.DefaultDenyACL,
 		}
 
 		// If the NC version check wasn't skipped, take into account the VFP programming status when returning the response
@@ -933,6 +934,7 @@ func (service *HTTPRestService) handleGetNetworkContainers(w http.ResponseWriter
 			LocalIPConfiguration:       ncDetails.CreateNetworkContainerRequest.LocalIPConfiguration,
 			AllowHostToNCCommunication: ncDetails.CreateNetworkContainerRequest.AllowHostToNCCommunication,
 			AllowNCToHostCommunication: ncDetails.CreateNetworkContainerRequest.AllowNCToHostCommunication,
+			DefaultDenyACL:             ncDetails.CreateNetworkContainerRequest.DefaultDenyACL,
 		}
 		networkContainers[i] = getNcResp
 		i++

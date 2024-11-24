@@ -59,6 +59,7 @@ func setEndpointOptions(cnsNwConfig *cns.GetNetworkContainerResponse, epInfo *ne
 		epInfo.AllowInboundFromHostToNC = cnsNwConfig.AllowHostToNCCommunication
 		epInfo.AllowInboundFromNCToHost = cnsNwConfig.AllowNCToHostCommunication
 		epInfo.NetworkContainerID = cnsNwConfig.NetworkContainerID
+		epInfo.DefaultDenyACL = cnsNwConfig.DefaultDenyACL
 	}
 }
 
