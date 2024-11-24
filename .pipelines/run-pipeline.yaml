@@ -73,45 +73,43 @@ stages:
   dependsOn:
     - setup
     - test
-  jobs:
-  - template: containers/container-template.jobs.yaml
-    parameters:
-      arch: amd64
-      os: linux
-      images:
-      - azure-ipam
-      - cni
-      - cns
-      - ipv6-hp-bpf
-      - npm
-      containerRegistry:
-        name: $(ACR_NAME)
-        clientId: $(ACR_CLIENTID)
-  - template: containers/container-template.jobs.yaml
-    parameters:
-      arch: arm64
-      os: linux
-      images:
-      - azure-ipam
-      - cni
-      - cns
-      - ipv6-hp-bpf
-      - npm
-      containerRegistry:
-        name: $(ACR_NAME)
-        clientId: $(ACR_CLIENTID)
-  - template: containers/container-template.jobs.yaml
-    parameters:
-      arch: amd64
-      os: windows
-      images:
-      - azure-ipam
-      - cni
-      - cns
-      - npm
-      containerRegistry:
-        name: $(ACR_NAME)
-        clientId: $(ACR_CLIENTID)
+  templateContext:
+    buildArch: amd64
+    buildOs: linux
+    buildPlatform: linux/amd64
+    authenticatedContainerRegistries:
+    - serviceConnection: $(ACR_SERVICECONNECTION)
+  parameters:
+    jobs:
+    - template: containers/container-template.jobs.yaml
+      parameters:
+        arch: amd64
+        os: linux
+        images:
+        - azure-ipam
+        - cni
+        - cns
+        - ipv6-hp-bpf
+        - npm
+    - template: containers/container-template.jobs.yaml
+      parameters:
+        arch: arm64
+        os: linux
+        images:
+        - azure-ipam
+        - cni
+        - cns
+        - ipv6-hp-bpf
+        - npm
+    - template: containers/container-template.jobs.yaml
+      parameters:
+        arch: amd64
+        os: windows
+        images:
+        - azure-ipam
+        - cni
+        - cns
+        - npm
 
 
 - stage: publish

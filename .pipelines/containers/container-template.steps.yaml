@@ -51,26 +51,26 @@ parameters:
 
 
 steps:
-    - task: 1ES.BuildContainerImage@1
-      retryCountOnTaskFailure: 3
-      inputs:
-        image: ${{ parameters.imageNameAndTag }}
-        dockerfile: ${{ parameters.dockerfilePath }}
-        path: ${{ parameters.buildContextPath }}
-        buildArguments: |
-          --build-arg PLATFORM="${{ parameters.buildPlatform }}"
-          --build-arg ARCH="${{ parameters.buildArch }}"
-          --build-arg OS="${{ parameters.buildOs }}"
-          --build-arg VERSION="${{ parameters.targetVersion }}"
-          --platform "${{ parameters.targetPlatform }}"
-          --target "${{ parameters.targetOs }}"
-          ${{ parameters.addBuildArgs }}
-        enableNetwork: true
-        enablePull: false
-        enableCache: true
-        useBuildKit: true
-    
-    - task: 1ES.PushContainerImage@1
-      condition: ${{ eq(parameters.targetOs, 'windows') }}
-      inputs:
-        image: ${{ parameters.imageNameAndTag }}
+- task: 1ES.BuildContainerImage@1
+  retryCountOnTaskFailure: 3
+  inputs:
+    image: ${{ parameters.imageNameAndTag }}
+    dockerfile: ${{ parameters.dockerfilePath }}
+    path: ${{ parameters.buildContextPath }}
+    buildArguments: |
+      --build-arg PLATFORM="${{ parameters.buildPlatform }}"
+      --build-arg ARCH="${{ parameters.buildArch }}"
+      --build-arg OS="${{ parameters.buildOs }}"
+      --build-arg VERSION="${{ parameters.targetVersion }}"
+      --platform "${{ parameters.targetPlatform }}"
+      --target "${{ parameters.targetOs }}"
+      ${{ parameters.addBuildArgs }}
+    enableNetwork: true
+    enablePull: false
+    enableCache: true
+    useBuildKit: true
+
+- task: 1ES.PushContainerImage@1
+  condition: ${{ eq(parameters.targetOs, 'windows') }}
+  inputs:
+    image: ${{ parameters.imageNameAndTag }}
