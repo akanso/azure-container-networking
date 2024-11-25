@@ -44,6 +44,13 @@ jobs:
     variables: 
       buildPlatform: ${{ parameters.buildOs }}/${{ parameters.buildArch }}
       targetPlatform: ${{ parameters.targetOs }}/${{ parameters.targetArch }}
+
+    ${{ if eq(parameters.targetOs, 'windows') }}:
+      pool:
+        name: $(BUILD_POOL_NAME_DEFAULT_WINDOWS)
+        os: windows
+        image: acn-runner-vmss-image-windows-1es-v2.0
+
     steps:
     - checkout: self
 
