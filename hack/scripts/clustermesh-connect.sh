@@ -126,7 +126,7 @@ patch_secret() {
   --set envoy.enabled=false \
   --set clustermesh.config.clusters[0].ips[0]="$remote_ip"\
   --set clustermesh.config.clusters[0].name="$remote_name"\
-  --set clustermesh.config.clusters[0].port=2379  --dry-run > "$MANIFEST_OUTPUT_FILE"
+  --set clustermesh.config.clusters[0].port=32379  --dry-run > "$MANIFEST_OUTPUT_FILE"
 
   echo "Filtering out cilium-config ConfigMap and cilium DaemonSet..."
 
