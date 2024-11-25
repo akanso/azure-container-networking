@@ -41,7 +41,7 @@ steps:
       --platform "${{ parameters.targetPlatform }}"
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
-    enablePull: true
+    enablePull: false
     enableCache: false
     useBuildKit: true
 
