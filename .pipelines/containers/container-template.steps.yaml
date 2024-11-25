@@ -42,7 +42,7 @@ steps:
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
     enablePull: true
-    enableCache: true
+    enableCache: false
     useBuildKit: true
 
 - task: 1ES.PushContainerImage@1
