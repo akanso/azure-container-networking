@@ -77,41 +77,38 @@ stages:
     authenticatedContainerRegistries:
     - serviceConnection: $(ACR_SERVICECONNECTION)
   jobs:
-  - template: containerize.jobs.yaml
+  - template: containers/containerize.jobs.yaml
     parameters:
-      buildArch: amd64
-      buildOs: linux
-      buildPlatform: linux/amd64
-      supportedPlatforms:
-      - template: ./containers/containerize.jobs.yaml
-        parameters:
-          targetOs: linux
-          targetArch: amd64
-          images:
-          - azure-ipam
-          - cni
-          - cns
-          - ipv6-hp-bpf
-          - npm
-      - template: ./containers/containerize.jobs.yaml
-        parameters:
-          targetOs: linux
-          targetArch: arm64
-          images:
-          - azure-ipam
-          - cni
-          - cns
-          - ipv6-hp-bpf
-          - npm
-      - template: ./containers/containerize.jobs.yaml
-        parameters:
-          targetOs: windows
-          targetArch: amd64
-          images:
-          - azure-ipam
-          - cni
-          - cns
-          - npm
+      targetOs: linux
+      targetArch: amd64
+      images:
+      - azure-ipam
+      - cni
+      - cns
+      - ipv6-hp-bpf
+      - npm
+      imageBuildStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
+  - template: containers/containerize.jobs.yaml
+    parameters:
+      targetOs: linux
+      targetArch: arm64
+      images:
+      - azure-ipam
+      - cni
+      - cns
+      - ipv6-hp-bpf
+      - npm
+      imageBuildStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
+  - template: containers/containerize.jobs.yaml
+    parameters:
+      targetOs: windows
+      targetArch: amd64
+      images:
+      - azure-ipam
+      - cni
+      - cns
+      - npm
+      imageBuildStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
 
 
 - stage: publish

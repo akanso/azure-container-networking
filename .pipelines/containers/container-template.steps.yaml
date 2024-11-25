@@ -5,11 +5,21 @@ parameters:
 - name: dockerfilePath
   type: string
 
-- name: targetVersion
+- name: buildContextPath
   type: string
   default: ""
 
-- name: buildContextPath
+- name: buildPlatform
+  type: string
+  default: ""
+
+- name: buildArch
+  type: string
+
+- name: buildOs
+  type: string
+
+- name: targetVersion
   type: string
   default: ""
 
@@ -19,31 +29,6 @@ parameters:
 
 - name: targetOs
   type: string
-  values:
-  - linux
-  - windows
-
-- name: targetArch
-  type: string
-  values:
-  - amd64
-  - arm64
-
-- name: buildOs
-  type: string
-  values:
-  - linux
-  - windows
-
-- name: buildArch
-  type: string
-  values:
-  - amd64
-  - arm64
-
-- name: buildPlatform
-  type: string
-  default: ""
 
 - name: addBuildArgs
   type: object

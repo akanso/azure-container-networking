@@ -1,85 +1,79 @@
 parameters:
-- name: supportedPlatforms
-  type: jobList
+
+- name: images
+  type: object
   default: []
 
 - name: targetOs
   type: string
+  default: linux
+  values:
+  - linux
+  - windows
 
 - name: targetArch
   type: string
-
-
-- name: buildPlatform
-  type: string
-  default: ''
+  default: amd64
+  values:
+  - amd64
+  - arm64
 
 - name: buildOs
   type: string
+  default: linux
   values:
   - linux
   - windows
 
 - name: buildArch
   type: string
+  default: amd64
   values:
   - amd64
   - arm64
 
+- name: buildVariablesStepTemplate
+  type: string
+  default: ''
+
 
 jobs:
-- ${{ each supportedPlatformJob in parameters.supportedPlatforms }}:
-  - ${{ each imageName in supportedPlatformJob.images }}:
-    - job: ${{ replace(concat(imageName, '_', supportedPlatformJob.name), '-', '_') }}
-      displayName: Build Image - (${{ imageName }} ${{ parameters.targetOs }}/${{ parameters.targetArch }})
-      steps:
-      - checkout: self
-  
-      - task: GoTool@0
-        inputs:
-          version: $(GO_VERSION)
-  
-      - bash: |
-          set -e
-  
-          VAR_ID="${IMAGE}_${OS}_${ARCH}"
-  
-          BUILD_CONTEXT=$(make "$MAKE_BUILD_CONTEXT")
-          echo >&2 "##vso[task.setvariable variable=BUILD_CONTEXT_${VAR_ID};]$BUILD_CONTEXT"
-  
-          IMAGE_PLATFORM_TAG=$(make "$MAKE_IMAGE_TAG")
-          echo >&2 "##vso[task.setvariable variable=IMAGE_PLATFORM_TAG_${VAR_ID};]$IMAGE_PLATFORM_TAG"
-  
-          IMAGE_NAME_AND_TAG=$(make "$MAKE_IMAGE_NAME_AND_TAG")
-          echo >&2 "##vso[task.setvariable variable=IMAGE_NAME_AND_TAG_${VAR_ID};]$IMAGE_NAME_AND_TAG"
-  
-          DOCKERFILE_PATH=$(make "$MAKE_DOCKERFILE_PATH")
-          echo >&2 "##vso[task.setvariable variable=DOCKERFILE_PATH_${VAR_ID};]$DOCKERFILE_PATH"
-  
-          EXTRA_BUILD_ARGS=$(make "$MAKE_EXTRA_BUILD_ARGS")
-          echo >&2 "##vso[task.setvariable variable=EXTRA_BUILD_ARGS_${VAR_ID};]$EXTRA_BUILD_ARGS"
-        displayName: "Get Image Build Data"
-        env:
-          IMAGE: ${{ imageName }}
-          OS: ${{ parameters.targetOs }}
-          ARCH: ${{ parameters.targetArch }}
-          PLATFORM: ${{ parameters.targetOs }}/${{ parameters.targetArch }}
-          MAKE_IMAGE_TAG: ${{ imageName }}-image-tag
-          MAKE_BUILD_CONTEXT: ${{ imageName }}-image-build-context
-          MAKE_IMAGE_NAME_AND_TAG: ${{ imageName }}-image-name-and-tag
-          MAKE_DOCKERFILE_PATH: ${{ imageName }}-dockerfile-path
-          MAKE_EXTRA_BUILD_ARGS: ${{ imageName }}-docker-build-args
-  
-      - template: ./container-template.steps.yaml
+- ${{ each imageName in parameters.images }}:
+  - job: ${{ replace(concat(imageName, '_', parameters.), '-', '_') }}
+    displayName: Build Image - (${{ imageName }} ${{ parameters.targetOs }}/${{ parameters.targetArch }})
+    variables: 
+      buildPlatform: ${{ parameters.buildOs }}/${{ parameters.buildArch }}
+      targetPlatform: ${{ parameters.targetOs }}/${{ parameters.targetArch }}
+    steps:
+    - checkout: self
+
+    - task: GoTool@0
+      inputs:
+        version: $(GO_VERSION)
+
+
+    # Requires creation of the following variables:
+    # - IMAGE_NAME_AND_TAG_${image}_${OS}_${ARCH}}
+    # - DOCKERFILE_PATH_${image}_${OS}_${ARCH}}
+    # - IMAGE_PLATFORM_TAG_${image}_${OS}_${ARCH}}
+    # - EXTRA_BUILD_ARGS_$${image}_${OS}_${ARCH}}
+    - ${{ if parameters.buildVariablesStepTemplate }}:
+      - template: ${{ parameters.buildVariablesStepTemplate }}
         parameters:
-          imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
-          dockerfilePath: $(DOCKERFILE_PATH_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
-          buildContextPath: $(Build.SourcesDirectory)
-          targetVersion: $(IMAGE_PLATFORM_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
           targetOs: ${{ parameters.targetOs }}
           targetArch: ${{ parameters.targetArch }}
-          targetPlatform: "${{ parameters.targetOs }}/${{ parameters.targetArch }}" 
-          addBuildArgs: $(EXTRA_BUILD_ARGS_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
-          buildOs: ${{ supportedPlatformJob.templatContext.buildOs }}
-          buildArch: ${{ supportedPlatformJob.templateContext.buildArch }}
-          buildPlatform: "${{ supportedPlatformJob.templatContext.buildOs }}/${{ supportedPlatformJob.templateContext.buildArch }}"
+          image: ${{ imageName }}
+
+
+    - template: ./container-template.steps.yaml
+      parameters:
+        imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
+        dockerfilePath: $(DOCKERFILE_PATH_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
+        buildContextPath: $(Build.SourcesDirectory)
+        buildPlatform: $(buildPlatform)
+        buildArch: ${{ parameters.buildArch }}
+        buildOs: ${{ parameters.buildOs }}
+        targetVersion: $(IMAGE_PLATFORM_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
+        targetPlatform: $(targetPlatform)
+        targetOs: ${{ parameters.targetOs }}
+        addBuildArgs: $(EXTRA_BUILD_ARGS_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
