@@ -39,7 +39,7 @@ parameters:
 
 jobs:
 - ${{ each imageName in parameters.images }}:
-  - job: ${{ replace(concat(imageName, '_', parameters.targetOs, '_', parameters.targetArch), '-', '_') }}
+  - job: ${{ replace(format('{0}_{1}_{2}', imageName, parameters.targetOs, parameters.targetArch), '-', '_') }}
     displayName: Build Image - (${{ imageName }} ${{ parameters.targetOs }}/${{ parameters.targetArch }})
     variables: 
       buildPlatform: ${{ parameters.buildOs }}/${{ parameters.buildArch }}
