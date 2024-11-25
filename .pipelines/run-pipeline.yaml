@@ -87,7 +87,7 @@ stages:
       - cns
       - ipv6-hp-bpf
       - npm
-      imageBuildStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
+      buildVariablesStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
   - template: containers/containerize.jobs.yaml
     parameters:
       targetOs: linux
@@ -98,7 +98,7 @@ stages:
       - cns
       - ipv6-hp-bpf
       - npm
-      imageBuildStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
+      buildVariablesStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
   - template: containers/containerize.jobs.yaml
     parameters:
       targetOs: windows
@@ -108,7 +108,7 @@ stages:
       - cni
       - cns
       - npm
-      imageBuildStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
+      buildVariablesStepTemplate: /.pipelines/containers/build-variables-template.steps.yaml
 
 
 - stage: publish
