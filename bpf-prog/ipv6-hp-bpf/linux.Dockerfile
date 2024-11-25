@@ -1,9 +1,9 @@
 # skopeo inspect docker://mcr.microsoft.com/oss/go/microsoft/golang:1.23.2 --format "{{.Name}}@{{.Digest}}"
+ARG ARCH
 FROM --platform=linux/${ARCH} mcr.microsoft.com/oss/go/microsoft/golang@sha256:86c5b00bbed2a6e7157052d78bf4b45c0bf26545ed6e8fd7dbad51ac9415f534 AS builder
 ARG VERSION
 ARG DEBUG
 ARG OS
-ARG ARCH
 WORKDIR /bpf-prog/ipv6-hp-bpf
 COPY ./bpf-prog/ipv6-hp-bpf .
 COPY ./bpf-prog/ipv6-hp-bpf/cmd/ipv6-hp-bpf/*.go /bpf-prog/ipv6-hp-bpf/
