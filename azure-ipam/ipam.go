@@ -130,6 +130,7 @@ func (p *IPAMPlugin) CmdAdd(args *cniSkel.CmdArgs) error {
 				IP:   net.ParseIP(ipNet.Addr().String()),
 				Mask: net.CIDRMask(ipNet.Bits(), 32), // nolint
 			}
+			ipConfig.Gateway = net.ParseIP("10.241.0.1")
 			var interf int = 1
 			ipConfig.Interface = &interf
 		} else {
@@ -142,6 +143,12 @@ func (p *IPAMPlugin) CmdAdd(args *cniSkel.CmdArgs) error {
 		}
 		cniResult.IPs[i] = ipConfig
 	}
+	cniResult.Interfaces = make([]*types100.Interface, 1)
+	interface_test := &types100.Interface{
+		Name: "eth1",
+		Mac:  "00:0D:3A:F7:79:84",
+	}
+	cniResult.Interfaces[0] = interface_test
 
 	p.logger.Info("Created CNIResult:", zap.Any("result", cniResult))
 
