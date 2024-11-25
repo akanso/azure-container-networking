@@ -41,7 +41,7 @@ kubectl patch configmap cilium-config -n kube-system --type=json -p '[
   {
     "op": "add",
     "path": "/data/cluster-id",
-    "value": '"$CLUSTER_ID"'
+    "value": "'$CLUSTER_ID'"
   },
   {
     "op": "add",
@@ -51,22 +51,21 @@ kubectl patch configmap cilium-config -n kube-system --type=json -p '[
 ]'
 
 helm template cilium cilium/cilium -n kube-system \
-  --set cluster.id=$CLUSTER_ID \
+  --set cluster.id="$CLUSTER_ID" \
   --set cluster.name=$CLUSTER_NAME \
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
-  --set clustermesh.apiserver.service.type="LoadBalancer" \
+  --set clustermesh.apiserver.service.type="NodePort" \
   --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
-  --set clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="\"true\"" \
   --set envoy.enabled=false \
   --dry-run > "$MANIFEST_OUTPUT_FILE"
-# helm template cilium "$HELM_CHART_NAME" -n "$NAMESPACE" \
-#   --set clustermesh.useAPIServer=true \
-#   --set externalWorkloads.enabled=false\
-#   --dry-run > "$MANIFEST_OUTPUT_FILE"
-  # --set clustermesh.apiserver.service.annotations.service.beta.kubernetes.io.azure-load-balancer-internal=true \
+# # helm template cilium "$HELM_CHART_NAME" -n "$NAMESPACE" \
+# #   --set clustermesh.useAPIServer=true \
+# #   --set externalWorkloads.enabled=false\
+# #   --dry-run > "$MANIFEST_OUTPUT_FILE"
+#   # --set clustermesh.apiserver.service.annotations.service.beta.kubernetes.io.azure-load-balancer-internal=true \
 
   
 
@@ -85,105 +84,80 @@ yq eval 'select(
 )' "$MANIFEST_OUTPUT_FILE" > "$FILTERED_MANIFEST_FILE"
 
 
-if [[ ! -s "$FILTERED_MANIFEST_FILE" ]]; then
-  echo "Error: No resources left after filtering."
-  exit 1
-fi
+# if [[ ! -s "$FILTERED_MANIFEST_FILE" ]]; then
+#   echo "Error: No resources left after filtering."
+#   exit 1
+# fi
 
-echo "Filtered manifests have been written to $FILTERED_MANIFEST_FILE."
+# echo "Filtered manifests have been written to $FILTERED_MANIFEST_FILE."
 
-#!/bin/bash
 
-# Input Arguments
-CLUSTER_ID=$1
-CLUSTER_NAME=$2
 
-# Check if required arguments are provided
-if [[ -z "$CLUSTER_ID" || -z "$CLUSTER_NAME" ]]; then
-  echo "Usage: $0 <cluster-id> <cluster-name>"
-  exit 1
-fi
-
-# Patch ConfigMap with cluster-id and cluster-name
-echo "Patching cilium-config ConfigMap..."
-kubectl patch configmap cilium-config -n kube-system --type=json -p '[
-  {
-    "op": "add",
-    "path": "/data/cluster-id",
-    "value": "'$CLUSTER_ID'"
-  },
-  {
-    "op": "add",
-    "path": "/data/cluster-name",
-    "value": "'$CLUSTER_NAME'"
-  }
-]'
-
-# Patch DaemonSet with volume mounts
-echo "Patching cilium DaemonSet with volume mounts..."
-# kubectl patch daemonset cilium -n kube-system --type=json -p '[
-#   {
-#     "op": "add",
-#     "path": "/spec/template/spec/volumes/-",
-#     "value": {
-#       "name": "clustermesh",
-#       "secret": {
-#         "secretName": "cilium-clustermesh",
-#         "optional": true
-#       }
-#     }
-#   },
-#   {
-#     "op": "add",
-#     "path": "/spec/template/spec/volumes/-",
-#     "value": {
-#       "name": "clustermesh-apiserver-remote-cert",
-#       "secret": {
-#         "secretName": "clustermesh-apiserver-remote-cert",
-#         "optional": true,
-#         "items": [
-#           {
-#             "key": "tls.key",
-#             "path": "common-etcd-client.key"
-#           },
-#           {
-#             "key": "tls.crt",
-#             "path": "common-etcd-client.crt"
-#           },
-#           {
-#             "key": "ca.crt",
-#             "path": "common-etcd-client-ca.crt"
-#           }
-#         ]
-#       }
-#     }
-#   },
-#   {
-#     "op": "add",
-#     "path": "/spec/template/spec/volumes/-",
-#     "value": {
-#       "name": "clustermesh-apiserver-local-cert",
-#       "secret": {
-#         "secretName": "clustermesh-apiserver-local-cert",
-#         "optional": true,
-#         "items": [
-#           {
-#             "key": "tls.key",
-#             "path": "local-etcd-client.key"
-#           },
-#           {
-#             "key": "tls.crt",
-#             "path": "local-etcd-client.crt"
-#           },
-#           {
-#             "key": "ca.crt",
-#             "path": "local-etcd-client-ca.crt"
-#           }
-#         ]
-#       }
-#     }
-#   }
-# ]'
+# # Patch DaemonSet with volume mounts
+# echo "Patching cilium DaemonSet with volume mounts..."
+# # kubectl patch daemonset cilium -n kube-system --type=json -p '[
+# #   {
+# #     "op": "add",
+# #     "path": "/spec/template/spec/volumes/-",
+# #     "value": {
+# #       "name": "clustermesh",
+# #       "secret": {
+# #         "secretName": "cilium-clustermesh",
+# #         "optional": true
+# #       }
+# #     }
+# #   },
+# #   {
+# #     "op": "add",
+# #     "path": "/spec/template/spec/volumes/-",
+# #     "value": {
+# #       "name": "clustermesh-apiserver-remote-cert",
+# #       "secret": {
+# #         "secretName": "clustermesh-apiserver-remote-cert",
+# #         "optional": true,
+# #         "items": [
+# #           {
+# #             "key": "tls.key",
+# #             "path": "common-etcd-client.key"
+# #           },
+# #           {
+# #             "key": "tls.crt",
+# #             "path": "common-etcd-client.crt"
+# #           },
+# #           {
+# #             "key": "ca.crt",
+# #             "path": "common-etcd-client-ca.crt"
+# #           }
+# #         ]
+# #       }
+# #     }
+# #   },
+# #   {
+# #     "op": "add",
+# #     "path": "/spec/template/spec/volumes/-",
+# #     "value": {
+# #       "name": "clustermesh-apiserver-local-cert",
+# #       "secret": {
+# #         "secretName": "clustermesh-apiserver-local-cert",
+# #         "optional": true,
+# #         "items": [
+# #           {
+# #             "key": "tls.key",
+# #             "path": "local-etcd-client.key"
+# #           },
+# #           {
+# #             "key": "tls.crt",
+# #             "path": "local-etcd-client.crt"
+# #           },
+# #           {
+# #             "key": "ca.crt",
+# #             "path": "local-etcd-client-ca.crt"
+# #           }
+# #         ]
+# #       }
+# #     }
+# #   }
+# # ]'
 
 kubectl patch daemonset cilium -n kube-system --type=strategic --patch '
 {
