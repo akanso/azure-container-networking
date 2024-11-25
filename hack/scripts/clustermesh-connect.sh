@@ -103,7 +103,8 @@ CLUSTER2_NODE_IP=$(kubectl --context $CLUSTER1_CONTEXT get nodes -o wide --no-he
 
 echo "Cluster 1 Apiserver IP: $CLUSTER1_APISERVER_IP"
 echo "Cluster 2 Apiserver IP: $CLUSTER2_APISERVER_IP"
-
+echo "Cluster 1 Node IP: $CLUSTER1_NODE_IP"
+echo "Cluster 2 Node IP: $CLUSTER2_NODE_IP"
 MANIFEST_OUTPUT_FILE="cilium-generated-manifests.yaml"
 FILTERED_MANIFEST_FILE="cilium-filtered-manifests.yaml" 
 
@@ -118,10 +119,9 @@ patch_secret() {
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
   --set clustermesh.apiserver.service.type="NodePort" \
-  --set clustermesh.apiserver.tls.auto.enabled=false \
-  --set clustermesh.apiserver.authentication.enabled=false \
+  --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
-  --set clustermesh.config.enabled=false \
+  --set clustermesh.config.enabled=true \
   --set clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="\"true\"" \
   --set envoy.enabled=false \
   --set clustermesh.config.clusters[0].ips[0]="$remote_ip"\
