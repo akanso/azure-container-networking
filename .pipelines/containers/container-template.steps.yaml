@@ -38,7 +38,7 @@ steps:
       --build-arg ARCH="${{ parameters.targetArch }}"
       --build-arg OS="${{ parameters.targetOs }}"
       --build-arg VERSION="${{ parameters.targetVersion }}"
-      --platform "${{ parameters.targetPlatform }}"
+      --target "${{ parameters.targetOs }}"
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
     enablePull: false
