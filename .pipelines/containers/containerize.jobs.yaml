@@ -70,10 +70,8 @@ jobs:
         imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         dockerfilePath: $(DOCKERFILE_PATH_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         buildContextPath: $(Build.SourcesDirectory)
-        buildPlatform: $(buildPlatform)
-        buildArch: ${{ parameters.buildArch }}
-        buildOs: ${{ parameters.buildOs }}
         targetVersion: $(IMAGE_PLATFORM_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         targetPlatform: $(targetPlatform)
+        targetArch: ${ parameters.targetArch }
         targetOs: ${{ parameters.targetOs }}
         addBuildArgs: $(EXTRA_BUILD_ARGS_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})

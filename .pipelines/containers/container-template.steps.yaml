@@ -7,25 +7,15 @@ parameters:
 
 - name: buildContextPath
   type: string
-  default: ""
-
-- name: buildPlatform
-  type: string
-  default: ""
-
-- name: buildArch
-  type: string
-
-- name: buildOs
-  type: string
 
 - name: targetVersion
   type: string
-  default: ""
+
+- name: targetArch
+  type: string
 
 - name: targetPlatform
   type: string
-  default: ""
 
 - name: targetOs
   type: string
@@ -43,15 +33,15 @@ steps:
     dockerfile: ${{ parameters.dockerfilePath }}
     path: ${{ parameters.buildContextPath }}
     buildArguments: |
-      --build-arg PLATFORM="${{ parameters.buildPlatform }}"
-      --build-arg ARCH="${{ parameters.buildArch }}"
-      --build-arg OS="${{ parameters.buildOs }}"
+      --build-arg DEBUG="$(System.Debug)"
+      --build-arg PLATFORM="${{ parameters.targetPlatform }}"
+      --build-arg ARCH="${{ parameters.targetArch }}"
+      --build-arg OS="${{ parameters.targetOs }}"
       --build-arg VERSION="${{ parameters.targetVersion }}"
       --platform "${{ parameters.targetPlatform }}"
-      --target "${{ parameters.targetOs }}"
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
-    enablePull: false
+    enablePull: true
     enableCache: true
     useBuildKit: true
 
