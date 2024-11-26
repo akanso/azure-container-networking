@@ -66,11 +66,11 @@ extends:
           #baselineFile: $(Build.SourcesDirectory)\.config\.gdnbaselines
           #suppressionSet: default
         suppression:
-          suppressionFile: $(Build.SourcesDirectory)\.config\.gdnsuppress
+          suppressionFile: $(Build.SourcesDirectory)/.config/guardian/.gdnsuppress
           suppressionSet: default
         credscan:
           enabled: true
-          suppressionsFileForArtifacts: $(Build.SourcesDirectory)/.config/credScanSuppressions.json
+          suppressionsFileForArtifacts: $(Build.SourcesDirectory)/.config/credscan/credScanSuppressions.json
       codeql:
         # Enables CodeQL on the main branch
         compiled:

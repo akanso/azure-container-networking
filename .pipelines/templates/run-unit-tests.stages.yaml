@@ -38,7 +38,7 @@ stages:
   pool:
     name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS)"
     os: windows
-    image: acn-runner-vmss-image-windows-1es-v2.0
+    image: acn-runner-vmss-image-windows-1es-v2.1
   jobs:
   - job: test
     displayName: Run Tests

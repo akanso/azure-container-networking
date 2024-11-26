@@ -37,7 +37,10 @@ jobs:
 - ${{ each imageName in parameters.images }}:
   - job: ${{ replace(format('{0}_{1}_{2}', imageName, parameters.targetOs, parameters.targetArch), '-', '_') }}
     displayName: Build Image - (${{ imageName }} ${{ parameters.targetOs }}/${{ parameters.targetArch }})
-    variables: 
+    # This can be removed after we verify that an increase in agent pool improves the run time.
+    timeoutInMinutes: 120
+
+    variables:
       buildPlatform: ${{ parameters.buildOs }}/${{ parameters.buildArch }}
       targetPlatform: ${{ parameters.targetOs }}/${{ parameters.targetArch }}
 
@@ -60,20 +63,13 @@ jobs:
     # - BUILD_CONTEXT_${image}_${OS}_${ARCH}}
     # - IMAGE_PLATFORM_TAG_${image}_${OS}_${ARCH}}
     # - EXTRA_BUILD_ARGS_$${image}_${OS}_${ARCH}}
-    - ${{ if eq(parameters.targetOs, 'windows') }}:
-      - template: /.pipelines/containers/build-variables-template.windows.steps.yaml
-        parameters:
-          targetOs: ${{ parameters.targetOs }}
-          targetArch: ${{ parameters.targetArch }}
-          image: ${{ imageName }}
-    - ${{ else }}:
-      - template: /.pipelines/containers/build-variables-template.steps.yaml
-        parameters:
-          targetOs: ${{ parameters.targetOs }}
-          targetArch: ${{ parameters.targetArch }}
-          image: ${{ imageName }}
+    - template: /.pipelines/containers/build-variables-template.steps.yaml
+      parameters:
+        targetOs: ${{ parameters.targetOs }}
+        targetArch: ${{ parameters.targetArch }}
+        image: ${{ imageName }}
 
-    - template: ./container-template.steps.yaml
+    - template: ./containerize.steps.yaml
       parameters:
         imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         dockerfilePath: $(DOCKERFILE_PATH_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
