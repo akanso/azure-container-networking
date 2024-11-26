@@ -4,6 +4,7 @@ FROM --platform=linux/${ARCH} mcr.microsoft.com/oss/go/microsoft/golang@sha256:8
 ARG VERSION
 ARG DEBUG
 ARG OS
+ARG ARCH
 WORKDIR /bpf-prog/ipv6-hp-bpf
 COPY ./bpf-prog/ipv6-hp-bpf .
 COPY ./bpf-prog/ipv6-hp-bpf/cmd/ipv6-hp-bpf/*.go /bpf-prog/ipv6-hp-bpf/
