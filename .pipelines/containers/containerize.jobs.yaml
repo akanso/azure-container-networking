@@ -67,7 +67,7 @@ jobs:
             targetOs: ${{ parameters.targetOs }}
             targetArch: ${{ parameters.targetArch }}
             image: ${{ imageName }}
-       - ${{ else }}:
+      - ${{ else }}:
         - template: /.pipelines/containers/build-variables-template.steps.yaml
           parameters:
             targetOs: ${{ parameters.targetOs }}
