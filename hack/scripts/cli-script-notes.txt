@@ -1,0 +1,31 @@
+clusterPrefix=jpayne sufix1=1 sufix2=2 SUB=d9eabe18-12f6-4421-934a-d7e2327585f5 clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
+
+
+# Running connectivity test from context to multi. test-namespace shows the direction of the test. 1->2, 2->1.
+# Completeing both of these will take 20+~minutes. Run outside of script.
+cilium connectivity test --context ${clusterPrefix}-${sufix1} --multi-cluster ${clusterPrefix}-${sufix2} --test-namespace ciltest-${sufix1}-${sufix2} --force-deploy
+cilium connectivity test --context ${clusterPrefix}-${sufix2} --multi-cluster ${clusterPrefix}-${sufix1} --test-namespace ciltest-${sufix2}-${sufix1} --force-deploy
+
+cilium config set --context ${clusterPrefix}-${sufix1} cluster.name ${clusterPrefix}-${sufix1}
+cilium config set --context ${clusterPrefix}-${sufix1} cluster.id ${sufix1}
+cilium config set --context ${clusterPrefix}-${sufix2} cluster.name ${clusterPrefix}-${sufix2}
+cilium config set --context ${clusterPrefix}-${sufix2} cluster.id ${sufix2}
+
+# -- Useful debug commands --
+# cilium status --context ${clusterPrefix}-${sufix1}
+# cilium status --context ${clusterPrefix}-${sufix2}
+
+# az aks get-credentials --resource-group ${clusterPrefix}-${sufix1} --name ${clusterPrefix}-${sufix1} --overwrite-existing
+# az aks get-credentials --resource-group ${clusterPrefix}-${sufix2} --name ${clusterPrefix}-${sufix2} --overwrite-existing
+
+# cilium clustermesh disable --context ${clusterPrefix}-${sufix1}
+# cilium clustermesh disable --context ${clusterPrefix}-${sufix2}
+
+# Below is old helm values to get helm to operate with different values, no longer needed, but kept
+--set ipv4NativeRoutingCIDR=10.0.0.0/8 \
+        --set ipam.mode="delegated-plugin" \
+        --set extraArgs[0]="--local-router-ipv4=169.254.23.0" \
+        --set tunnel="disabled" \
+        --set routingMode=native \
+        --set endpointRoutes.enabled=true \
+        --set endpointHealthChecking.enabled=false
