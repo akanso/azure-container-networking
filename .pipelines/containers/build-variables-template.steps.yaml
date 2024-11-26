@@ -56,7 +56,7 @@ steps:
       MAKE_EXTRA_BUILD_ARGS: ${{ parameters.image }}-docker-build-args
 
 - ${{ elseif eq(parameters.targetOs, 'windows') }}:
-  - pwsh: |
+  - powershell: |
       $env:VAR_ID = "$env:IMAGE_$env:OS_$env:ARCH"
   
       $env:BUILD_CONTEXT = (make "$env:MAKE_BUILD_CONTEXT")
