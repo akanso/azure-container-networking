@@ -56,7 +56,7 @@ patch_secret() {
         --set clustermesh.apiserver.kvstoremesh.enabled=true \
         --set clustermesh.apiserver.service.type=NodePort \
         --set clustermesh.apiserver.tls.auto.enabled=true \
-        --set clustermesh.apiserver.tls.auto.method=cronJob \
+        --set clustermesh.apiserver.tls.auto.method="legacy" \
         --set clustermesh.apiserver.tls.auto.schedule="0 0 1 */4 *" \
         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
         --set clustermesh.config.clusters[0].name="$remote_name" \
@@ -70,9 +70,10 @@ patch_secret() {
     echo "Filtering out cilium-config ConfigMap and cilium DaemonSet..."
 
     # Filter out specific resources from the manifest
-    yq eval 'select(
-        ((.kind != "ConfigMap") or (.metadata.name != "cilium-config"))
-    )' "$MANIFEST_OUTPUT_FILE" > "$FILTERED_MANIFEST_FILE"
+   yq eval 'select(
+  ((.kind != "ConfigMap") or (.metadata.name != "cilium-config")) and
+  ((.kind != "DaemonSet") or (.metadata.name != "cilium"))
+)' "$MANIFEST_OUTPUT_FILE" > "$FILTERED_MANIFEST_FILE"
 
     kubectl apply -f "$FILTERED_MANIFEST_FILE"
 }
