@@ -1,5 +1,37 @@
 #!/bin/bash
 
+# For the first revision, we need to manually patch the clustermesh-clusters on the cilium-agent 
+# This can be done by simply editing the cilium agent deployment in the cluster and changing the volume mounts as follows 
+
+#       - name: clustermesh-secrets
+#         projected:
+#           defaultMode: 256
+#           sources:
+#           - secret:
+#               name: cilium-clustermesh
+#               optional: true
+#           - secret:
+#               items:
+#               - key: tls.key
+#                 path: common-etcd-client.key
+#               - key: tls.crt
+#                 path: common-etcd-client.crt
+#               - key: ca.crt
+#                 path: common-etcd-client-ca.crt
+#               name: clustermesh-apiserver-remote-cert
+#               optional: true
+#           - secret:
+#               items:
+#               - key: tls.key
+#                 path: local-etcd-client.key
+#               - key: tls.crt
+#                 path: local-etcd-client.crt
+#               - key: ca.crt
+#                 path: local-etcd-client-ca.crt
+#               name: clustermesh-apiserver-local-cert
+#               optional: true
+
+
 # Variables
 NAMESPACE="kube-system"
 MANIFEST_OUTPUT_FILE="cilium-generated-manifests.yaml"
@@ -159,70 +191,6 @@ kubectl patch daemonset cilium -n kube-system --type=strategic -p '{
     }
   }
 }'
-
-# kubectl patch daemonset cilium -n kube-system --type=json -p '[
-#   {
-#     "op": "add",
-#     "path": "/spec/template/spec/volumes/-",
-#     "value": {
-#       "name": "clustermesh",
-#       "secret": {
-#         "secretName": "cilium-clustermesh",
-#         "optional": true
-#       }
-#     }
-#   },
-#   {
-#     "op": "add",
-#     "path": "/spec/template/spec/volumes/-",
-#     "value": {
-#       "name": "clustermesh-apiserver-remote-cert",
-#       "secret": {
-#         "secretName": "clustermesh-apiserver-remote-cert",
-#         "optional": true,
-#         "items": [
-#           {
-#             "key": "tls.key",
-#             "path": "common-etcd-client.key"
-#           },
-#           {
-#             "key": "tls.crt",
-#             "path": "common-etcd-client.crt"
-#           },
-#           {
-#             "key": "ca.crt",
-#             "path": "common-etcd-client-ca.crt"
-#           }
-#         ]
-#       }
-#     }
-#   },
-#   {
-#     "op": "add",
-#     "path": "/spec/template/spec/volumes/-",
-#     "value": {
-#       "name": "clustermesh-apiserver-local-cert",
-#       "secret": {
-#         "secretName": "clustermesh-apiserver-local-cert",
-#         "optional": true,
-#         "items": [
-#           {
-#             "key": "tls.key",
-#             "path": "local-etcd-client.key"
-#           },
-#           {
-#             "key": "tls.crt",
-#             "path": "local-etcd-client.crt"
-#           },
-#           {
-#             "key": "ca.crt",
-#             "path": "local-etcd-client-ca.crt"
-#           }
-#         ]
-#       }
-#     }
-#   }
-# ]'
 
 
 echo "Patches applied successfully!"

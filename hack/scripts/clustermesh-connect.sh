@@ -1,4 +1,5 @@
 #!/bin/bash
+# usage ./clustermesh-connect.sh CLUSTER_1 CLUSTER2 (Order is important since the ids are derieved implicitly)
 
 # Input arguments
 CLUSTER1_CONTEXT=$1
