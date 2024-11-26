@@ -32,10 +32,6 @@ parameters:
   - amd64
   - arm64
 
-- name: buildVariablesStepTemplate
-  type: string
-  default: ''
-
 
 jobs:
 - ${{ each imageName in parameters.images }}:
@@ -58,27 +54,33 @@ jobs:
       inputs:
         version: $(GO_VERSION)
 
-
     # Requires creation of the following variables:
     # - IMAGE_NAME_AND_TAG_${image}_${OS}_${ARCH}}
     # - DOCKERFILE_PATH_${image}_${OS}_${ARCH}}
+    # - BUILD_CONTEXT_${image}_${OS}_${ARCH}}
     # - IMAGE_PLATFORM_TAG_${image}_${OS}_${ARCH}}
     # - EXTRA_BUILD_ARGS_$${image}_${OS}_${ARCH}}
     - ${{ if parameters.buildVariablesStepTemplate }}:
-      - template: ${{ parameters.buildVariablesStepTemplate }}
-        parameters:
-          targetOs: ${{ parameters.targetOs }}
-          targetArch: ${{ parameters.targetArch }}
-          image: ${{ imageName }}
-
+      - ${{ if eq(parameters.targetOs, 'windows') }}:
+        - template: /.pipelines/containers/build-variables-template.windows.steps.yaml
+          parameters:
+            targetOs: ${{ parameters.targetOs }}
+            targetArch: ${{ parameters.targetArch }}
+            image: ${{ imageName }}
+       - ${{ else }}:
+        - template: /.pipelines/containers/build-variables-template.steps.yaml
+          parameters:
+            targetOs: ${{ parameters.targetOs }}
+            targetArch: ${{ parameters.targetArch }}
+            image: ${{ imageName }}
 
     - template: ./container-template.steps.yaml
       parameters:
         imageNameAndTag: $(IMAGE_NAME_AND_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         dockerfilePath: $(DOCKERFILE_PATH_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
-        buildContextPath: $(Build.SourcesDirectory)
+        buildContextPath: $(BUILD_CONTEXT_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         targetVersion: $(IMAGE_PLATFORM_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
+        addBuildArgs: $(EXTRA_BUILD_ARGS_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         targetPlatform: $(targetPlatform)
         targetArch: ${{ parameters.targetArch }}
         targetOs: ${{ parameters.targetOs }}
-        addBuildArgs: $(EXTRA_BUILD_ARGS_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})

@@ -22,7 +22,7 @@ parameters:
 
 
 steps:
-- script: |
+- bash: |
     set -e
 
     VAR_ID="${IMAGE}_${OS}_${ARCH}"
