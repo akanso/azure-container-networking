@@ -23,14 +23,7 @@ for unique in $sufixes; do
         --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
         --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
         --set hubble.enabled=false \
-        --set envoy.enabled=false \
-        --set ipv4NativeRoutingCIDR=10.0.0.0/8 \
-        --set ipam.mode="delegated-plugin" \
-        --set extraArgs[0]="--local-router-ipv4=169.254.23.0" \
-        --set tunnel="disabled" \
-        --set routingMode=native \
-        --set endpointRoutes.enabled=true \
-        --set endpointHealthChecking.enabled=false
+        --set envoy.enabled=false
 
     else # Ignore this block for now, was testing internal resources.
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
@@ -82,25 +75,10 @@ az network vnet peering create \
     --remote-vnet "${VNET_ID1}" \
     --allow-vnet-access
 
-# Retaining for testing
-# cilium install -n kube-system cilium cilium/cilium --version v1.16.1 --set azure.resourceGroup=${clusterPrefix}-${unique} \
-# --set cluster.id=${unique} --set ipam.operator.clusterPoolIPv4PodCIDRList='{10.'${unique}'0.0.0/16}' \
-# --set ipam.mode="delegated-plugin" \
-# --set hubble.enabled=false \
-# --set local-router-ipv4="169.254.23.0" \
-# --set enable-l7-proxy=false \
-# --set routing-mode="tunnel" \
-# --set cni-exclusive=false \
-# --set enable-tcx=false \
-# --set kube-proxy-replacement-healthz-bind-address="0.0.0.0:10256"
 
-
-# cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=false
-# cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=false
-# -- testing --
 cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
 cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
-# # -- testing --
+
 
 cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
 cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
@@ -108,22 +86,3 @@ cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
 # # CA is passed between clusters in this step
 cilium clustermesh connect --context ${clusterPrefix}-${sufix1} --destination-context ${clusterPrefix}-${sufix2}
 # These can be run in parallel in different bash shells
-# Running connectivity test from context to multi. test-namespace shows the direction of the test. 1->2, 2->1.
-# Completeing both of these will take 20+~minutes. Run outside of script.
-cilium connectivity test --context ${clusterPrefix}-${sufix1} --multi-cluster ${clusterPrefix}-${sufix2} --test-namespace ciltest-${sufix1}-${sufix2} --force-deploy
-cilium connectivity test --context ${clusterPrefix}-${sufix2} --multi-cluster ${clusterPrefix}-${sufix1} --test-namespace ciltest-${sufix2}-${sufix1} --force-deploy
-
-cilium config set --context ${clusterPrefix}-${sufix1} cluster.name ${clusterPrefix}-${sufix1}
-cilium config set --context ${clusterPrefix}-${sufix1} cluster.id ${sufix1}
-cilium config set --context ${clusterPrefix}-${sufix2} cluster.name ${clusterPrefix}-${sufix2}
-cilium config set --context ${clusterPrefix}-${sufix2} cluster.id ${sufix2}
-
-# -- Useful debug commands --
-# cilium status --context ${clusterPrefix}-${sufix1}
-# cilium status --context ${clusterPrefix}-${sufix2}
-
-# az aks get-credentials --resource-group ${clusterPrefix}-${sufix1} --name ${clusterPrefix}-${sufix1} --overwrite-existing
-# az aks get-credentials --resource-group ${clusterPrefix}-${sufix2} --name ${clusterPrefix}-${sufix2} --overwrite-existing
-
-# cilium clustermesh disable --context ${clusterPrefix}-${sufix1}
-# cilium clustermesh disable --context ${clusterPrefix}-${sufix2}
