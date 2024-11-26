@@ -15,6 +15,9 @@ if [[ -z "$CLUSTER_ID" || -z "$CLUSTER_NAME" ]]; then
   exit 1
 fi
 
+kubectl config use-context $CLUSTER_NAME
+
+
 # Step 1: Add Helm chart repo if not present (this does not install it, just makes it available for templating)
 HELM_CHART_REPO="https://helm.cilium.io"
 HELM_CHART_NAME="cilium/cilium"
@@ -59,6 +62,7 @@ helm template cilium cilium/cilium -n kube-system \
   --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
+  --set hubble.enabled=false \
   --set envoy.enabled=false \
   --dry-run > "$MANIFEST_OUTPUT_FILE"
 # # helm template cilium "$HELM_CHART_NAME" -n "$NAMESPACE" \
