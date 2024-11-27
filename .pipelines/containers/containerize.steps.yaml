@@ -27,7 +27,7 @@ parameters:
 
 steps:
 - bash: |
-    docker build buildx ls
+    docker buildx ls
     # rm ~/.docker/config.json
 
 - task: 1ES.BuildContainerImage@1
