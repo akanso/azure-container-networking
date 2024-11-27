@@ -26,6 +26,10 @@ parameters:
 
 
 steps:
+- bash: |
+    docker build buildx ls
+    # rm ~/.docker/config.json
+
 - task: 1ES.BuildContainerImage@1
   retryCountOnTaskFailure: 3
   inputs:
@@ -33,6 +37,7 @@ steps:
     dockerfile: ${{ parameters.dockerfilePath }}
     path: ${{ parameters.buildContextPath }}
     buildArguments: |
+      --debug
       --build-arg DEBUG="$(System.Debug)"
       --build-arg PLATFORM="${{ parameters.targetPlatform }}"
       --build-arg ARCH="${{ parameters.targetArch }}"
@@ -41,10 +46,9 @@ steps:
       --target "${{ parameters.targetOs }}"
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
-    enableCache: false
-    useBuildKit: true
+    enableCache: true
+    useBuildKit: ${{ eq(parameters.targetOs, 'linux') }}
     enablePull: false 
-# {{ eq(parameters.targetOs, 'windows') }}
 
 - task: 1ES.PushContainerImage@1
   condition: ${{ eq(parameters.targetOs, 'windows') }}
