@@ -59,19 +59,19 @@ steps:
   - powershell: |
       $env:VAR_ID = "$env:IMAGE_$env:OS_$env:ARCH"
   
-      $env:BUILD_CONTEXT = (make "$env:MAKE_BUILD_CONTEXT")
+      $env:BUILD_CONTEXT = (cmake "$env:MAKE_BUILD_CONTEXT")
       Write-Host "##vso[task.setvariable variable=BUILD_CONTEXT_$env:VAR_ID;]$env:BUILD_CONTEXT"
   
-      $env:IMAGE_PLATFORM_TAG = (make "$env:MAKE_IMAGE_TAG")
+      $env:IMAGE_PLATFORM_TAG = (cmake "$env:MAKE_IMAGE_TAG")
       Write-Host "##vso[task.setvariable variable=IMAGE_PLATFORM_TAG_$env:VAR_ID;]$env:IMAGE_PLATFORM_TAG"
   
-      $env:IMAGE_NAME_AND_TAG = (make "$env:MAKE_IMAGE_NAME_AND_TAG")
+      $env:IMAGE_NAME_AND_TAG = (cmake "$env:MAKE_IMAGE_NAME_AND_TAG")
       Write-Host "##vso[task.setvariable variable=IMAGE_NAME_AND_TAG_$env:VAR_ID;]$env:IMAGE_NAME_AND_TAG"
   
-      $env:DOCKERFILE_PATH = (make "$env:MAKE_DOCKERFILE_PATH")
+      $env:DOCKERFILE_PATH = (cmake "$env:MAKE_DOCKERFILE_PATH")
       Write-Host "##vso[task.setvariable variable=DOCKERFILE_PATH_$env:VAR_ID;]$env:DOCKERFILE_PATH"
   
-      $env:EXTRA_BUILD_ARGS = (make "$env:MAKE_EXTRA_BUILD_ARGS")
+      $env:EXTRA_BUILD_ARGS = (cmake "$env:MAKE_EXTRA_BUILD_ARGS")
       Write-Host "##vso[task.setvariable variable=EXTRA_BUILD_ARGS_$env:VAR_ID;]$env:EXTRA_BUILD_ARGS"
     displayName: "Get Image Build Data"
     errorActionPreference: stop
