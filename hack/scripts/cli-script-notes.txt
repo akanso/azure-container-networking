@@ -1,5 +1,7 @@
 clusterPrefix=jpayne sufix1=1 sufix2=2 SUB=d9eabe18-12f6-4421-934a-d7e2327585f5 clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
 
+clusterPrefix=jpaynemesh sufix1=1 sufix2=2 SUB=d9eabe18-12f6-4421-934a-d7e2327585f5 clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script-vnet.sh
+
 
 # Running connectivity test from context to multi. test-namespace shows the direction of the test. 1->2, 2->1.
 # Completeing both of these will take 20+~minutes. Run outside of script.
@@ -29,3 +31,16 @@ cilium config set --context ${clusterPrefix}-${sufix2} cluster.id ${sufix2}
         --set routingMode=native \
         --set endpointRoutes.enabled=true \
         --set endpointHealthChecking.enabled=false
+
+
+### Same infra-vnet notes
+Can change script.
+    - Vnet /8 -> /16
+        = CIDR /16 -> /24
+
+Currently makefile builds 2 clusters and then joins. Probably need to make script better anf run from there
+
+clusterPrefix=jmesh sufix1=1 sufix2=2 SUB=d9eabe18-12f6-4421-934a-d7e2327585f5 ./cil-script-vnet.sh
+cilium connectivity test --context ${clusterPrefix}${sufix1} --multi-cluster ${clusterPrefix}${sufix2} --test-namespace ciltest-${sufix1}-${sufix2} --force-deploy
+cilium connectivity test --context ${clusterPrefix}${sufix2} --multi-cluster ${clusterPrefix}${sufix1} --test-namespace ciltest-${sufix2}-${sufix1} --force-deploy
+
