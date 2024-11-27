@@ -41,9 +41,10 @@ steps:
       --target "${{ parameters.targetOs }}"
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
-    enablePull: false
-    enableCache: true
+    enableCache: false
     useBuildKit: true
+    enablePull: false 
+# {{ eq(parameters.targetOs, 'windows') }}
 
 - task: 1ES.PushContainerImage@1
   condition: ${{ eq(parameters.targetOs, 'windows') }}
