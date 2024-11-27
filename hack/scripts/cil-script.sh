@@ -7,12 +7,12 @@
 # Example command: clusterPrefix=<alais> sufix1=1 sufix2=2 SUB=<GUID> clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
 
 sufixes="${sufix1} ${sufix2}"
-install=helm
+install=acn
 echo "sufixes ${sufixes}"
 
 cd ../..
 for unique in $sufixes; do
-    make -C ./hack/aks $clusterType \
+    make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
         AZCLI=az REGION=westus2 SUB=$SUB \
         CLUSTER=${clusterPrefix}-${unique} \
         POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
@@ -26,21 +26,14 @@ for unique in $sufixes; do
         --set envoy.enabled=false
 
     else # Ignore this block for now, was testing internal resources.
+        export CILIUM_VERSION_TAG=v1.14.15-241024
+        export CILIUM_IMAGE_REGISTRY=mcr.microsoft.com/containernetworking
+        export DIR=1.14
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-operator/files
-        export CILIUM_VERSION_TAG=v1.16-240904
-        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
         envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
         envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
-
-        export CILIUM_VERSION_TAG=v1.16-240904
-        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
-        DIR=1.16
-        kubectl apply -f test/manifests/v${DIR}/cilium-agent/files
-        kubectl apply -f test/manifests/v${DIR}/cilium-operator/files
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY},${IPV6_HP_BPF_VERSION}' < test/manifests/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/manifests/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
     fi
 
     make test-load CNS_ONLY=true \
@@ -76,13 +69,13 @@ az network vnet peering create \
     --allow-vnet-access
 
 
-cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
-cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
+# cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
+# cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
 
 
-cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
-cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
+# cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
+# cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
 
-# # CA is passed between clusters in this step
-cilium clustermesh connect --context ${clusterPrefix}-${sufix1} --destination-context ${clusterPrefix}-${sufix2}
-# These can be run in parallel in different bash shells
+# # # CA is passed between clusters in this step
+# cilium clustermesh connect --context ${clusterPrefix}-${sufix1} --destination-context ${clusterPrefix}-${sufix2}
+# # These can be run in parallel in different bash shells

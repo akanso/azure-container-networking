@@ -44,3 +44,4 @@ clusterPrefix=jmesh sufix1=1 sufix2=2 SUB=d9eabe18-12f6-4421-934a-d7e2327585f5 .
 cilium connectivity test --context ${clusterPrefix}${sufix1} --multi-cluster ${clusterPrefix}${sufix2} --test-namespace ciltest-${sufix1}-${sufix2} --force-deploy
 cilium connectivity test --context ${clusterPrefix}${sufix2} --multi-cluster ${clusterPrefix}${sufix1} --test-namespace ciltest-${sufix2}-${sufix1} --force-deploy
 
+clusterPrefix=jpaynem sufix1=1 sufix2=2 SUB=d9eabe18-12f6-4421-934a-d7e2327585f5 ./cil-script.sh
