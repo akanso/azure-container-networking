@@ -5,26 +5,26 @@ stages:
   - job: env
     displayName: Setup
     steps:
-      - script: |
-          # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
-          BUILD_NUMBER=$(Build.BuildNumber)
-          echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_NUMBER//./-})"
-          echo "##vso[task.setvariable variable=commitID;isOutput=true]$(echo $(make revision)-$(date "+%d%H%M"))"
-          echo "##vso[task.setvariable variable=Tag;isOutput=true]$(make version)"
-          echo "##vso[task.setvariable variable=npmVersion;isOutput=true]$(make npm-version)"
-          cat /etc/os-release
-          uname -a
-          sudo chown -R $(whoami):$(whoami) .
-          go version
-          go env
-          which go
-          echo $PATH
-          echo "------"
-          echo $(Build.QueuedBy)
-          echo $(Build.Reason) # manual, PR, IndividualCI
-          echo $(Build.SourceBranch)
-        name: "EnvironmentalVariables"
-        displayName: "Set environmental variables"
+    - script: |
+        # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
+        BUILD_NUMBER=$(Build.BuildNumber)
+        echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_NUMBER//./-})"
+        echo "##vso[task.setvariable variable=commitID;isOutput=true]$(echo $(make revision)-$(date "+%d%H%M"))"
+        echo "##vso[task.setvariable variable=Tag;isOutput=true]$(make version)"
+        echo "##vso[task.setvariable variable=npmVersion;isOutput=true]$(make npm-version)"
+        cat /etc/os-release
+        uname -a
+        sudo chown -R $(whoami):$(whoami) .
+        go version
+        go env
+        which go
+        echo $PATH
+        echo "------"
+        echo $(Build.QueuedBy)
+        echo $(Build.Reason) # manual, PR, IndividualCI
+        echo $(Build.SourceBranch)
+      name: "EnvironmentalVariables"
+      displayName: "Set environmental variables"
 
 - template: templates/run-unit-tests.stages.yaml
 
@@ -32,8 +32,8 @@ stages:
 - stage: binaries
   displayName: Build Binaries
   dependsOn:
-    - setup
-    - test
+  - setup
+  - test
   jobs:
   - job: build
     displayName: Build Binaries
@@ -71,8 +71,8 @@ stages:
 - stage: containerize
   displayName: Build Images
   dependsOn:
-    - setup
-    - test
+  - setup
+  - test
   templateContext:
     authenticatedContainerRegistries:
     - serviceConnection: $(ACR_SERVICECONNECTION)
@@ -99,6 +99,7 @@ stages:
       - npm
   - template: containers/containerize.jobs.yaml
     parameters:
+      buildOs: windows
       targetOs: windows
       targetArch: amd64
       images:
@@ -111,7 +112,7 @@ stages:
 - stage: publish
   displayName: Publish Multiarch Manifests
   dependsOn:
-    - containerize
+  - containerize
   variables:
     Packaging.EnableSBOMSigning: false
   jobs:
@@ -290,19 +291,19 @@ stages:
   displayName: Delete Clusters
   condition: always()
   dependsOn:
-    - setup
-    - azure_overlay_e2e
-    - azure_overlay_stateless_e2e
-    - aks_swift_e2e
-    - cilium_e2e
-    - cilium_nodesubnet_e2e
-    - cilium_overlay_e2e
-    - cilium_h_overlay_e2e
-    - aks_ubuntu_22_linux_e2e
-    - aks_swift_vnetscale_e2e
-    - aks_windows_22_e2e
-    - dualstackoverlay_e2e
-    - cilium_dualstackoverlay_e2e
+  - setup
+  - azure_overlay_e2e
+  - azure_overlay_stateless_e2e
+  - aks_swift_e2e
+  - cilium_e2e
+  - cilium_nodesubnet_e2e
+  - cilium_overlay_e2e
+  - cilium_h_overlay_e2e
+  - aks_ubuntu_22_linux_e2e
+  - aks_swift_vnetscale_e2e
+  - aks_windows_22_e2e
+  - dualstackoverlay_e2e
+  - cilium_dualstackoverlay_e2e
   variables:
     commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
   jobs:
