@@ -18,20 +18,6 @@ parameters:
   - amd64
   - arm64
 
-- name: buildOs
-  type: string
-  default: linux
-  values:
-  - linux
-  - windows
-
-- name: buildArch
-  type: string
-  default: amd64
-  values:
-  - amd64
-  - arm64
-
 
 jobs:
 - ${{ each imageName in parameters.images }}:
@@ -48,7 +34,7 @@ jobs:
       pool:
         name: $(BUILD_POOL_NAME_DEFAULT_WINDOWS)
         os: windows
-        image: acn-runner-vmss-image-windows-1es-v2.1
+        image: acn-runner-vmss-image-windows-1es-v2.0
 
     steps:
     - checkout: self

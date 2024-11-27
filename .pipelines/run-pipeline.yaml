@@ -99,7 +99,6 @@ stages:
       - npm
   - template: containers/containerize.jobs.yaml
     parameters:
-      buildOs: windows
       targetOs: windows
       targetArch: amd64
       images:

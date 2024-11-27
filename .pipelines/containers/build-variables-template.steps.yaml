@@ -56,7 +56,13 @@ steps:
       MAKE_EXTRA_BUILD_ARGS: ${{ parameters.image }}-docker-build-args
 
 - ${{ elseif eq(parameters.targetOs, 'windows') }}:
-  - powershell: |
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x' # string. Required. Version spec. Default: 3.x.
+      addToPath: true # boolean. Add to PATH. Default: true.
+      architecture: 'x64'
+
+  - pwsh: |
       $env:VAR_ID = "$env:IMAGE_$env:OS_$env:ARCH"
   
       $env:BUILD_CONTEXT = (make "$env:MAKE_BUILD_CONTEXT")
