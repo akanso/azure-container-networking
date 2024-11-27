@@ -82,6 +82,9 @@ steps:
     displayName: "Get Image Build Data"
     errorActionPreference: stop
     env:
+      CONTAINER_BUILDER: docker
+      CONTAINER_RUNTIME: docker
+      CONTAINER_TRANSPORT: docker  
       IMAGE: ${{ parameters.image }}
       OS: ${{ parameters.targetOs }}
       ARCH: ${{ parameters.targetArch }}
