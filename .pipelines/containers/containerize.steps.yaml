@@ -43,7 +43,7 @@ steps:
     enableNetwork: true
     enablePull: false
     enableCache: true
-    useBuildKit: ${{ eq(parameters.targetOs, 'linux') }}
+    useBuildKit: true
 
 - task: 1ES.PushContainerImage@1
   condition: ${{ eq(parameters.targetOs, 'windows') }}
