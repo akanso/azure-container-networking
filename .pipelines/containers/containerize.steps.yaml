@@ -26,13 +26,13 @@ parameters:
 
 
 steps:
-- bash: |
-    docker buildx ls
-    # rm ~/.docker/config.json
-    # Pull windows image to allow building windows images on the Linux platform.
-    docker pull --platform windows mcr.microsoft.com/windows/servercore:ltsc2019
-    docker pull --platform windows mcr.microsoft.com/windows/servercore:ltsc2022
-  displayName: Pull Required Images
+#- bash: |
+#    docker buildx ls
+#    # rm ~/.docker/config.json
+#    # Pull windows image to allow building windows images on the Linux platform.
+#    docker pull --platform windows mcr.microsoft.com/windows/servercore:ltsc2019
+#    docker pull --platform windows mcr.microsoft.com/windows/servercore:ltsc2022
+#  displayName: Pull Required Images
 
 - task: 1ES.BuildContainerImage@1
   retryCountOnTaskFailure: 3
