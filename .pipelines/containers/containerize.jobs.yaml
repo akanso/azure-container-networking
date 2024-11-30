@@ -62,6 +62,6 @@ jobs:
         buildContextPath: $(BUILD_CONTEXT_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         targetVersion: $(IMAGE_PLATFORM_TAG_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
         addBuildArgs: $(EXTRA_BUILD_ARGS_${{ imageName }}_${{ parameters.targetOs }}_${{ parameters.targetArch }})
-        targetPlatform: $(targetPlatform)
+        targetPlatform: $(targetPlatform),linux/${{ parameters.targetArch }}
         targetArch: ${{ parameters.targetArch }}
         targetOs: ${{ parameters.targetOs }}
