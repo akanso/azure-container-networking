@@ -43,7 +43,6 @@ steps:
     buildArguments: |
       --debug
       --build-arg DEBUG="$(System.Debug)"
-      --platform "${{ parameters.targetPlatform }}"
       --build-arg PLATFORM="${{ parameters.targetPlatform }}"
       --build-arg ARCH="${{ parameters.targetArch }}"
       --build-arg OS="${{ parameters.targetOs }}"
@@ -52,8 +51,8 @@ steps:
       ${{ parameters.addBuildArgs }}
     enableNetwork: true
     enableCache: true
-    useBuildKit: ${{ eq(parameters.targetOs, 'linux') }}
-    enablePull: false 
+    useBuildKit: true
+    enablePull: true
 
 - task: 1ES.PushContainerImage@1
   condition: ${{ eq(parameters.targetOs, 'windows') }}
