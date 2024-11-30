@@ -43,6 +43,7 @@ steps:
     buildArguments: |
       --debug
       --build-arg DEBUG="$(System.Debug)"
+      --platform "${{ parameters.targetPlatform }}"
       --build-arg PLATFORM="${{ parameters.targetPlatform }}"
       --build-arg ARCH="${{ parameters.targetArch }}"
       --build-arg OS="${{ parameters.targetOs }}"
