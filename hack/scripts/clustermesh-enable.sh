@@ -96,6 +96,7 @@ helm template cilium cilium/cilium -n kube-system \
   --set clustermesh.config.enabled=true \
   --set hubble.enabled=false \
   --set envoy.enabled=false \
+  --set clustermesh.apiserver.tls.auto.method="cronJob" \
   --dry-run > "$MANIFEST_OUTPUT_FILE"
 # # helm template cilium "$HELM_CHART_NAME" -n "$NAMESPACE" \
 # #   --set clustermesh.useAPIServer=true \

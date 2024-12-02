@@ -23,7 +23,30 @@ az network vnet peering create \
     --vnet-name "$CLUSTER2_CONTEXT" \
     --remote-vnet "/subscriptions/d9eabe18-12f6-4421-934a-d7e2327585f5/resourceGroups/$CLUSTER1_CONTEXT/providers/Microsoft.Network/virtualNetworks/$CLUSTER1_CONTEXT" \
     --allow-vnet-access
+echo "Copying CA certificates between clusters..."
+kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system cilium-ca 
+kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system cilium-ca -o yaml | \
+  kubectl --context $CLUSTER2_CONTEXT create -f -
 
+# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system cilium-kvstoremesh 
+# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system cilium-kvstoremesh -o yaml | \
+#   kubectl --context $CLUSTER2_CONTEXT create -f -
+
+# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-admin-cert 
+# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-admin-cert  -o yaml | \
+#   kubectl --context $CLUSTER2_CONTEXT create -f -
+
+# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-remote-cert 
+# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-remote-cert  -o yaml | \
+#   kubectl --context $CLUSTER2_CONTEXT create -f -
+
+# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-local-cert 
+# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-local-cert  -o yaml | \
+#   kubectl --context $CLUSTER2_CONTEXT create -f -
+
+# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-server-cert
+# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-server-cert -o yaml | \
+#   kubectl --context $CLUSTER2_CONTEXT create -f -
 # Function to get the clustermesh-apiserver IP
 get_clustermesh_apiserver_ip() {
     local context=$1
@@ -56,16 +79,14 @@ patch_secret() {
         --set cluster.name="$local_name" \
         --set clustermesh.apiserver.kvstoremesh.enabled=true \
         --set clustermesh.apiserver.service.type=NodePort \
-        --set clustermesh.apiserver.tls.auto.enabled=true \
-        --set clustermesh.apiserver.tls.auto.method="legacy" \
-        --set clustermesh.apiserver.tls.auto.schedule="0 0 1 */4 *" \
         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
         --set clustermesh.config.clusters[0].name="$remote_name" \
         --set clustermesh.config.clusters[0].port=32379 \
         --set clustermesh.config.enabled=true \
         --set hubble.enabled=false \
         --set clustermesh.useAPIServer=true \
-        --set envoy.enabled=false \
+  --set externalWorkloads.enabled=false \
+  --set envoy.enabled=false \
         --dry-run > "$MANIFEST_OUTPUT_FILE"
 
     echo "Filtering out cilium-config ConfigMap and cilium DaemonSet..."
@@ -77,6 +98,7 @@ patch_secret() {
 )' "$MANIFEST_OUTPUT_FILE" > "$FILTERED_MANIFEST_FILE"
 
     kubectl apply -f "$FILTERED_MANIFEST_FILE"
+    kubectl rollout restart deployment clustermesh-apiserver
 }
 
 # Step 3: Configure secrets for both clusters
