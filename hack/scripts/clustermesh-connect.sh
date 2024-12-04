@@ -1,13 +1,13 @@
 #!/bin/bash
 # usage ./clustermesh-connect.sh CLUSTER_1 CLUSTER2 (Order is important since the ids are derieved implicitly)
-
+# Please make sure that the secrets are patched and clustermesh-apiserver svc has an external ip exposed as 
+# mentioned in the instructions section of the clustermesh-enable.sh script
 # Input arguments
 CLUSTER1_CONTEXT=$1
 CLUSTER2_CONTEXT=$2
 SECRET_NAME="cilium-clustermesh"
 NAMESPACE="kube-system"
 CLUSTER_DOMAIN="svc.cluster.local"
-SECRETS=("cilium-clustermesh" "cilium-kvstoremesh")
 
 # Step 1: Create VNet Peering between the two clusters
 az network vnet peering create \
@@ -24,25 +24,6 @@ az network vnet peering create \
     --remote-vnet "/subscriptions/d9eabe18-12f6-4421-934a-d7e2327585f5/resourceGroups/$CLUSTER1_CONTEXT/providers/Microsoft.Network/virtualNetworks/$CLUSTER1_CONTEXT" \
     --allow-vnet-access
 
-# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system cilium-kvstoremesh 
-# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system cilium-kvstoremesh -o yaml | \
-#   kubectl --context $CLUSTER2_CONTEXT create -f -
-
-# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-admin-cert 
-# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-admin-cert  -o yaml | \
-#   kubectl --context $CLUSTER2_CONTEXT create -f -
-
-# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-remote-cert 
-# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-remote-cert  -o yaml | \
-#   kubectl --context $CLUSTER2_CONTEXT create -f -
-
-# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-local-cert 
-# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-local-cert  -o yaml | \
-#   kubectl --context $CLUSTER2_CONTEXT create -f -
-
-# kubectl --context $CLUSTER2_CONTEXT delete secret -n kube-system clustermesh-apiserver-server-cert
-# kubectl --context=$CLUSTER1_CONTEXT get secret -n kube-system clustermesh-apiserver-server-cert -o yaml | \
-#   kubectl --context $CLUSTER2_CONTEXT create -f -
 # Function to get the clustermesh-apiserver IP
 get_clustermesh_apiserver_ip() {
     local context=$1
@@ -57,8 +38,7 @@ CLUSTER2_NODE_IP=$(kubectl --context "$CLUSTER2_CONTEXT" get nodes -o wide --no-
 
 echo "Cluster 1 Apiserver IP: $CLUSTER1_APISERVER_IP"
 echo "Cluster 2 Apiserver IP: $CLUSTER2_APISERVER_IP"
-echo "Cluster 1 Node IP: $CLUSTER1_NODE_IP"
-echo "Cluster 2 Node IP: $CLUSTER2_NODE_IP"
+
 
 MANIFEST_OUTPUT_FILE="cilium-generated-manifests.yaml"
 FILTERED_MANIFEST_FILE="cilium-filtered-manifests.yaml"
@@ -72,39 +52,6 @@ patch_secret() {
     local ca_cert=$5
     local cert=$6
     local key=$7
- #   tls:
-    #     cert: ""
-    #     key: ""
-    #     caCert: ""
-#     helm template cilium cilium/cilium \
-#         --set cluster.id="$local_id" \
-#         --set cluster.name="$local_name" \
-#         --set clustermesh.useAPIServer=true \
-#   --set clustermesh.apiserver.tls.auto.enabled=false \
-#   --set clustermesh.apiserver.kvstoremesh.enabled=true \
-#   --set clustermesh.config.enabled=true \
-#         --set clustermesh.apiserver.kvstoremesh.enabled=true \
-#         --set clustermesh.apiserver.service.type=NodePort \
-#         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
-#         --set clustermesh.apiserver.tls.server.cert="$CLUSTER1_CERT" \
-#         --set clustermesh.apiserver.tls.server.key="$CLUSTER1_KEY" \
-#         --set clustermesh.apiserver.tls.admin.cert="$CLUSTER1_CERT" \
-#         --set clustermesh.apiserver.tls.admin.key="$CLUSTER1_KEY" \
-#         --set clustermesh.apiserver.tls.remote.cert="$CLUSTER1_CERT" \
-#         --set clustermesh.apiserver.tls.remote.key="$CLUSTER1_KEY" \
-#          --set clustermesh.apiserver.tls.client.cert="$CLUSTER1_CERT" \
-#         --set clustermesh.apiserver.tls.client.key="$CLUSTER1_KEY" \
-#         --set clustermesh.config.clusters[0].name="$remote_name" \
-#         --set clustermesh.config.clusters[0].port=32379 \
-#         --set clustermesh.config.clusters[0].tls.caCert="$ca_cert" \
-#         --set clustermesh.config.clusters[0].tls.cert="$cert" \
-#         --set clustermesh.config.clusters[0].tls.key="$key" \
-#         --set clustermesh.config.enabled=true \
-#         --set hubble.enabled=false \
-#         --set clustermesh.useAPIServer=true \
-#   --set externalWorkloads.enabled=false \
-#   --set envoy.enabled=false \
-#         --dry-run > "$MANIFEST_OUTPUT_FILE"
 
 helm template cilium cilium/cilium \
         --set cluster.id="$local_id" \
