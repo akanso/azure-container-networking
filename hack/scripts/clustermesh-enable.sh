@@ -3,33 +3,33 @@
 # For the first revision, we need to manually patch the clustermesh-clusters on the cilium-agent 
 # This can be done by simply editing the cilium agent deployment in the cluster and changing the volume mounts as follows 
 
-#       - name: clustermesh-secrets
-#         projected:
-#           defaultMode: 256
-#           sources:
-#           - secret:
-#               name: cilium-clustermesh
-#               optional: true
-#           - secret:
-#               items:
-#               - key: tls.key
-#                 path: common-etcd-client.key
-#               - key: tls.crt
-#                 path: common-etcd-client.crt
-#               - key: ca.crt
-#                 path: common-etcd-client-ca.crt
-#               name: clustermesh-apiserver-remote-cert
-#               optional: true
-#           - secret:
-#               items:
-#               - key: tls.key
-#                 path: local-etcd-client.key
-#               - key: tls.crt
-#                 path: local-etcd-client.crt
-#               - key: ca.crt
-#                 path: local-etcd-client-ca.crt
-#               name: clustermesh-apiserver-local-cert
-#               optional: true
+      # - name: clustermesh-secrets
+      #   projected:
+      #     defaultMode: 256
+      #     sources:
+      #     - secret:
+      #         name: cilium-clustermesh
+      #         optional: true
+      #     - secret:
+      #         items:
+      #         - key: tls.key
+      #           path: common-etcd-client.key
+      #         - key: tls.crt
+      #           path: common-etcd-client.crt
+      #         - key: ca.crt
+      #           path: common-etcd-client-ca.crt
+      #         name: clustermesh-apiserver-remote-cert
+      #         optional: true
+      #     - secret:
+      #         items:
+      #         - key: tls.key
+      #           path: local-etcd-client.key
+      #         - key: tls.crt
+      #           path: local-etcd-client.crt
+      #         - key: ca.crt
+      #           path: local-etcd-client-ca.crt
+      #         name: clustermesh-apiserver-local-cert
+      #         optional: true
 
 
 # Variables
@@ -90,8 +90,9 @@ helm template cilium cilium/cilium -n kube-system \
   --set cluster.name=$CLUSTER_NAME \
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
-  --set clustermesh.apiserver.service.type="NodePort" \
-  --set clustermesh.apiserver.tls.auto.enabled=true \
+  --set clustermesh.apiserver.service.type="LoadBalancer" \
+ --set-string clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="true" \
+ --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
   --set hubble.enabled=false \

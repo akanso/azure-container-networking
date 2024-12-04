@@ -76,7 +76,37 @@ patch_secret() {
     #     cert: ""
     #     key: ""
     #     caCert: ""
-    helm template cilium cilium/cilium \
+#     helm template cilium cilium/cilium \
+#         --set cluster.id="$local_id" \
+#         --set cluster.name="$local_name" \
+#         --set clustermesh.useAPIServer=true \
+#   --set clustermesh.apiserver.tls.auto.enabled=false \
+#   --set clustermesh.apiserver.kvstoremesh.enabled=true \
+#   --set clustermesh.config.enabled=true \
+#         --set clustermesh.apiserver.kvstoremesh.enabled=true \
+#         --set clustermesh.apiserver.service.type=NodePort \
+#         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
+#         --set clustermesh.apiserver.tls.server.cert="$CLUSTER1_CERT" \
+#         --set clustermesh.apiserver.tls.server.key="$CLUSTER1_KEY" \
+#         --set clustermesh.apiserver.tls.admin.cert="$CLUSTER1_CERT" \
+#         --set clustermesh.apiserver.tls.admin.key="$CLUSTER1_KEY" \
+#         --set clustermesh.apiserver.tls.remote.cert="$CLUSTER1_CERT" \
+#         --set clustermesh.apiserver.tls.remote.key="$CLUSTER1_KEY" \
+#          --set clustermesh.apiserver.tls.client.cert="$CLUSTER1_CERT" \
+#         --set clustermesh.apiserver.tls.client.key="$CLUSTER1_KEY" \
+#         --set clustermesh.config.clusters[0].name="$remote_name" \
+#         --set clustermesh.config.clusters[0].port=32379 \
+#         --set clustermesh.config.clusters[0].tls.caCert="$ca_cert" \
+#         --set clustermesh.config.clusters[0].tls.cert="$cert" \
+#         --set clustermesh.config.clusters[0].tls.key="$key" \
+#         --set clustermesh.config.enabled=true \
+#         --set hubble.enabled=false \
+#         --set clustermesh.useAPIServer=true \
+#   --set externalWorkloads.enabled=false \
+#   --set envoy.enabled=false \
+#         --dry-run > "$MANIFEST_OUTPUT_FILE"
+
+helm template cilium cilium/cilium \
         --set cluster.id="$local_id" \
         --set cluster.name="$local_name" \
         --set clustermesh.useAPIServer=true \
@@ -84,16 +114,24 @@ patch_secret() {
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
         --set clustermesh.apiserver.kvstoremesh.enabled=true \
-        --set clustermesh.apiserver.service.type=NodePort \
+        --set clustermesh.apiserver.service.type=LoadBalancer \
         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
         --set clustermesh.config.clusters[0].name="$remote_name" \
-        --set clustermesh.config.clusters[0].port=32379 \
+        --set clustermesh.config.clusters[0].port=2379 \
         --set clustermesh.config.clusters[0].tls.caCert="$ca_cert" \
         --set clustermesh.config.clusters[0].tls.cert="$cert" \
         --set clustermesh.config.clusters[0].tls.key="$key" \
         --set clustermesh.config.enabled=true \
-        --set hubble.enabled=false \
-        --set clustermesh.useAPIServer=true \
+  --set clustermesh.useAPIServer=true \
+  --set externalWorkloads.enabled=false \
+  --set clustermesh.apiserver.service.type="LoadBalancer" \
+ --set-string clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="true" \
+ --set clustermesh.apiserver.tls.auto.enabled=true \
+  --set clustermesh.apiserver.kvstoremesh.enabled=true \
+  --set clustermesh.config.enabled=true \
+  --set hubble.enabled=false \
+  --set envoy.enabled=false \
+  --set clustermesh.apiserver.tls.auto.method="cronJob" \
   --set externalWorkloads.enabled=false \
   --set envoy.enabled=false \
         --dry-run > "$MANIFEST_OUTPUT_FILE"
@@ -122,10 +160,10 @@ CLUSTER2_KEY=$(kubectl get secret  clustermesh-apiserver-remote-cert  -o jsonpat
 kubectl config use-context "$CLUSTER1_CONTEXT"
 echo "patch_secret $CLUSTER2_NODE_IP $CLUSTER2_CONTEXT 1 $CLUSTER1_CONTEXT $CLUSTER2_CA $CLUSTER2_CERT $CLUSTER2_KEY"
 
-patch_secret "$CLUSTER2_NODE_IP" "$CLUSTER2_CONTEXT" 1 "$CLUSTER1_CONTEXT" "$CLUSTER2_CA" "$CLUSTER2_CERT" "$CLUSTER2_KEY"
+patch_secret "$CLUSTER2_APISERVER_IP" "$CLUSTER2_CONTEXT" 1 "$CLUSTER1_CONTEXT" "$CLUSTER2_CA" "$CLUSTER2_CERT" "$CLUSTER2_KEY"
 kubectl config use-context "$CLUSTER2_CONTEXT"
 echo "patch_secret $CLUSTER2_NODE_IP $CLUSTER2_CONTEXT 1 $CLUSTER2_CONTEXT $CLUSTER1_CA $CLUSTER1_CERT $CLUSTER1_KEY"
-patch_secret "$CLUSTER1_NODE_IP" "$CLUSTER1_CONTEXT" 2 "$CLUSTER2_CONTEXT" $CLUSTER1_CA $CLUSTER1_CERT $CLUSTER1_KEY
+patch_secret "$CLUSTER1_APISERVER_IP" "$CLUSTER1_CONTEXT" 2 "$CLUSTER2_CONTEXT" $CLUSTER1_CA $CLUSTER1_CERT $CLUSTER1_KEY
 
 
 echo "Secrets and hostAliases have been successfully configured in both clusters!"
