@@ -26,9 +26,12 @@ for unique in $sufixes; do
         --set envoy.enabled=false
 
     else # Ignore this block for now, was testing internal resources.
-        export CILIUM_VERSION_TAG=v1.14.15-241024
+        export CILIUM_VERSION_TAG=v1.16.2-241024
         export CILIUM_IMAGE_REGISTRY=mcr.microsoft.com/containernetworking
-        export DIR=1.14
+
+        export CILIUM_VERSION_TAG=v1.16.2
+        export CILIUM_IMAGE_REGISTRY=quay.io/cilium/cilium
+        export DIR=1.16
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-operator/files
@@ -69,8 +72,8 @@ az network vnet peering create \
     --allow-vnet-access
 
 
-# cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
-# cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
+cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
+cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
 
 
 # cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait

@@ -187,7 +187,7 @@ overlay-byocni-nokubeproxy-up-mesh: rg-up overlay-net-up  ## Brings up an Overla
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
-		--node-count 1 \
+		--node-count 2 \
 		--node-vm-size Standard_D8ls_v5 \
 		--load-balancer-sku standard \
 		--network-plugin none \
