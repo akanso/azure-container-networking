@@ -61,17 +61,16 @@ helm template cilium cilium/cilium \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
         --set clustermesh.apiserver.kvstoremesh.enabled=true \
-        --set clustermesh.apiserver.service.type=LoadBalancer \
+        --set clustermesh.apiserver.service.type=NodePort \
         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
         --set clustermesh.config.clusters[0].name="$remote_name" \
-        --set clustermesh.config.clusters[0].port=2379 \
+        --set clustermesh.config.clusters[0].port=32379 \
         --set clustermesh.config.clusters[0].tls.caCert="$ca_cert" \
         --set clustermesh.config.clusters[0].tls.cert="$cert" \
         --set clustermesh.config.clusters[0].tls.key="$key" \
         --set clustermesh.config.enabled=true \
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
-  --set clustermesh.apiserver.service.type="LoadBalancer" \
  --set-string clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="true" \
  --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
@@ -107,10 +106,10 @@ CLUSTER2_KEY=$(kubectl get secret  clustermesh-apiserver-remote-cert  -o jsonpat
 kubectl config use-context "$CLUSTER1_CONTEXT"
 echo "patch_secret $CLUSTER2_NODE_IP $CLUSTER2_CONTEXT 1 $CLUSTER1_CONTEXT $CLUSTER2_CA $CLUSTER2_CERT $CLUSTER2_KEY"
 
-patch_secret "$CLUSTER2_APISERVER_IP" "$CLUSTER2_CONTEXT" 1 "$CLUSTER1_CONTEXT" "$CLUSTER2_CA" "$CLUSTER2_CERT" "$CLUSTER2_KEY"
+patch_secret "$CLUSTER2_NODE_IP" "$CLUSTER2_CONTEXT" 1 "$CLUSTER1_CONTEXT" "$CLUSTER2_CA" "$CLUSTER2_CERT" "$CLUSTER2_KEY"
 kubectl config use-context "$CLUSTER2_CONTEXT"
 echo "patch_secret $CLUSTER2_NODE_IP $CLUSTER2_CONTEXT 1 $CLUSTER2_CONTEXT $CLUSTER1_CA $CLUSTER1_CERT $CLUSTER1_KEY"
-patch_secret "$CLUSTER1_APISERVER_IP" "$CLUSTER1_CONTEXT" 2 "$CLUSTER2_CONTEXT" $CLUSTER1_CA $CLUSTER1_CERT $CLUSTER1_KEY
+patch_secret "$CLUSTER1_NODE_IP" "$CLUSTER1_CONTEXT" 2 "$CLUSTER2_CONTEXT" $CLUSTER1_CA $CLUSTER1_CERT $CLUSTER1_KEY
 
 
 echo "Secrets and hostAliases have been successfully configured in both clusters!"

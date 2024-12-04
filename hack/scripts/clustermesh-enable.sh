@@ -84,8 +84,7 @@ helm template cilium cilium/cilium -n kube-system \
   --set cluster.name=$CLUSTER_NAME \
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
-  --set clustermesh.apiserver.service.type="LoadBalancer" \
- --set-string clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="true" \
+  --set clustermesh.apiserver.service.type="NodePort" \
  --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
