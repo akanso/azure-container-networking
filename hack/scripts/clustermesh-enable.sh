@@ -78,13 +78,18 @@ kubectl patch configmap cilium-config -n kube-system --type=json -p '[
     "value": "'$CLUSTER_NAME'"
   }
 ]'
-
+nodePort=32379
+if (( $CLUSTER_ID % 2 == 0 )); then
+  echo "Overriding NodePort value"
+  nodePort=32380
+fi
 helm template cilium cilium/cilium -n kube-system \
   --set cluster.id="$CLUSTER_ID" \
   --set cluster.name=$CLUSTER_NAME \
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
   --set clustermesh.apiserver.service.type="NodePort" \
+  --set clustermesh.apiserver.service.nodePort=$nodePort \
  --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \

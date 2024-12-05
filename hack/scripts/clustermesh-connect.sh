@@ -53,6 +53,14 @@ patch_secret() {
     local cert=$6
     local key=$7
 
+    local_nodePort=32379
+    remote_nodePort=32380
+    if (( $local_id % 2 == 0 )); then
+    echo "Overriding NodePort value"
+        local_nodePort=32380
+        remote_nodePort=32379
+    fi
+
 helm template cilium cilium/cilium \
         --set cluster.id="$local_id" \
         --set cluster.name="$local_name" \
@@ -62,9 +70,10 @@ helm template cilium cilium/cilium \
   --set clustermesh.config.enabled=true \
         --set clustermesh.apiserver.kvstoremesh.enabled=true \
         --set clustermesh.apiserver.service.type=NodePort \
+        --set clustermesh.apiserver.service.nodePort=$local_nodePort \
         --set clustermesh.config.clusters[0].ips[0]="$remote_ip" \
         --set clustermesh.config.clusters[0].name="$remote_name" \
-        --set clustermesh.config.clusters[0].port=32379 \
+        --set clustermesh.config.clusters[0].port=$remote_nodePort \
         --set clustermesh.config.clusters[0].tls.caCert="$ca_cert" \
         --set clustermesh.config.clusters[0].tls.cert="$cert" \
         --set clustermesh.config.clusters[0].tls.key="$key" \
