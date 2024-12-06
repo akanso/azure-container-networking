@@ -16,21 +16,47 @@ for unique in $sufixes; do
         AZCLI=az REGION=westus2 SUB=$SUB \
         CLUSTER=${clusterPrefix}-${unique} \
         POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
+        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
 
     if [ $install == "helm" ]; then
-        cilium install -n kube-system cilium cilium/cilium --version v1.16.1 \
-        --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
-        --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
-        --set hubble.enabled=false \
-        --set envoy.enabled=false
+        # cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
+        # --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
+        # --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
+        # --set hubble.enabled=false \
+        # --set envoy.enabled=false
+
+        cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
+            --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
+            --set aksbyocni.enabled=false \
+            --set nodeinit.enabled=false \
+            --set hubble.enabled=false \
+            --set envoy.enabled=false \
+            --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
+            --set cluster.id=${unique} \
+            --set ipam.mode=delegated-plugin \
+            --set routingMode=native \
+            --set endpointRoutes.enabled=true \
+            --set enable-ipv4=true \
+            --set enableIPv4Masquerade=false \
+            --set kubeProxyReplacement=true \
+            --set kubeProxyReplacementHealthzBindAddr='0.0.0.0:10256' \
+            --set extraArgs="{--local-router-ipv4=169.254.23.0} {--install-iptables-rules=true}" \
+            --set endpointHealthChecking.enabled=false \
+            --set cni.exclusive=false \
+            --set bpf.enableTCX=false \
+            --set bpf.hostLegacyRouting=true \
+            --set l7Proxy=false \
+            --set sessionAffinity=true
 
     else # Ignore this block for now, was testing internal resources.
+        # Our Cilium image
         export CILIUM_VERSION_TAG=v1.16.2-241024
         export CILIUM_IMAGE_REGISTRY=mcr.microsoft.com/containernetworking
 
-        export CILIUM_VERSION_TAG=v1.16.2
-        export CILIUM_IMAGE_REGISTRY=quay.io/cilium/cilium
+        # Upstream Cilium
+        # export CILIUM_VERSION_TAG=v1.16.4
+        # export CILIUM_IMAGE_REGISTRY=quay.io
+
         export DIR=1.16
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
@@ -39,10 +65,29 @@ for unique in $sufixes; do
         envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
     fi
 
+# cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
+# --set azure.resourceGroup=jpaynepoc1-${unique}-rg --set cluster.id=${unique} \
+# --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
+# --set hubble.enabled=false \
+# --set envoy.enabled=false \
+# --set extraArgs="{--local-router-ipv4=169.254.23.0}" \
+
+
+# cilium config set routing-mode native
+# cilium config set enable-ipv4-masquerade false
+# cilium config set ipam delegated-plugin
+# cilium config set local-router-ipv4 169.254.23.0
+# cilium config set enable-endpoint-routes true
+# cilium config set enable-endpoint-health-checking false
+
+
     make test-load CNS_ONLY=true \
         AZURE_IPAM_VERSION=v0.2.0 CNS_VERSION=v1.5.32 \
         INSTALL_CNS=true INSTALL_OVERLAY=true \
         CNS_IMAGE_REPO=MCR IPAM_IMAGE_REPO=MCR
+    if [ $install == "helm" ]; then
+        kubectl get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,HOSTNETWORK:.spec.hostNetwork --no-headers=true | grep '<none>' | awk '{print "-n "$1" "$2}' | xargs -L 1 -r kubectl delete pod
+    fi
 done
 
 cd hack/scripts
@@ -71,14 +116,18 @@ az network vnet peering create \
     --remote-vnet "${VNET_ID1}" \
     --allow-vnet-access
 
+if [ $install == "helm" ]; then
+    cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
+    cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
+    # cilium clustermesh enable --enable-kvstoremesh=true
 
-cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
-cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
+    cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
+    cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
 
+    # # # CA is passed between clusters in this step
+    cilium clustermesh connect --context ${clusterPrefix}-${sufix2} --destination-context ${clusterPrefix}-${sufix1}
+    # # These can be run in parallel in different bash shells
 
-# cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
-# cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
-
-# # # CA is passed between clusters in this step
-# cilium clustermesh connect --context ${clusterPrefix}-${sufix1} --destination-context ${clusterPrefix}-${sufix2}
-# # These can be run in parallel in different bash shells
+    cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
+    cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
+fi
