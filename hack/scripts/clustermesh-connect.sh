@@ -8,6 +8,8 @@ CLUSTER2_CONTEXT=$2
 SECRET_NAME="cilium-clustermesh"
 NAMESPACE="kube-system"
 CLUSTER_DOMAIN="svc.cluster.local"
+kubectl config set-context $CLUSTER1_CONTEXT --namespace=kube-system
+kubectl config set-context $CLUSTER2_CONTEXT --namespace=kube-system
 
 # Step 1: Create VNet Peering between the two clusters
 az network vnet peering create \

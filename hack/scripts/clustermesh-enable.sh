@@ -44,6 +44,8 @@ FILTERED_MANIFEST_FILE="cilium-filtered-manifests.yaml"
 # Input Arguments
 CLUSTER_ID=$1
 CLUSTER_NAME=$2
+kubectl config set-context $CLUSTER_NAME --namespace=kube-system
+
 
 # Check if required arguments are provided
 if [[ -z "$CLUSTER_ID" || -z "$CLUSTER_NAME" ]]; then
