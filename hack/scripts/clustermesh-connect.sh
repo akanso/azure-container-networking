@@ -97,13 +97,13 @@ helm template cilium cilium/cilium \
     kubectl rollout restart deployment clustermesh-apiserver
 }
 
-CLUSTER1_CA=$(kubectl get secret cilium-ca -o jsonpath='{.data.ca\.crt}' --context $CLUSTER1_CONTEXT) 
-CLUSTER1_CERT=$(kubectl get secret  clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.crt}' --context $CLUSTER1_CONTEXT) 
-CLUSTER1_KEY=$(kubectl get secret  clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.key}'  --context $CLUSTER1_CONTEXT)
+CLUSTER1_CA=$(kubectl get secret -n kube-system cilium-ca -o jsonpath='{.data.ca\.crt}' --context $CLUSTER1_CONTEXT) 
+CLUSTER1_CERT=$(kubectl get secret -n kube-system clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.crt}' --context $CLUSTER1_CONTEXT) 
+CLUSTER1_KEY=$(kubectl get secret -n kube-system clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.key}'  --context $CLUSTER1_CONTEXT)
 
-CLUSTER2_CA=$(kubectl get secret cilium-ca -o jsonpath='{.data.ca\.crt}' --context $CLUSTER2_CONTEXT) 
-CLUSTER2_CERT=$(kubectl get secret  clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.crt}' --context $CLUSTER2_CONTEXT) 
-CLUSTER2_KEY=$(kubectl get secret  clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.key}' --context $CLUSTER2_CONTEXT) 
+CLUSTER2_CA=$(kubectl get secret -n kube-system cilium-ca -o jsonpath='{.data.ca\.crt}' --context $CLUSTER2_CONTEXT) 
+CLUSTER2_CERT=$(kubectl get secret -n kube-system clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.crt}' --context $CLUSTER2_CONTEXT) 
+CLUSTER2_KEY=$(kubectl get secret  -n kube-system clustermesh-apiserver-remote-cert  -o jsonpath='{.data.tls\.key}' --context $CLUSTER2_CONTEXT) 
 
 # Step 3: Configure secrets for both clusters
 kubectl config use-context "$CLUSTER1_CONTEXT"
