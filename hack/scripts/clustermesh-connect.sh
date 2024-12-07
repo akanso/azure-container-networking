@@ -33,11 +33,15 @@ get_clustermesh_apiserver_ip() {
 # Step 2: Get the clustermesh-apiserver and node IPs for both clusters
 CLUSTER1_APISERVER_IP=$(get_clustermesh_apiserver_ip "$CLUSTER1_CONTEXT")
 CLUSTER2_APISERVER_IP=$(get_clustermesh_apiserver_ip "$CLUSTER2_CONTEXT")
-CLUSTER1_NODE_IP=$(kubectl --context "$CLUSTER1_CONTEXT" get nodes -o wide --no-headers | awk '{print $6}')
-CLUSTER2_NODE_IP=$(kubectl --context "$CLUSTER2_CONTEXT" get nodes -o wide --no-headers | awk '{print $6}')
+CLUSTER1_NODE_IP=$(kubectl --context "$CLUSTER1_CONTEXT" get nodes -o wide --no-headers | awk '{print $6}' | head -n 1)
+
+CLUSTER2_NODE_IP=$(kubectl --context "$CLUSTER2_CONTEXT" get nodes -o wide --no-headers | awk '{print $6}' | head -n 1)
+
 
 echo "Cluster 1 Apiserver IP: $CLUSTER1_APISERVER_IP"
 echo "Cluster 2 Apiserver IP: $CLUSTER2_APISERVER_IP"
+echo "Cluster 1 Node IP: $CLUSTER1_NODE_IP"
+echo "Cluster 2 Node IP: $CLUSTER2_NODE_IP"
 
 
 MANIFEST_OUTPUT_FILE="cilium-generated-manifests.yaml"
@@ -80,7 +84,6 @@ helm template cilium cilium/cilium \
         --set clustermesh.config.enabled=true \
   --set clustermesh.useAPIServer=true \
   --set externalWorkloads.enabled=false \
- --set-string clustermesh.apiserver.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"="true" \
  --set clustermesh.apiserver.tls.auto.enabled=true \
   --set clustermesh.apiserver.kvstoremesh.enabled=true \
   --set clustermesh.config.enabled=true \
