@@ -11,8 +11,8 @@ parameters:
 
 steps:
   - task: AzureCLI@2
-    name: "throughput_test"
-    displayName: "Test throughput ${{ parameters.name }}"
+    name: "throughput_test_${{parameters.name}}"
+    displayName: "Test ${{ parameters.name }} throughput"
     inputs:
       azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
       scriptLocation: "inlineScript"
