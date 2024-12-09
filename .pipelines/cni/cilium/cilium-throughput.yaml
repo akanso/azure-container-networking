@@ -1,0 +1,52 @@
+steps:
+  - task: AzureCLI@2
+    name: throughput_none
+    displayName: "Test throughput baseline"
+    inputs:
+      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+      scriptLocation: "inlineScript"
+      scriptType: "bash"
+      addSpnToEnvironment: true
+      inlineScript: |
+        cd test/scale
+        chmod +x test-scale.sh
+        
+
+  - task: AzureCLI@2
+    name: throughput_netpol
+    displayName: "Test throughput with netpol"
+    inputs:
+      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+      scriptLocation: "inlineScript"
+      scriptType: "bash"
+      addSpnToEnvironment: true
+      inlineScript: |
+        cd test/scale
+        chmod +x test-scale.sh
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=${NUM_REAL_DEPLOYMENTS_NETPOL} --num-real-replicas=${NUM_REAL_REPLICAS_NETPOL} --num-network-policies=${APPLIED_NETPOL} --num-unapplied-network-policies=${UNAPPLIED_NETPOL} --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=${NUM_REAL_SVC_NETPOL} --delete-labels
+        
+  - task: AzureCLI@2
+    name: throughput_svc
+    displayName: "Test throughput with svc"
+    inputs:
+      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+      scriptLocation: "inlineScript"
+      scriptType: "bash"
+      addSpnToEnvironment: true
+      inlineScript: |
+        cd test/scale
+        chmod +x test-scale.sh
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_LB} --num-real-deployments=${NUM_REAL_DEPLOYMENTS_LB} --num-real-replicas=${NUM_REAL_REPLICAS_LB} --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=${NUM_REAL_SVC_LB} --delete-labels --real-pod-type=nginx
+
+  - task: AzureCLI@2
+    name: throughput_netpol_and_svc
+    displayName: "Test throughput with netpol and svc"
+    inputs:
+      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+      scriptLocation: "inlineScript"
+      scriptType: "bash"
+      addSpnToEnvironment: true
+      inlineScript: |
+        cd test/scale
+        chmod +x test-scale.sh
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_LB} --num-real-deployments=${NUM_REAL_DEPLOYMENTS_LB} --num-real-replicas=${NUM_REAL_REPLICAS_LB} --num-network-policies=${APPLIED_NETPOL}  --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=${NUM_REAL_SVC_LB} --delete-labels --real-pod-type=nginx

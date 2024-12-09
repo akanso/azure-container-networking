@@ -151,6 +151,15 @@ stages:
                 ./label-nodes.sh
             name: "LabelNodes"
             displayName: "Label all Nodes"
+  - stage: scale_cluster_deployments_throughput
+    displayName: "Scale deployments for throughput"
+    jobs:
+      - job: scale_deployments_for_throughput
+        pool:
+          name: $(BUILD_POOL_NAME_DEFAULT)
+        timeoutInMinutes: 120
+        steps:
+          - template: cilium-throughput.yaml
   - stage: scale_cluster_deployments
     displayName: "Scale deploments for Network Policies Check"
     jobs:
