@@ -19,8 +19,3 @@ echo "All resources are ready!"
 perl runNetPerfTest.pl > out.log
 
 echo "Finished Perf Test"
-
-kubectl delete deployment netperf-pod
-kubectl delete ds netperf-pod
-kubectl delete ds netperf-host
-kubectl delete svc netperf-server
