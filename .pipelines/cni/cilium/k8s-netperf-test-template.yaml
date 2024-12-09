@@ -1,0 +1,31 @@
+parameters:
+  - name: resourceGroup
+    type: string
+    default: ''
+  - name: clusterName
+    type: string
+    default: ''
+  - name: name
+    type: string
+    default: ''
+
+steps:
+  - task: AzureCLI@2
+    name: "throughput_test"
+    displayName: "Test throughput ${{ parameters.name }}"
+    inputs:
+      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+      scriptLocation: "inlineScript"
+      scriptType: "bash"
+      addSpnToEnvironment: true
+      inlineScript: |
+        # Apply and run tests                
+        az aks get-credentials --resource-group ${{ parameters.resourceGroup }} --name ${{ parameters.clusterName }}
+        cd hack/scripts/
+        chmod +x k8s-netperf.sh
+        bash k8s-netperf.sh
+
+        # Copy test results into staging directory
+        ARTIFACT_DIR=$(Build.ArtifactStagingDirectory)/throughput/${{ parameters.name }}
+        mkdir -p $ARTIFACT_DIR
+        sudo cp ./*.log $ARTIFACT_DIR

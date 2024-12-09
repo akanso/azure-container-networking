@@ -15,26 +15,11 @@ steps:
         mkdir -p $ARTIFACT_DIR
         echo $ARTIFACT_DIR
 
-  - task: AzureCLI@2
-    name: throughput_none
-    displayName: "Test throughput baseline"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        # Apply and run tests                
-        az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${CLUSTER}
-        cd hack/scripts/
-        chmod +x k8s-netperf.sh
-        bash k8s-netperf.sh
-
-        # Copy test results into staging directory
-        ARTIFACT_DIR=$(Build.ArtifactStagingDirectory)/throughput/baseline
-        mkdir -p $ARTIFACT_DIR
-        sudo cp ./*.log $ARTIFACT_DIR
-  
+  - template: k8s-netperf-test-template.yaml
+    parameters:
+      resourceGroup: "$(RESOURCE_GROUP)"
+      clusterName: "$(CLUSTER)"
+      name: "baseline"
 
   # - task: AzureCLI@2
   #   name: throughput_netpol
@@ -74,7 +59,7 @@ steps:
   #       cd test/scale
   #       chmod +x test-scale.sh
   #       ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_LB} --num-real-deployments=${NUM_REAL_DEPLOYMENTS_LB} --num-real-replicas=${NUM_REAL_REPLICAS_LB} --num-network-policies=${APPLIED_NETPOL}  --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=${NUM_REAL_SVC_LB} --delete-labels --real-pod-type=nginx
-  
+
   - task: PublishBuildArtifacts@1
     name: throughput_artifacts
     inputs:
