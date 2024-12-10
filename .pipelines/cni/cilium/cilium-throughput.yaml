@@ -46,9 +46,9 @@ steps:
       inlineScript: |
         cd test/scale
         chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=2 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
         echo "Number of pods in scale test namespace"
-        kubectl get pods -Aowide -n scale-test | wc -l
+        kubectl get pods -owide -n scale-test --no-headers | wc -l
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
@@ -67,11 +67,11 @@ steps:
       inlineScript: |
         cd test/scale
         chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=3 --num-real-replicas=3 --num-network-policies=2 --num-unapplied-network-policies=2 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=20 --num-unapplied-network-policies=40 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
         echo "Number of pods in scale test namespace"
-        kubectl get pods -Aowide -n scale-test | wc -l
+        kubectl get pods -owide -n scale-test --no-headers | wc -l
         echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -Aowide -n scale-test | wc -l
+        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
@@ -89,13 +89,13 @@ steps:
       inlineScript: |
         cd test/scale
         chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=4 --num-real-replicas=4 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=3 --delete-labels
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=30 --delete-labels
         echo "Number of pods in scale test namespace"
-        kubectl get pods -Aowide -n scale-test | wc -l
+        kubectl get pods -owide -n scale-test --no-headers | wc -l
         echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -Aowide -n scale-test | wc -l
+        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
         echo "Number of services in scale test namespace"
-        kubectl get svc -Aowide -n scale-test | wc -l
+        kubectl get svc -owide -n scale-test --no-headers | wc -l
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
@@ -113,13 +113,13 @@ steps:
       inlineScript: |
         cd test/scale
         chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=5 --num-real-replicas=5 --num-network-policies=4 --num-unapplied-network-policies=4 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=4 --delete-labels
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=20 --num-unapplied-network-policies=40 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=30 --delete-labels
         echo "Number of pods in scale test namespace"
-        kubectl get pods -Aowide -n scale-test | wc -l
+        kubectl get pods -owide -n scale-test --no-headers | wc -l
         echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -Aowide -n scale-test | wc -l
+        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
         echo "Number of services in scale test namespace"
-        kubectl get svc -Aowide -n scale-test | wc -l
+        kubectl get svc -owide -n scale-test --no-headers | wc -l
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
