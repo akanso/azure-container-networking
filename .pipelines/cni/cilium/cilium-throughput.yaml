@@ -15,116 +15,56 @@ steps:
         mkdir -p $ARTIFACT_DIR
         echo $ARTIFACT_DIR
 
-  - task: AzureCLI@2
-    name: throughput_baseline
-    displayName: "Setup baseline pod throughput"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        cd test/scale
-        chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=0 --num-real-replicas=0 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
-        echo "Listing pods in scale test namespace"
-        kubectl get pods -Aowide -n scale-test
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "none"
-
-  - task: AzureCLI@2
-    name: throughput_pods
-    displayName: "Setup backend pod throughput"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        cd test/scale
-        chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
-        echo "Number of pods in scale test namespace"
-        kubectl get pods -owide -n scale-test --no-headers | wc -l
+      numDeployments: 0
+      numReplicasPerDeployment: 0
+      numPolicies: 0
+      numUnappliedPolicies: 0
+      numServices: 0
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "pods"
-  
-
-  - task: AzureCLI@2
-    name: throughput_netpol
-    displayName: "Setup network policies with pods throughput"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        cd test/scale
-        chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=20 --num-unapplied-network-policies=40 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=0 --delete-labels
-        echo "Number of pods in scale test namespace"
-        kubectl get pods -owide -n scale-test --no-headers | wc -l
-        echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
+      numDeployments: 2
+      numReplicasPerDeployment: 30
+      numPolicies: 0
+      numUnappliedPolicies: 0
+      numServices: 0
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
-      name: "network_policies"
-  
-  - task: AzureCLI@2
-    name: throughput_svc
-    displayName: "Setup services with pods throughput"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        cd test/scale
-        chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=0 --num-unapplied-network-policies=0 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=30 --delete-labels
-        echo "Number of pods in scale test namespace"
-        kubectl get pods -owide -n scale-test --no-headers | wc -l
-        echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
-        echo "Number of services in scale test namespace"
-        kubectl get svc -owide -n scale-test --no-headers | wc -l
+      name: "policies"
+      numDeployments: 2
+      numReplicasPerDeployment: 30
+      numPolicies: 20
+      numUnappliedPolicies: 40
+      numServices: 0
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "services"
-
-  - task: AzureCLI@2
-    name: throughput_netpol_and_svc
-    displayName: "Setup network policies and services with pods throughput"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        cd test/scale
-        chmod +x test-scale.sh
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=2 --num-real-replicas=30 --num-network-policies=20 --num-unapplied-network-policies=40 --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=3 --num-real-services=30 --delete-labels
-        echo "Number of pods in scale test namespace"
-        kubectl get pods -owide -n scale-test --no-headers | wc -l
-        echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
-        echo "Number of services in scale test namespace"
-        kubectl get svc -owide -n scale-test --no-headers | wc -l
+      numDeployments: 2
+      numReplicasPerDeployment: 30
+      numPolicies: 0
+      numUnappliedPolicies: 0
+      numServices: 30
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
-      name: "network_policies_and_services"
+      name: "policies_and_services"
+      numDeployments: 2
+      numReplicasPerDeployment: 30
+      numPolicies: 20
+      numUnappliedPolicies: 40
+      numServices: 30
 
   - task: PublishBuildArtifacts@1
     name: throughput_artifacts
