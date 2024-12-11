@@ -47,6 +47,17 @@ type NCVersionList struct {
 // HomeAZ.
 type HomeAZFix int
 
+func (h HomeAZFix) String() string {
+	switch h {
+	case HomeAZFixInvalid:
+		return "HomeAZFixInvalid"
+	case HomeAZFixIPv6:
+		return "HomeAZFixIPv6"
+	default:
+		return "Unknown HomeAZ Fix"
+	}
+}
+
 const (
 	HomeAZFixInvalid HomeAZFix = iota
 	HomeAZFixIPv6
