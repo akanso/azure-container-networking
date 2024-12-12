@@ -17,7 +17,7 @@ done
 echo "All resources are ready!"
 
 for i in {1..3}; do
-    perl runNetPerfTest.pl > "out-${i}.log"
+    perl runNetPerfTestIperfOnly.pl --nobaseline > "out-${i}.log"
     echo "Finished Perf Test Iter ${i}"
 done
 
