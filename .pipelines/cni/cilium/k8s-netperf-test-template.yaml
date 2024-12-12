@@ -9,20 +9,20 @@ parameters:
     type: string
     default: ''
   - name: numDeployments
-    type: number
-    default: 0
+    type: string
+    default: '0'
   - name: numReplicasPerDeployment
-    type: number
-    default: 0
+    type: string
+    default: '0'
   - name: numPolicies
-    type: number
-    default: 0
+    type: string
+    default: '0'
   - name: numUnappliedPolicies
-    type: number
-    default: 0
+    type: string
+    default: '0'
   - name: numServices
-    type: number
-    default: 0
+    type: string
+    default: '0'
 
 steps:
   - task: AzureCLI@2
