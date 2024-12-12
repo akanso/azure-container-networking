@@ -70,7 +70,7 @@ steps:
     name: throughput_artifacts
     inputs:
       artifactName: throughput
-      pathtoPublish: "$(Build.ArtifactStagingDirectory)/${CLUSTER}/"
+      pathtoPublish: "$(Build.ArtifactStagingDirectory)/$(CLUSTER)/"
     condition: always()
     displayName: "Publish Artifacts"
   

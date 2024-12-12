@@ -68,6 +68,7 @@ steps:
 
         # Copy test results into staging directory
         ARTIFACT_DIR="$(Build.ArtifactStagingDirectory)/${CLUSTER}/${{ parameters.name }}"
+        echo "Saving results to ${ARTIFACT_DIR}"
         mkdir -p $ARTIFACT_DIR
         sudo cp ./*.log $ARTIFACT_DIR
 
