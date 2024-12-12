@@ -30,8 +30,8 @@ steps:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "pods"
-      numDeployments: 2
-      numReplicasPerDeployment: 30
+      numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
+      numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
       numPolicies: 0
       numUnappliedPolicies: 0
       numServices: 0
@@ -40,37 +40,37 @@ steps:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "policies"
-      numDeployments: 2
-      numReplicasPerDeployment: 30
-      numPolicies: 20
-      numUnappliedPolicies: 40
+      numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
+      numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
+      numPolicies: "$(APPLIED_NETPOL)" # 20
+      numUnappliedPolicies: "$(UNAPPLIED_NETPOL)" # 40
       numServices: 0
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "services"
-      numDeployments: 2
-      numReplicasPerDeployment: 30
+      numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
+      numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
       numPolicies: 0
       numUnappliedPolicies: 0
-      numServices: 30
+      numServices: "$(NUM_REAL_SVC_NETPOL)" # 30
   - template: k8s-netperf-test-template.yaml
     parameters:
       resourceGroup: "$(RESOURCE_GROUP)"
       clusterName: "$(CLUSTER)"
       name: "policies_and_services"
-      numDeployments: 2
-      numReplicasPerDeployment: 30
-      numPolicies: 20
-      numUnappliedPolicies: 40
-      numServices: 30
+      numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
+      numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
+      numPolicies: "$(APPLIED_NETPOL)" # 20
+      numUnappliedPolicies: "$(UNAPPLIED_NETPOL)" # 40
+      numServices: "$(NUM_REAL_SVC_NETPOL)" # 30
 
   - task: PublishBuildArtifacts@1
     name: throughput_artifacts
     inputs:
       artifactName: throughput
-      pathtoPublish: "$(Build.ArtifactStagingDirectory)/throughput/"
+      pathtoPublish: "$(Build.ArtifactStagingDirectory)/${CLUSTER}/"
     condition: always()
     displayName: "Publish Artifacts"
   
