@@ -157,7 +157,7 @@ stages:
       - job: scale_deployments_for_throughput
         pool:
           name: $(BUILD_POOL_NAME_DEFAULT)
-        timeoutInMinutes: 180
+        timeoutInMinutes: 360
         steps:
           - template: cilium-throughput.yaml
   - stage: scale_cluster_deployments
