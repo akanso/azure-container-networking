@@ -1,5 +1,22 @@
+pr:
+  branches:
+    include:
+      - master
+      - release/*
+  paths:
+    include:
+      - npm/*
+      - .pipelines/npm/*
+      - test/scale/*
+
+
 trigger:
-  - master
+  branches:
+    include:
+      - master
+  tags:
+    include:
+      - "*"
 
 variables:
   - name: VNET_NAME
@@ -50,18 +67,16 @@ jobs:
             arch: amd64
             name: npm
             os: linux
-        npm_windows2022_amd64:
+        npm_windows_amd64:
           arch: amd64
           name: npm
           os: windows
-          os_version: ltsc2022
     steps:
       - template: ../containers/container-template.yaml
         parameters:
           arch: $(arch)
           name: $(name)
           os: $(os)
-          os_version: $(os_version)
 
   - job: Create_Cluster_and_Run_Test
     timeoutInMinutes: 360
@@ -82,10 +97,11 @@ jobs:
           PROFILE: "sc-lin"
           NUM_NETPOLS: 800
           INITIAL_CONNECTIVITY_TIMEOUT: 60
-        ws22:
-          PROFILE: "sc-ws22"
-          NUM_NETPOLS: 50
-          INITIAL_CONNECTIVITY_TIMEOUT: 720
+        # 2024/07/23: Windows Scale Test is consistently failing to establish initial connectivity in time
+        # ws22:
+        #   PROFILE: "sc-ws22"
+        #   NUM_NETPOLS: 50
+        #   INITIAL_CONNECTIVITY_TIMEOUT: 720
     steps:
       - checkout: self
       - bash: |
@@ -186,7 +202,7 @@ jobs:
 
             # swap azure-npm image with one built during run
             kubectl set image daemonset/azure-npm -n kube-system azure-npm=$IMAGE_REGISTRY/azure-npm:linux-amd64-$(TAG)
-            kubectl set image daemonset/azure-npm-win -n kube-system azure-npm=$IMAGE_REGISTRY/azure-npm:windows-amd64-ltsc2022-$(TAG)
+            kubectl set image daemonset/azure-npm-win -n kube-system azure-npm=$IMAGE_REGISTRY/azure-npm:windows-amd64-$(TAG)
 
             sleep 30s
             echo "waiting for NPM to start running..."

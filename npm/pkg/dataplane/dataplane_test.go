@@ -1,7 +1,6 @@
 package dataplane
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/common"
@@ -221,6 +220,33 @@ func TestRemovePolicy(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestHandle2977(t *testing.T) {
+	if util.IsWindowsDP() {
+		return
+	}
+
+	metrics.InitializeAll()
+
+	calls := append(getBootupTestCalls(), getAddPolicyTestCallsForDP(&testPolicyobj)...)
+	calls = append(calls, policies.GetRemovePolicyTestCalls(&testPolicyobj)...)
+	calls = append(calls, ipsets.GetApplyIPSetsFailureTestCalls()...)
+	calls = append(calls, ipsets.GetApplyIPSetsTestCalls(nil, getAffectedIPSets(&testPolicyobj))...)
+	calls = append(calls, getAddPolicyTestCallsForDP(&testPolicyobj)...)
+	ioshim := common.NewMockIOShim(calls)
+	defer ioshim.VerifyCalls(t, calls)
+	dp, err := NewDataPlane("testnode", ioshim, dpCfg, nil)
+	require.NoError(t, err)
+
+	err = dp.AddPolicy(&testPolicyobj)
+	require.NoError(t, err)
+
+	err = dp.RemovePolicy(testPolicyobj.PolicyKey)
+	require.Error(t, err)
+
+	err = dp.AddPolicy(&testPolicyobj)
+	require.NoError(t, err)
+}
+
 func TestUpdatePolicy(t *testing.T) {
 	metrics.InitializeAll()
 
@@ -235,9 +261,6 @@ func TestUpdatePolicy(t *testing.T) {
 	calls := append(getBootupTestCalls(), getAddPolicyTestCallsForDP(&testPolicyobj)...)
 	calls = append(calls, getRemovePolicyTestCallsForDP(&testPolicyobj)...)
 	calls = append(calls, getAddPolicyTestCallsForDP(&updatedTestPolicyobj)...)
-	for _, call := range calls {
-		fmt.Println(call)
-	}
 	ioshim := common.NewMockIOShim(calls)
 	defer ioshim.VerifyCalls(t, calls)
 	dp, err := NewDataPlane("testnode", ioshim, dpCfg, nil)
@@ -393,7 +416,7 @@ func TestUpdatePodCache(t *testing.T) {
 }
 
 func getBootupTestCalls() []testutils.TestCmd {
-	return append(policies.GetBootupTestCalls(true), ipsets.GetResetTestCalls()...)
+	return append(policies.GetBootupTestCalls(), ipsets.GetResetTestCalls()...)
 }
 
 func getAddPolicyTestCallsForDP(networkPolicy *policies.NPMNetworkPolicy) []testutils.TestCmd {

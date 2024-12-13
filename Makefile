@@ -20,10 +20,6 @@ GOOS 	 ?= $(shell go env GOOS)
 GOARCH   ?= $(shell go env GOARCH)
 GOOSES   ?= "linux windows" # To override at the cli do: GOOSES="\"darwin bsd\""
 GOARCHES ?= "amd64 arm64" # To override at the cli do: GOARCHES="\"ppc64 mips\""
-ltsc2019  = "10.0.17763.4010"
-ltsc2022  = "10.0.20348.643"
-ltsc2022-KB5035857   = "10.0.26100.1"
-win2025 = "10.0.26100.1"
 
 # Windows specific extensions
 # set these based on the GOOS, not the OS
@@ -37,10 +33,9 @@ endif
 REPO_ROOT				 = $(shell git rev-parse --show-toplevel)
 REVISION				?= $(shell git rev-parse --short HEAD)
 ACN_VERSION				?= $(shell git describe --exclude "azure-ipam*" --exclude "dropgz*" --exclude "zapai*" --exclude "ipv6-hp-bpf*" --tags --always)
-IPV6_HP_BPF_VERSION			?= $(notdir $(shell git describe --match "ipv6-hp-bpf*" --tags --always))
+IPV6_HP_BPF_VERSION		?= $(notdir $(shell git describe --match "ipv6-hp-bpf*" --tags --always))
 AZURE_IPAM_VERSION		?= $(notdir $(shell git describe --match "azure-ipam*" --tags --always))
 CNI_VERSION				?= $(ACN_VERSION)
-CNI_DROPGZ_VERSION		?= $(notdir $(shell git describe --match "dropgz*" --tags --always))
 CNS_VERSION				?= $(ACN_VERSION)
 NPM_VERSION				?= $(ACN_VERSION)
 ZAPAI_VERSION			?= $(notdir $(shell git describe --match "zapai*" --tags --always))
@@ -48,7 +43,7 @@ ZAPAI_VERSION			?= $(notdir $(shell git describe --match "zapai*" --tags --alway
 # Build directories.
 AZURE_IPAM_DIR = $(REPO_ROOT)/azure-ipam
 IPV6_HP_BPF_DIR = $(REPO_ROOT)/bpf-prog/ipv6-hp-bpf
-CNM_DIR = $(REPO_ROOT)/cnm/plugin
+
 CNI_NET_DIR = $(REPO_ROOT)/cni/network/plugin
 CNI_IPAM_DIR = $(REPO_ROOT)/cni/ipam/plugin
 STATELESS_CNI_NET_DIR = $(REPO_ROOT)/cni/network/stateless
@@ -62,7 +57,7 @@ BUILD_DIR = $(OUTPUT_DIR)/$(GOOS)_$(GOARCH)
 AZURE_IPAM_BUILD_DIR = $(BUILD_DIR)/azure-ipam
 IPV6_HP_BPF_BUILD_DIR = $(BUILD_DIR)/bpf-prog/ipv6-hp-bpf
 IMAGE_DIR  = $(OUTPUT_DIR)/images
-CNM_BUILD_DIR = $(BUILD_DIR)/cnm
+
 CNI_BUILD_DIR = $(BUILD_DIR)/cni
 ACNCLI_BUILD_DIR = $(BUILD_DIR)/acncli
 STATELESS_CNI_BUILD_DIR = $(CNI_BUILD_DIR)/stateless
@@ -102,7 +97,7 @@ CNI_SWIFT_ARCHIVE_NAME = azure-vnet-cni-swift-$(GOOS)-$(GOARCH)-$(CNI_VERSION).$
 CNI_OVERLAY_ARCHIVE_NAME = azure-vnet-cni-overlay-$(GOOS)-$(GOARCH)-$(CNI_VERSION).$(ARCHIVE_EXT)
 CNI_BAREMETAL_ARCHIVE_NAME = azure-vnet-cni-baremetal-$(GOOS)-$(GOARCH)-$(CNI_VERSION).$(ARCHIVE_EXT)
 CNI_DUALSTACK_ARCHIVE_NAME = azure-vnet-cni-overlay-dualstack-$(GOOS)-$(GOARCH)-$(CNI_VERSION).$(ARCHIVE_EXT)
-CNM_ARCHIVE_NAME = azure-vnet-cnm-$(GOOS)-$(GOARCH)-$(ACN_VERSION).$(ARCHIVE_EXT)
+
 CNS_ARCHIVE_NAME = azure-cns-$(GOOS)-$(GOARCH)-$(CNS_VERSION).$(ARCHIVE_EXT)
 NPM_ARCHIVE_NAME = azure-npm-$(GOOS)-$(GOARCH)-$(NPM_VERSION).$(ARCHIVE_EXT)
 AZURE_IPAM_ARCHIVE_NAME = azure-ipam-$(GOOS)-$(GOARCH)-$(AZURE_IPAM_VERSION).$(ARCHIVE_EXT)
@@ -110,13 +105,8 @@ IPV6_HP_BPF_ARCHIVE_NAME = ipv6-hp-bpf-$(GOOS)-$(GOARCH)-$(IPV6_HP_BPF_VERSION).
 
 # Image info file names.
 CNI_IMAGE_INFO_FILE			= azure-cni-$(CNI_VERSION).txt
-CNI_DROPGZ_IMAGE_INFO_FILE	= cni-dropgz-$(CNI_DROPGZ_VERSION).txt
 CNS_IMAGE_INFO_FILE			= azure-cns-$(CNS_VERSION).txt
 NPM_IMAGE_INFO_FILE			= azure-npm-$(NPM_VERSION).txt
-
-# Docker libnetwork (CNM) plugin v2 image parameters.
-CNM_PLUGIN_IMAGE ?= microsoft/azure-vnet-plugin
-CNM_PLUGIN_ROOTFS = azure-vnet-plugin-rootfs
 
 # Default target
 all-binaries-platforms: ## Make all platform binaries
@@ -137,7 +127,6 @@ all-images:
 endif
 
 # Shorthand target names for convenience.
-azure-cnm-plugin: cnm-binary cnm-archive
 azure-cni-plugin: azure-vnet-binary azure-vnet-stateless-binary azure-vnet-ipam-binary azure-vnet-ipamv6-binary azure-vnet-telemetry-binary cni-archive
 azure-cns: azure-cns-binary cns-archive
 acncli: acncli-binary acncli-archive
@@ -164,9 +153,6 @@ ipv6-hp-bpf-version: ## prints the ipv6-hp-bpf version
 
 cni-version: ## prints the cni version
 	@echo $(CNI_VERSION)
-
-cni-dropgz-version: ## prints the cni-dropgz version
-	@echo $(CNI_DROPGZ_VERSION)
 
 cns-version:
 	@echo $(CNS_VERSION)
@@ -197,10 +183,6 @@ else ifeq ($(GOARCH),arm64)
 	sudo apt-get update && sudo apt-get install -y llvm clang linux-libc-dev linux-headers-generic libbpf-dev libc6-dev nftables iproute2 gcc-aarch64-linux-gnu
 	for dir in /usr/include/aarch64-linux-gnu/*; do sudo ln -sfn "$$dir" /usr/include/$$(basename "$$dir"); done
 endif
-
-# Build the Azure CNM binary.
-cnm-binary:
-	cd $(CNM_DIR) && CGO_ENABLED=0 go build -v -o $(CNM_BUILD_DIR)/azure-vnet-plugin$(EXE_EXT) -ldflags "-X main.version=$(ACN_VERSION)" -gcflags="-dwarflocationlists=true"
 
 # Build the Azure CNI network binary.
 azure-vnet-binary:
@@ -277,21 +259,19 @@ ACNCLI_IMAGE		= acncli
 AZURE_IPAM_IMAGE	= azure-ipam
 IPV6_HP_BPF_IMAGE	= ipv6-hp-bpf
 CNI_IMAGE			= azure-cni
-CNI_DROPGZ_IMAGE	= cni-dropgz
 CNS_IMAGE			= azure-cns
 NPM_IMAGE			= azure-npm
 
 ## Image platform tags.
-ACNCLI_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(ACN_VERSION)
-AZURE_IPAM_PLATFORM_TAG			?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(AZURE_IPAM_VERSION)
-AZURE_IPAM_WINDOWS_PLATFORM_TAG	?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(AZURE_IPAM_VERSION)-$(OS_SKU_WIN)
-IPV6_HP_BPF_IMAGE_PLATFORM_TAG	?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(IPV6_HP_BPF_VERSION)
-CNI_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(CNI_VERSION)
-CNI_WINDOWS_PLATFORM_TAG		?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(CNI_VERSION)-$(OS_SKU_WIN)
-CNI_DROPGZ_PLATFORM_TAG 		?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(CNI_DROPGZ_VERSION)
-CNS_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(CNS_VERSION)
-CNS_WINDOWS_PLATFORM_TAG		?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(CNS_VERSION)-$(OS_SKU_WIN)
-NPM_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(NPM_VERSION)
+ACNCLI_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))-$(ACN_VERSION)
+AZURE_IPAM_PLATFORM_TAG			?= $(subst /,-,$(PLATFORM))-$(AZURE_IPAM_VERSION)
+AZURE_IPAM_WINDOWS_PLATFORM_TAG	?= $(subst /,-,$(PLATFORM))-$(AZURE_IPAM_VERSION)-$(OS_SKU_WIN)
+IPV6_HP_BPF_IMAGE_PLATFORM_TAG	?= $(subst /,-,$(PLATFORM))-$(IPV6_HP_BPF_VERSION)
+CNI_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))-$(CNI_VERSION)
+CNI_WINDOWS_PLATFORM_TAG		?= $(subst /,-,$(PLATFORM))-$(CNI_VERSION)-$(OS_SKU_WIN)
+CNS_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))-$(CNS_VERSION)
+CNS_WINDOWS_PLATFORM_TAG		?= $(subst /,-,$(PLATFORM))-$(CNS_VERSION)-$(OS_SKU_WIN)
+NPM_PLATFORM_TAG				?= $(subst /,-,$(PLATFORM))-$(NPM_VERSION)
 
 
 qemu-user-static: ## Set up the host to run qemu multiplatform container builds.
@@ -304,7 +284,6 @@ container-buildah: # util target to build container images using buildah. do not
 	buildah bud \
 		--build-arg ARCH=$(ARCH) \
 		--build-arg OS=$(OS) \
-		--build-arg OS_VERSION=$(OS_VERSION) \
 		--build-arg PLATFORM=$(PLATFORM) \
 		--build-arg VERSION=$(TAG) \
 		$(EXTRA_BUILD_ARGS) \
@@ -317,12 +296,11 @@ container-buildah: # util target to build container images using buildah. do not
 	buildah push $(IMAGE_REGISTRY)/$(IMAGE):$(TAG)
 
 container-docker: # util target to build container images using docker buildx. do not invoke directly.
-	docker buildx create --use --platform $(PLATFORM)
+	docker buildx create --use --driver-opt image=mcr.microsoft.com/oss/v2/moby/buildkit:v0.16.0-2 --platform $(PLATFORM)
 	docker buildx build \
 		$(BUILDX_ACTION) \
 		--build-arg ARCH=$(ARCH) \
 		--build-arg OS=$(OS) \
-		--build-arg OS_VERSION=$(OS_VERSION) \
 		--build-arg PLATFORM=$(PLATFORM) \
 		--build-arg VERSION=$(TAG) \
 		$(EXTRA_BUILD_ARGS) \
@@ -336,7 +314,6 @@ container: # util target to build container images. do not invoke directly.
 	$(MAKE) container-$(CONTAINER_BUILDER) \
 		ARCH=$(ARCH) \
 		OS=$(OS) \
-		OS_VERSION=$(OS_VERSION) \
 		PLATFORM=$(PLATFORM) \
 		TAG=$(TAG) \
 		TARGET=$(TARGET)
@@ -393,8 +370,7 @@ azure-ipam-image: ## build azure-ipam container image.
 		TAG=$(AZURE_IPAM_PLATFORM_TAG) \
 		TARGET=$(OS) \
 		OS=$(OS) \
-		ARCH=$(ARCH) \
-		OS_VERSION=$(OS_VERSION)
+		ARCH=$(ARCH)
 
 azure-ipam-image-push: ## push azure-ipam container image.
 	$(MAKE) container-push \
@@ -418,13 +394,12 @@ ipv6-hp-bpf-image: ## build ipv6-hp-bpf container image.
 	$(MAKE) container \
 		DOCKERFILE=bpf-prog/ipv6-hp-bpf/$(OS).Dockerfile \
 		IMAGE=$(IPV6_HP_BPF_IMAGE) \
-		EXTRA_BUILD_ARGS='--build-arg OS=$(OS) --build-arg ARCH=$(ARCH) --build-arg OS_VERSION=$(OS_VERSION) --build-arg DEBUG=$(DEBUG)'\
+		EXTRA_BUILD_ARGS='--build-arg OS=$(OS) --build-arg ARCH=$(ARCH) --build-arg DEBUG=$(DEBUG)'\
 		PLATFORM=$(PLATFORM) \
 		TAG=$(IPV6_HP_BPF_IMAGE_PLATFORM_TAG) \
 		TARGET=$(OS) \
 		OS=$(OS) \
-		ARCH=$(ARCH) \
-		OS_VERSION=$(OS_VERSION)
+		ARCH=$(ARCH)
 
 ipv6-hp-bpf-image-push: ## push ipv6-hp-bpf container image.
 	$(MAKE) container-push \
@@ -453,7 +428,7 @@ cni-image: ## build cni container image.
 		TARGET=$(OS) \
 		OS=$(OS) \
 		ARCH=$(ARCH) \
-		OS_VERSION=$(OS_VERSION)
+		EXTRA_BUILD_ARGS='--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
 
 cni-image-push: ## push cni container image.
 	$(MAKE) container-push \
@@ -464,32 +439,6 @@ cni-image-pull: ## pull cni container image.
 	$(MAKE) container-pull \
 		IMAGE=$(CNI_IMAGE) \
 		TAG=$(CNI_PLATFORM_TAG)
-
-
-# cni-dropgz
-
-cni-dropgz-image-name: # util target to print the CNI dropgz image name.
-	@echo $(CNI_DROPGZ_IMAGE)
-
-cni-dropgz-image-name-and-tag: # util target to print the CNI dropgz image name and tag.
-	@echo $(IMAGE_REGISTRY)/$(CNI_DROPGZ_IMAGE):$(CNI_DROPGZ_PLATFORM_TAG)
-
-cni-dropgz-image: ## build cni-dropgz container image.
-	$(MAKE) container \
-		DOCKERFILE=dropgz/build/$(OS).Dockerfile \
-		IMAGE=$(CNI_DROPGZ_IMAGE) \
-		TAG=$(CNI_DROPGZ_PLATFORM_TAG) \
-		TARGET=$(OS)
-
-cni-dropgz-image-push: ## push cni-dropgz container image.
-	$(MAKE) container-push \
-		IMAGE=$(CNI_DROPGZ_IMAGE) \
-		TAG=$(CNI_DROPGZ_PLATFORM_TAG)
-
-cni-dropgz-image-pull: ## pull cni-dropgz container image.
-	$(MAKE) container-pull \
-		IMAGE=$(CNI_DROPGZ_IMAGE) \
-		TAG=$(CNI_DROPGZ_PLATFORM_TAG)
 
 
 # cns
@@ -509,8 +458,7 @@ cns-image: ## build cns container image.
 		TAG=$(CNS_PLATFORM_TAG) \
 		TARGET=$(OS) \
 		OS=$(OS) \
-		ARCH=$(ARCH) \
-		OS_VERSION=$(OS_VERSION)
+		ARCH=$(ARCH)
 
 cns-image-push: ## push cns container image.
 	$(MAKE) container-push \
@@ -539,8 +487,7 @@ npm-image: ## build the npm container image.
 		TAG=$(NPM_PLATFORM_TAG) \
 		TARGET=$(OS) \
 		OS=$(OS) \
-		ARCH=$(ARCH) \
-		OS_VERSION=$(OS_VERSION)
+		ARCH=$(ARCH)
 
 npm-image-push: ## push npm container image.
 	$(MAKE) container-push \
@@ -552,40 +499,6 @@ npm-image-pull: ## pull cns container image.
 		IMAGE=$(NPM_IMAGE) \
 		TAG=$(NPM_PLATFORM_TAG)
 
-
-## Legacy
-
-# Build the Azure CNM plugin image, installable with "docker plugin install".
-azure-cnm-plugin-image: azure-cnm-plugin ## build the azure-cnm plugin container image.
-	docker images -q $(CNM_PLUGIN_ROOTFS):$(ACN_VERSION) > cid
-	docker build --no-cache \
-		-f Dockerfile.cnm \
-		-t $(CNM_PLUGIN_ROOTFS):$(ACN_VERSION) \
-		--build-arg CNM_BUILD_DIR=$(CNM_BUILD_DIR) \
-		.
-	$(eval CID := `cat cid`)
-	docker rmi $(CID) || true
-
-	# Create a container using the image and export its rootfs.
-	docker create $(CNM_PLUGIN_ROOTFS):$(ACN_VERSION) > cid
-	$(eval CID := `cat cid`)
-	$(MKDIR) $(OUTPUT_DIR)/$(CID)/rootfs
-	docker export $(CID) | tar -x -C $(OUTPUT_DIR)/$(CID)/rootfs
-	docker rm -vf $(CID)
-
-	# Copy the plugin configuration and set ownership.
-	cp cnm/config.json $(OUTPUT_DIR)/$(CID)
-	chgrp -R docker $(OUTPUT_DIR)/$(CID)
-
-	# Create the plugin.
-	docker plugin rm $(CNM_PLUGIN_IMAGE):$(ACN_VERSION) || true
-	docker plugin create $(CNM_PLUGIN_IMAGE):$(ACN_VERSION) $(OUTPUT_DIR)/$(CID)
-
-	# Cleanup temporary files.
-	rm -rf $(OUTPUT_DIR)/$(CID)
-	rm cid
-
-
 ## Reusable targets for building multiplat container image manifests.
 
 IMAGE_ARCHIVE_DIR ?= $(shell pwd)
@@ -594,16 +507,14 @@ manifest-create:
 	$(CONTAINER_BUILDER) manifest create $(IMAGE_REGISTRY)/$(IMAGE):$(TAG)
 
 manifest-add:
-	$(CONTAINER_BUILDER) manifest add --os=$(OS) --os-version=$($(OS_VERSION)) $(IMAGE_REGISTRY)/$(IMAGE):$(TAG) docker://$(IMAGE_REGISTRY)/$(IMAGE):$(subst /,-,$(PLATFORM))$(if $(OS_VERSION),-$(OS_VERSION),)-$(TAG)
+	$(CONTAINER_BUILDER) manifest add --os=$(OS) $(IMAGE_REGISTRY)/$(IMAGE):$(TAG) docker://$(IMAGE_REGISTRY)/$(IMAGE):$(subst /,-,$(PLATFORM))-$(TAG)
 
 manifest-build: # util target to compose multiarch container manifests from platform specific images.
 	$(MAKE) manifest-create
 	$(foreach PLATFORM,$(PLATFORMS),\
 		$(if $(filter $(PLATFORM),windows/amd64),\
-			$(foreach OS_VERSION,$(OS_VERSIONS),\
-				$(MAKE) manifest-add CONTAINER_BUILDER=$(CONTAINER_BUILDER) OS=windows OS_VERSION=$(OS_VERSION) PLATFORM=$(PLATFORM);\
-			),\
-			$(MAKE) manifest-add PLATFORM=$(PLATFORM);\
+			$(MAKE) manifest-add CONTAINER_BUILDER=$(CONTAINER_BUILDER) OS=windows OS_VERSION=$(OS_VERSION) PLATFORM=$(PLATFORM);,\
+		$(MAKE) manifest-add PLATFORM=$(PLATFORM);\
 		)\
 	)\
 
@@ -635,8 +546,7 @@ azure-ipam-manifest-build: ## build azure-ipam multiplat container manifest.
 	$(MAKE) manifest-build \
 		PLATFORMS="$(PLATFORMS)" \
 		IMAGE=$(AZURE_IPAM_IMAGE) \
-		TAG=$(AZURE_IPAM_VERSION) \
-		OS_VERSIONS="$(OS_VERSIONS)"
+		TAG=$(AZURE_IPAM_VERSION)
 
 azure-ipam-manifest-push: ## push azure-ipam multiplat container manifest
 	$(MAKE) manifest-push \
@@ -652,8 +562,7 @@ ipv6-hp-bpf-manifest-build: ## build ipv6-hp-bpf multiplat container manifest.
 	$(MAKE) manifest-build \
 		PLATFORMS="$(PLATFORMS)" \
 		IMAGE=$(IPV6_HP_BPF_IMAGE) \
-		TAG=$(IPV6_HP_BPF_VERSION) \
-		OS_VERSIONS="$(OS_VERSIONS)"
+		TAG=$(IPV6_HP_BPF_VERSION)
 
 ipv6-hp-bpf-manifest-push: ## push ipv6-hp-bpf multiplat container manifest
 	$(MAKE) manifest-push \
@@ -669,8 +578,7 @@ cni-manifest-build: ## build cni multiplat container manifest.
 	$(MAKE) manifest-build \
 		PLATFORMS="$(PLATFORMS)" \
 		IMAGE=$(CNI_IMAGE) \
-		TAG=$(CNI_VERSION) \
-		OS_VERSIONS="$(OS_VERSIONS)"
+		TAG=$(CNI_VERSION)
 
 cni-manifest-push: ## push cni multiplat container manifest
 	$(MAKE) manifest-push \
@@ -682,29 +590,11 @@ cni-skopeo-archive: ## export tar archive of cni multiplat container manifest.
 		IMAGE=$(CNI_IMAGE) \
 		TAG=$(CNI_VERSION)
 
-cni-dropgz-manifest-build: ## build cni-dropgz multiplat container manifest.
-	$(MAKE) manifest-build \
-		PLATFORMS="$(PLATFORMS)" \
-		IMAGE=$(CNI_DROPGZ_IMAGE) \
-		TAG=$(CNI_DROPGZ_VERSION) \
-		OS_VERSIONS="$(OS_VERSIONS)"
-
-cni-dropgz-manifest-push: ## push cni-dropgz multiplat container manifest
-	$(MAKE) manifest-push \
-		IMAGE=$(CNI_DROPGZ_IMAGE) \
-		TAG=$(CNI_DROPGZ_VERSION)
-
-cni-dropgz-skopeo-archive: ## export tar archive of cni-dropgz multiplat container manifest.
-	$(MAKE) manifest-skopeo-archive \
-		IMAGE=$(CNI_DROPGZ_IMAGE) \
-		TAG=$(CNI_DROPGZ_VERSION)
-
 cns-manifest-build: ## build azure-cns multiplat container manifest.
 	$(MAKE) manifest-build \
 		PLATFORMS="$(PLATFORMS)" \
 		IMAGE=$(CNS_IMAGE) \
-		TAG=$(CNS_VERSION) \
-		OS_VERSIONS="$(OS_VERSIONS)"
+		TAG=$(CNS_VERSION)
 
 cns-manifest-push: ## push cns multiplat container manifest
 	$(MAKE) manifest-push \
@@ -720,8 +610,7 @@ npm-manifest-build: ## build azure-npm multiplat container manifest.
 	$(MAKE) manifest-build \
 		PLATFORMS="$(PLATFORMS)" \
 		IMAGE=$(NPM_IMAGE) \
-		TAG=$(NPM_VERSION) \
-		OS_VERSIONS="$(OS_VERSIONS)"
+		TAG=$(NPM_VERSION)
 
 npm-manifest-push: ## push multiplat container manifest
 	$(MAKE) manifest-push \
@@ -791,11 +680,6 @@ ifeq ($(GOOS),windows)
 	cp $(CNI_BUILD_DIR)/azure-vnet$(EXE_EXT) $(CNI_BAREMETAL_BUILD_DIR)
 	cd $(CNI_BAREMETAL_BUILD_DIR) && $(ARCHIVE_CMD) $(CNI_BAREMETAL_ARCHIVE_NAME) azure-vnet$(EXE_EXT) 10-azure.conflist
 endif
-
-# Create a CNM archive for the target platform.
-.PHONY: cnm-archive
-cnm-archive: cnm-binary
-	cd $(CNM_BUILD_DIR) && $(ARCHIVE_CMD) $(CNM_ARCHIVE_NAME) azure-vnet-plugin$(EXE_EXT)
 
 # Create a cli archive for the target platform.
 .PHONY: acncli-archive
@@ -873,9 +757,8 @@ RESTART_CASE ?= false
 # CNI type is a key to direct the types of state validation done on a cluster.
 CNI_TYPE ?= cilium
 
-# COVER_FILTER omits folders with all files tagged with one of 'unit', '!ignore_uncovered', or '!ignore_autogenerated'
 test-all: ## run all unit tests.
-	@$(eval COVER_FILTER=`go list --tags ignore_uncovered,ignore_autogenerated $(COVER_PKG)/... | tr '\n' ','`)
+	@$(eval COVER_FILTER=`go list $(COVER_PKG)/... | tr '\n' ','`)
 	@echo Test coverpkg: $(COVER_FILTER)
 	go test -mod=readonly -buildvcs=false -tags "unit" --skip 'TestE2E*' -coverpkg=$(COVER_FILTER) -race -covermode atomic -coverprofile=coverage.out $(COVER_PKG)/...
 

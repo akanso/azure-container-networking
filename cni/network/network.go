@@ -9,16 +9,20 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/Azure/azure-container-networking/aitelemetry"
 	"github.com/Azure/azure-container-networking/cni"
 	"github.com/Azure/azure-container-networking/cni/api"
+	"github.com/Azure/azure-container-networking/cni/log"
 	"github.com/Azure/azure-container-networking/cni/util"
 	"github.com/Azure/azure-container-networking/cns"
 	cnscli "github.com/Azure/azure-container-networking/cns/client"
+	"github.com/Azure/azure-container-networking/cns/fsnotify"
 	"github.com/Azure/azure-container-networking/common"
+	"github.com/Azure/azure-container-networking/dhcp"
 	"github.com/Azure/azure-container-networking/iptables"
 	"github.com/Azure/azure-container-networking/netio"
 	"github.com/Azure/azure-container-networking/netlink"
@@ -35,6 +39,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// matches if the string fully consists of zero or more alphanumeric, dots, dashes, parentheses, spaces, or underscores
+var allowedInput = regexp.MustCompile(`^[a-zA-Z0-9._\-\(\) ]*$`)
+
 const (
 	dockerNetworkOption = "com.docker.network.generic"
 	OpModeTransparent   = "transparent"
@@ -43,6 +50,7 @@ const (
 	defaultRequestTimeout = 15 * time.Second
 	ipv4FullMask          = 32
 	ipv6FullMask          = 128
+	ibInterfacePrefix     = "ib"
 )
 
 // CNI Operation Types
@@ -101,6 +109,7 @@ type NnsClient interface {
 // client for getting interface
 type InterfaceGetter interface {
 	GetNetworkInterfaces() ([]net.Interface, error)
+	GetNetworkInterfaceAddrs(iface *net.Interface) ([]net.Addr, error)
 }
 
 // snatConfiguration contains a bool that determines whether CNI enables snat on host and snat for dns
@@ -123,7 +132,7 @@ func NewPlugin(name string,
 
 	nl := netlink.NewNetlink()
 	// Setup network manager.
-	nm, err := network.NewNetworkManager(nl, platform.NewExecClient(logger), &netio.NetIO{}, network.NewNamespaceClient(), iptables.NewClient())
+	nm, err := network.NewNetworkManager(nl, platform.NewExecClient(logger), &netio.NetIO{}, network.NewNamespaceClient(), iptables.NewClient(), dhcp.New(logger))
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +258,7 @@ func (plugin *NetPlugin) findMasterInterfaceBySubnet(nwCfg *cni.NetworkConfig, s
 	}
 	var ipnets []string
 	for _, iface := range interfaces {
-		addrs, _ := iface.Addrs()
+		addrs, _ := plugin.netClient.GetNetworkInterfaceAddrs(&iface) //nolint
 		for _, addr := range addrs {
 			_, ipnet, err := net.ParseCIDR(addr.String())
 			if err != nil {
@@ -385,6 +394,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		enableSnatForDNS bool
 		k8sPodName       string
 		cniMetric        telemetry.AIMetric
+		epInfos          []*network.EndpointInfo
 	)
 
 	startTime := time.Now()
@@ -406,6 +416,11 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		return err
 	}
 
+	if argErr := plugin.validateArgs(args, nwCfg); argErr != nil {
+		err = argErr
+		return err
+	}
+
 	iptables.DisableIPTableLock = nwCfg.DisableIPTableLock
 	plugin.setCNIReportDetails(nwCfg, CNI_ADD, "")
 
@@ -421,11 +436,9 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		telemetry.SendCNIMetric(&cniMetric, plugin.tb)
 
 		// Add Interfaces to result.
-		// previously just logged the default (infra) interface so this is equivalent behavior
+		// previously we had a default interface info to select which interface info was the one to be returned from cni add
 		cniResult := &cniTypesCurr.Result{}
 		for key := range ipamAddResult.interfaceInfo {
-			logger.Info("Exiting add, interface info retrieved", zap.Any("ifInfo", ipamAddResult.interfaceInfo[key]))
-			// previously we had a default interface info to select which interface info was the one to be returned from cni add
 			// now we have to infer which interface info should be returned
 			// we assume that we want to return the infra nic always, and if that is not found, return any one of the secondary interfaces
 			// if there is an infra nic + secondary, we will always return the infra nic (linux swift v2)
@@ -435,13 +448,26 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			}
 		}
 
-		addSnatInterface(nwCfg, cniResult)
+		// stdout multiple cniResults for containerd to create multiple pods
+		// containerd receives each cniResult as the stdout and create pod
+		addSnatInterface(nwCfg, cniResult) //nolint TODO: check whether Linux supports adding secondary snatinterface
+
+		// add IB NIC interfaceInfo to cniResult
+		for _, epInfo := range epInfos {
+			if epInfo.NICType == cns.BackendNIC {
+				cniResult.Interfaces = append(cniResult.Interfaces, &cniTypesCurr.Interface{
+					Name:  epInfo.MasterIfName,
+					Mac:   epInfo.MacAddress.String(),
+					PciID: epInfo.PnPID,
+				})
+			}
+		}
 
 		// Convert result to the requested CNI version.
 		res, vererr := cniResult.GetAsVersion(nwCfg.CNIVersion)
 		if vererr != nil {
 			logger.Error("GetAsVersion failed", zap.Error(vererr))
-			plugin.Error(vererr)
+			plugin.Error(vererr) //nolint
 		}
 
 		if err == nil && res != nil {
@@ -452,7 +478,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		logger.Info("ADD command completed for",
 			zap.String("pod", k8sPodName),
 			zap.Any("IPs", cniResult.IPs),
-			zap.Error(err))
+			zap.Error(log.NewErrorWithoutStackTrace(err)))
 	}()
 
 	ipamAddResult = IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
@@ -582,11 +608,11 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 	}()
 
-	epInfos := []*network.EndpointInfo{}
 	infraSeen := false
-	endpointIndex := 0
+	endpointIndex := 1
 	for key := range ipamAddResult.interfaceInfo {
 		ifInfo := ipamAddResult.interfaceInfo[key]
+		logger.Info("Processing interfaceInfo:", zap.Any("ifInfo", ifInfo))
 
 		natInfo := getNATInfo(nwCfg, options[network.SNATIPKey], enableSnatForDNS)
 		networkID, _ := plugin.getNetworkID(args.Netns, &ifInfo, nwCfg)
@@ -610,11 +636,13 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			infraSeen:        &infraSeen,
 			endpointIndex:    endpointIndex,
 		}
+
 		var epInfo *network.EndpointInfo
 		epInfo, err = plugin.createEpInfo(&createEpInfoOpt)
 		if err != nil {
 			return err
 		}
+
 		epInfos = append(epInfos, epInfo)
 		// TODO: should this statement be based on the current iteration instead of the constant ifIndex?
 		// TODO figure out where to put telemetry: sendEvent(plugin, fmt.Sprintf("CNI ADD succeeded: IP:%+v, VlanID: %v, podname %v, namespace %v numendpoints:%d",
@@ -660,10 +688,13 @@ func (plugin *NetPlugin) findMasterInterface(opt *createEpInfoOpt) string {
 	switch opt.ifInfo.NICType {
 	case cns.InfraNIC:
 		return plugin.findMasterInterfaceBySubnet(opt.ipamAddConfig.nwCfg, &opt.ifInfo.HostSubnetPrefix)
-	case cns.DelegatedVMNIC:
+	case cns.NodeNetworkInterfaceFrontendNIC:
 		return plugin.findInterfaceByMAC(opt.ifInfo.MacAddress.String())
 	case cns.BackendNIC:
-		return ""
+		// if windows swiftv2 has right network drivers, there will be an NDIS interface while the VFs are mounted
+		// when the VF is dismounted, this interface will go away
+		// return an unique interface name to containerd
+		return ibInterfacePrefix + strconv.Itoa(opt.endpointIndex)
 	default:
 		return ""
 	}
@@ -695,6 +726,7 @@ func (plugin *NetPlugin) createEpInfo(opt *createEpInfoOpt) (*network.EndpointIn
 	// ensure we can find the master interface
 	opt.ifInfo.HostSubnetPrefix.IP = opt.ifInfo.HostSubnetPrefix.IP.Mask(opt.ifInfo.HostSubnetPrefix.Mask)
 	opt.ipamAddConfig.nwCfg.IPAM.Subnet = opt.ifInfo.HostSubnetPrefix.String()
+
 	// populate endpoint info section
 	masterIfName := plugin.findMasterInterface(opt)
 	if masterIfName == "" {
@@ -707,7 +739,6 @@ func (plugin *NetPlugin) createEpInfo(opt *createEpInfoOpt) (*network.EndpointIn
 	// populate endpoint info
 	epDNSInfo, err := getEndpointDNSSettings(opt.nwCfg, opt.ifInfo.DNS, opt.k8sNamespace) // Probably won't panic if given bad values
 	if err != nil {
-
 		err = plugin.Errorf("Failed to getEndpointDNSSettings: %v", err)
 		return nil, err
 	}
@@ -728,13 +759,16 @@ func (plugin *NetPlugin) createEpInfo(opt *createEpInfoOpt) (*network.EndpointIn
 	}
 
 	// generate endpoint info
-	var endpointID string
+	var endpointID, ifName string
+
 	if opt.ifInfo.NICType == cns.InfraNIC && !*opt.infraSeen {
 		// so we do not break existing scenarios, only the first infra gets the original endpoint id generation
-		endpointID = plugin.nm.GetEndpointID(opt.args.ContainerID, opt.args.IfName)
+		ifName = opt.args.IfName
+		endpointID = plugin.nm.GetEndpointID(opt.args.ContainerID, ifName)
 		*opt.infraSeen = true
 	} else {
-		endpointID = plugin.nm.GetEndpointID(opt.args.ContainerID, strconv.Itoa(opt.endpointIndex))
+		ifName = "eth" + strconv.Itoa(opt.endpointIndex)
+		endpointID = plugin.nm.GetEndpointID(opt.args.ContainerID, ifName)
 	}
 
 	endpointInfo := network.EndpointInfo{
@@ -745,14 +779,14 @@ func (plugin *NetPlugin) createEpInfo(opt *createEpInfoOpt) (*network.EndpointIn
 		BridgeName:                    opt.ipamAddConfig.nwCfg.Bridge,
 		NetworkPolicies:               networkPolicies, // nw and ep policies separated to avoid possible conflicts
 		NetNs:                         opt.ipamAddConfig.args.Netns,
-		Options:                       opt.ipamAddConfig.options,
+		Options:                       opt.ipamAddConfig.shallowCopyIpamAddConfigOptions(),
 		DisableHairpinOnHostInterface: opt.ipamAddConfig.nwCfg.DisableHairpinOnHostInterface,
 		IsIPv6Enabled:                 opt.ipv6Enabled, // present infra only
 
 		EndpointID:  endpointID,
 		ContainerID: opt.args.ContainerID,
 		NetNsPath:   opt.args.Netns, // probably same value as epInfo.NetNs
-		IfName:      opt.args.IfName,
+		IfName:      ifName,
 		Data:        make(map[string]interface{}),
 		EndpointDNS: epDNSInfo,
 		// endpoint policies are populated later
@@ -776,6 +810,7 @@ func (plugin *NetPlugin) createEpInfo(opt *createEpInfoOpt) (*network.EndpointIn
 		MacAddress:  opt.ifInfo.MacAddress,
 		// the following is used for creating an external interface if we can't find an existing network
 		HostSubnetPrefix: opt.ifInfo.HostSubnetPrefix.String(),
+		PnPID:            opt.ifInfo.PnPID,
 	}
 
 	if err = addSubnetToEndpointInfo(*opt.ifInfo, &endpointInfo); err != nil {
@@ -905,7 +940,7 @@ func (plugin *NetPlugin) Get(args *cniSkel.CmdArgs) error {
 		}
 
 		logger.Info("GET command completed", zap.Any("result", result),
-			zap.Error(err))
+			zap.Error(log.NewErrorWithoutStackTrace(err)))
 	}()
 
 	// Parse network configuration from stdin.
@@ -915,6 +950,11 @@ func (plugin *NetPlugin) Get(args *cniSkel.CmdArgs) error {
 	}
 
 	logger.Info("Read network configuration", zap.Any("config", nwCfg))
+
+	if argErr := plugin.validateArgs(args, nwCfg); argErr != nil {
+		err = argErr
+		return err
+	}
 
 	iptables.DisableIPTableLock = nwCfg.DisableIPTableLock
 
@@ -989,12 +1029,17 @@ func (plugin *NetPlugin) Delete(args *cniSkel.CmdArgs) error {
 	defer func() {
 		logger.Info("DEL command completed",
 			zap.String("pod", k8sPodName),
-			zap.Error(err))
+			zap.Error(log.NewErrorWithoutStackTrace(err)))
 	}()
 
 	// Parse network configuration from stdin.
 	if nwCfg, err = cni.ParseNetworkConfig(args.StdinData); err != nil {
 		err = plugin.Errorf("[cni-net] Failed to parse network configuration: %v", err)
+		return err
+	}
+
+	if argErr := plugin.validateArgs(args, nwCfg); argErr != nil {
+		err = argErr
 		return err
 	}
 
@@ -1087,18 +1132,38 @@ func (plugin *NetPlugin) Delete(args *cniSkel.CmdArgs) error {
 		// network ID is passed in and used only for migration
 		// otherwise, in stateless, we don't need the network id for deletion
 		epInfos, err = plugin.nm.GetEndpointState(networkID, args.ContainerID)
+		// if stateless CNI fail to get the endpoint from CNS for any reason other than  Endpoint Not found
+		if err != nil {
+			if errors.Is(err, network.ErrConnectionFailure) {
+				logger.Info("failed to connect to CNS", zap.String("containerID", args.ContainerID), zap.Error(err))
+				addErr := fsnotify.AddFile(args.ContainerID, args.ContainerID, watcherPath)
+				logger.Info("add containerid file for Asynch delete", zap.String("containerID", args.ContainerID), zap.Error(addErr))
+				if addErr != nil {
+					logger.Error("failed to add file to watcher", zap.String("containerID", args.ContainerID), zap.Error(addErr))
+					return errors.Wrap(addErr, fmt.Sprintf("failed to add file to watcher with containerID %s", args.ContainerID))
+				}
+				return nil
+			}
+			if errors.Is(err, network.ErrEndpointStateNotFound) {
+				logger.Info("Endpoint Not found", zap.String("containerID", args.ContainerID), zap.Error(err))
+				return nil
+			}
+			logger.Error("Get Endpoint State API returned error", zap.String("containerID", args.ContainerID), zap.Error(err))
+			return plugin.RetriableError(fmt.Errorf("failed to delete endpoint: %w", err))
+		}
 	} else {
 		epInfos = plugin.nm.GetEndpointInfosFromContainerID(args.ContainerID)
 	}
 
 	// for when the endpoint is not created, but the ips are already allocated (only works if single network, single infra)
-	// stateless cni won't have this issue
+	// this block is not applied to stateless CNI
 	if len(epInfos) == 0 {
 		endpointID := plugin.nm.GetEndpointID(args.ContainerID, args.IfName)
 		if !nwCfg.MultiTenancy {
 			logger.Error("Failed to query endpoint",
 				zap.String("endpoint", endpointID),
 				zap.Error(err))
+
 			logger.Error("Release ip by ContainerID (endpoint not found)",
 				zap.String("containerID", args.ContainerID))
 			sendEvent(plugin, fmt.Sprintf("Release ip by ContainerID (endpoint not found):%v", args.ContainerID))
@@ -1132,7 +1197,7 @@ func (plugin *NetPlugin) Delete(args *cniSkel.CmdArgs) error {
 			zap.String("endpointID", epInfo.EndpointID))
 		sendEvent(plugin, fmt.Sprintf("Deleting endpoint:%v", epInfo.EndpointID))
 
-		if !nwCfg.MultiTenancy && epInfo.NICType != cns.DelegatedVMNIC {
+		if !nwCfg.MultiTenancy && (epInfo.NICType == cns.InfraNIC || epInfo.NICType == "") {
 			// Delegated/secondary nic ips are statically allocated so we don't need to release
 			// Call into IPAM plugin to release the endpoint's addresses.
 			for i := range epInfo.IPAddresses {
@@ -1189,6 +1254,11 @@ func (plugin *NetPlugin) Update(args *cniSkel.CmdArgs) error {
 		return err
 	}
 
+	if argErr := plugin.validateArgs(args, nwCfg); argErr != nil {
+		err = argErr
+		return err
+	}
+
 	logger.Info("Read network configuration", zap.Any("config", nwCfg))
 
 	iptables.DisableIPTableLock = nwCfg.DisableIPTableLock
@@ -1213,7 +1283,7 @@ func (plugin *NetPlugin) Update(args *cniSkel.CmdArgs) error {
 		res, vererr := result.GetAsVersion(nwCfg.CNIVersion)
 		if vererr != nil {
 			logger.Error("GetAsVersion failed", zap.Error(vererr))
-			plugin.Error(vererr)
+			plugin.Error(vererr) //nolint
 		}
 
 		if err == nil && res != nil {
@@ -1223,7 +1293,7 @@ func (plugin *NetPlugin) Update(args *cniSkel.CmdArgs) error {
 
 		logger.Info("UPDATE command completed",
 			zap.Any("result", result),
-			zap.Error(err))
+			zap.Error(log.NewErrorWithoutStackTrace(err)))
 	}()
 
 	// Parse Pod arguments.
@@ -1450,4 +1520,15 @@ func convertCniResultToInterfaceInfo(result *cniTypesCurr.Result) network.Interf
 	}
 
 	return interfaceInfo
+}
+
+func (plugin *NetPlugin) validateArgs(args *cniSkel.CmdArgs, nwCfg *cni.NetworkConfig) error {
+	if !allowedInput.MatchString(args.ContainerID) || !allowedInput.MatchString(args.IfName) {
+		return errors.New("invalid args value")
+	}
+	if !allowedInput.MatchString(nwCfg.Bridge) {
+		return errors.New("invalid network config value")
+	}
+
+	return nil
 }

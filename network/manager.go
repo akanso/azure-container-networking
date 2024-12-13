@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/azure-container-networking/cns"
 	cnsclient "github.com/Azure/azure-container-networking/cns/client"
 	"github.com/Azure/azure-container-networking/cns/restserver"
+	"github.com/Azure/azure-container-networking/cns/types"
 	"github.com/Azure/azure-container-networking/common"
 	"github.com/Azure/azure-container-networking/log"
 	"github.com/Azure/azure-container-networking/netio"
@@ -86,6 +87,7 @@ type networkManager struct {
 	plClient           platform.ExecClient
 	nsClient           NamespaceClientInterface
 	iptablesClient     ipTablesClient
+	dhcpClient         dhcpClient
 	sync.Mutex
 }
 
@@ -94,7 +96,7 @@ type NetworkManager interface {
 	Initialize(config *common.PluginConfig, isRehydrationRequired bool) error
 	Uninitialize()
 
-	AddExternalInterface(ifName string, subnet string) error
+	AddExternalInterface(ifName, subnet, nicType string) error
 
 	CreateNetwork(nwInfo *EndpointInfo) error
 	DeleteNetwork(networkID string) error
@@ -123,7 +125,7 @@ type NetworkManager interface {
 
 // Creates a new network manager.
 func NewNetworkManager(nl netlink.NetlinkInterface, plc platform.ExecClient, netioCli netio.NetIOInterface, nsc NamespaceClientInterface,
-	iptc ipTablesClient,
+	iptc ipTablesClient, dhcpc dhcpClient,
 ) (NetworkManager, error) {
 	nm := &networkManager{
 		ExternalInterfaces: make(map[string]*externalInterface),
@@ -132,6 +134,7 @@ func NewNetworkManager(nl netlink.NetlinkInterface, plc platform.ExecClient, net
 		netio:              netioCli,
 		nsClient:           nsc,
 		iptablesClient:     iptc,
+		dhcpClient:         dhcpc,
 	}
 
 	return nm, nil
@@ -300,11 +303,11 @@ func (nm *networkManager) save() error {
 //
 
 // AddExternalInterface adds a host interface to the list of available external interfaces.
-func (nm *networkManager) AddExternalInterface(ifName string, subnet string) error {
+func (nm *networkManager) AddExternalInterface(ifName, subnet, nicType string) error {
 	nm.Lock()
 	defer nm.Unlock()
 
-	err := nm.newExternalInterface(ifName, subnet)
+	err := nm.newExternalInterface(ifName, subnet, nicType)
 	if err != nil {
 		return err
 	}
@@ -386,7 +389,7 @@ func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epIn
 		}
 	}
 
-	ep, err := nw.newEndpoint(cli, nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, epInfo)
+	ep, err := nw.newEndpoint(cli, nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, nm.dhcpClient, epInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +398,7 @@ func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epIn
 		if err != nil {
 			logger.Error("Create endpoint failure", zap.Error(err))
 			logger.Info("Cleanup resources")
-			delErr := nw.deleteEndpoint(nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, ep.Id)
+			delErr := nw.deleteEndpoint(nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, nm.dhcpClient, ep.Id)
 			if delErr != nil {
 				logger.Error("Deleting endpoint after create endpoint failure failed with", zap.Error(delErr))
 			}
@@ -423,13 +426,29 @@ func (nm *networkManager) UpdateEndpointState(eps []*endpoint) error {
 		logger.Info("Update endpoint state", zap.String("hnsEndpointID", ipinfo.HnsEndpointID), zap.String("hnsNetworkID", ipinfo.HnsNetworkID),
 			zap.String("hostVethName", ipinfo.HostVethName), zap.String("macAddress", ipinfo.MacAddress), zap.String("nicType", string(ipinfo.NICType)))
 	}
-	// logger.Info("Calling cns updateEndpoint API with ", zap.String("containerID: ", ep.ContainerID), zap.String("HnsId: ", ep.HnsId), zap.String("HostIfName: ", ep.HostIfName))
+
 	// we assume all endpoints have the same container id
-	response, err := nm.CnsClient.UpdateEndpoint(context.TODO(), eps[0].ContainerID, ifnameToIPInfoMap)
+	cnsEndpointID := eps[0].ContainerID
+	if err := validateUpdateEndpointState(cnsEndpointID, ifnameToIPInfoMap); err != nil {
+		return errors.Wrap(err, "failed to validate update endpoint state that will be sent to cns")
+	}
+	response, err := nm.CnsClient.UpdateEndpoint(context.TODO(), cnsEndpointID, ifnameToIPInfoMap)
 	if err != nil {
 		return errors.Wrapf(err, "Update endpoint API returend with error")
 	}
 	logger.Info("Update endpoint API returend ", zap.String("podname: ", response.ReturnCode.String()))
+	return nil
+}
+
+func validateUpdateEndpointState(endpointID string, ifNameToIPInfoMap map[string]*restserver.IPInfo) error {
+	if endpointID == "" {
+		return errors.New("endpoint id empty while validating update endpoint state")
+	}
+	for ifName := range ifNameToIPInfoMap {
+		if ifName == "" {
+			return errors.New("an interface name is empty while validating update endpoint state")
+		}
+	}
 	return nil
 }
 
@@ -439,7 +458,13 @@ func (nm *networkManager) UpdateEndpointState(eps []*endpoint) error {
 func (nm *networkManager) GetEndpointState(networkID, containerID string) ([]*EndpointInfo, error) {
 	endpointResponse, err := nm.CnsClient.GetEndpoint(context.TODO(), containerID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Get endpoint API returned with error")
+		if endpointResponse.Response.ReturnCode == types.NotFound {
+			return nil, ErrEndpointStateNotFound
+		}
+		if endpointResponse.Response.ReturnCode == types.ConnectionError {
+			return nil, ErrConnectionFailure
+		}
+		return nil, ErrGetEndpointStateFailure
 	}
 	epInfos := cnsEndpointInfotoCNIEpInfos(endpointResponse.EndpointInfo, containerID)
 
@@ -474,7 +499,7 @@ func (nm *networkManager) DeleteEndpoint(networkID, endpointID string, epInfo *E
 		return err
 	}
 
-	err = nw.deleteEndpoint(nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, endpointID)
+	err = nw.deleteEndpoint(nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, nm.dhcpClient, endpointID)
 	if err != nil {
 		return err
 	}
@@ -515,22 +540,18 @@ func (nm *networkManager) DeleteEndpointState(networkID string, epInfo *Endpoint
 		IfName:                   epInfo.IfName, // TODO: For stateless cni linux populate IfName here to use in deletion in secondary endpoint client
 	}
 	logger.Info("Deleting endpoint with", zap.String("Endpoint Info: ", epInfo.PrettyString()), zap.String("HNISID : ", ep.HnsId))
-	// do not need to Delete HNS endpoint if the there is no HNS in state
-	if ep.HnsId != "" {
-		err := nw.deleteEndpointImpl(netlink.NewNetlink(), platform.NewExecClient(logger), nil, nil, nil, nil, ep)
-		if err != nil {
-			return err
-		}
-	}
-	if epInfo.NICType == cns.DelegatedVMNIC {
-		// we are currently assuming stateless is not running in linux
-		// CHECK: could this affect linux? (if it does, it could disconnect external interface, is that okay?)
-		// bad only when 1) stateless and 2) linux and 3) delegated vmnics exist
-		logger.Info("Deleting endpoint because delegated vmnic detected", zap.String("HNSNetworkID", nw.HnsId))
-		err := nm.deleteNetworkImpl(nw)
-		// no need to clean up state in stateless
+
+	err := nw.deleteEndpointImpl(netlink.NewNetlink(), platform.NewExecClient(logger), nil, nil, nil, nil, nil, ep)
+	if err != nil {
 		return err
 	}
+
+	err = nm.deleteNetworkImpl(nw, ep.NICType)
+	// no need to clean up state in stateless
+	if err != nil {
+		return errors.Wrap(err, "Failed to delete HNS Network")
+	}
+
 	return nil
 }
 

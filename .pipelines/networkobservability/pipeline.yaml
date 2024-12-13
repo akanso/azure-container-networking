@@ -47,7 +47,7 @@ stages:
           inputs:
               kubectlVersion: latest
 
-        - task: AzureCLI@1
+        - task: AzureCLI@2
           inputs:
               azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
               scriptLocation: "inlineScript"
@@ -70,14 +70,14 @@ stages:
           name: "installCiliumCLI"
           displayName: "Install Cilium CLI"
 
-        - task: AzureCLI@1
+        - task: AzureCLI@2
           inputs:
             azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
             scriptLocation: "inlineScript"
             scriptType: "bash"
             addSpnToEnvironment: true
             inlineScript: |
-              export DIR=${CILIUM_VERSION_TAG%.*}
+              export DIR=$(echo ${CILIUM_VERSION_TAG#v} | cut -d. -f1,2)
               echo "installing files from ${DIR}"
               kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config-hubble.yaml
               kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
@@ -131,10 +131,10 @@ stages:
           retryCountOnTaskFailure: 3
           name: "HubbleConnectivityTests"
           displayName: "Run Hubble Connectivity Tests"
-          
+
   - stage: deleteCluster
     condition: always()
-    dependsOn: 
+    dependsOn:
      - createCluster
      - setupCluster
     jobs:

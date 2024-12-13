@@ -9,7 +9,7 @@ AZCLI   ?= docker run --rm -v $(AZCFG):/root/.azure -v $(KUBECFG):/root/.kube -v
 
 # overrideable defaults
 AUTOUPGRADE     ?= patch
-K8S_VER         ?= 1.28
+K8S_VER         ?= 1.30
 NODE_COUNT      ?= 2
 NODE_COUNT_WIN	?= $(NODE_COUNT)
 NODEUPGRADE     ?= NodeImage
@@ -22,6 +22,7 @@ VM_SIZE_WIN     ?= Standard_B2s
 IP_TAG          ?= FirstPartyUsage=/DelegatedNetworkControllerTest
 IP_PREFIX       ?= serviceTaggedIp
 PUBLIC_IP       ?= $(IP_PREFIX)-$(CLUSTER)
+KUBE_PROXY_JSON_PATH ?= ./kube-proxy.json
 
 # overrideable variables
 SUB        ?= $(AZURE_SUBSCRIPTION)
@@ -96,6 +97,24 @@ byocni-up: swift-byocni-up ## Alias to swift-byocni-up
 cilium-up: swift-cilium-up ## Alias to swift-cilium-up
 up: swift-up ## Alias to swift-up
 
+
+nodesubnet-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an NodeSubnet BYO CNI cluster without kube-proxy
+	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--auto-upgrade-channel $(AUTOUPGRADE) \
+		--node-os-upgrade-channel $(NODEUPGRADE) \
+		--kubernetes-version $(K8S_VER) \
+		--node-count $(NODE_COUNT) \
+		--node-vm-size $(VM_SIZE) \
+		--load-balancer-sku standard \
+		--max-pods 250 \
+		--network-plugin none \
+		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
+		--os-sku $(OS_SKU) \
+		--no-ssh-key \
+		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
+		--yes
+	@$(MAKE) set-kubeconf
+
 overlay-byocni-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster
 	$(AZCLI) network public-ip create --name $(PUBLIC_IP) \
 		--resource-group $(GROUP) \
@@ -145,7 +164,7 @@ overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO 
 		--pod-cidr 192.168.0.0/16 \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
-		--kube-proxy-config ./kube-proxy.json \
+		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -246,7 +265,7 @@ swift-byocni-nokubeproxy-up: rg-up swift-net-up ## Bring up a SWIFT BYO CNI clus
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
 		--no-ssh-key \
 		--os-sku $(OS_SKU) \
-		--kube-proxy-config ./kube-proxy.json \
+		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -310,7 +329,7 @@ swiftv2-multitenancy-cluster-up: rg-up
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
-		--kubernetes-version 1.28 \
+		--kubernetes-version $(K8S_VER) \
 		--nodepool-name "mtapool" \
 		--node-vm-size $(VM_SIZE) \
 		--node-count 2 \
@@ -386,7 +405,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up vnetscale-swift-net-up ## Bring up 
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
 		--no-ssh-key \
 		--os-sku $(OS_SKU) \
-		--kube-proxy-config ./kube-proxy.json \
+		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -475,6 +494,7 @@ linux-cniv1-up: rg-up overlay-net-up ## Bring up a Linux CNIv1 cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
+		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
 		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IP) \
@@ -584,7 +604,7 @@ dualstack-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up a Dualstack o
 		--ip-families ipv4,ipv6 \
 		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/AzureOverlayDualStackPreview \
 		--no-ssh-key \
-		--kube-proxy-config ./kube-proxy.json \
+		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
 		--yes
 	@$(MAKE) set-kubeconf
 
@@ -617,5 +637,5 @@ down: ## Delete the cluster
 restart-vmss: ## Restarts the nodes in the cluster
 	$(AZCLI) vmss restart -g MC_${GROUP}_${CLUSTER}_${REGION} --name $(VMSS_NAME)
 
-scale-vmss: ## Scales the nodes in the cluster
-	$(AZCLI) vmss scale -g MC_${GROUP}_${CLUSTER}_${REGION} --name $(VMSS_NAME) --new-capacity $(NODE_COUNT)
+scale-nodes: ## Scales the nodes in the cluster
+	$(AZCLI) aks nodepool scale --resource-group $(GROUP) --cluster-name $(CLUSTER) --name $(NODEPOOL) --node-count $(NODE_COUNT)

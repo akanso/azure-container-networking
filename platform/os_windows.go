@@ -20,6 +20,9 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
+	"golang.org/x/sys/windows/svc"
+	"golang.org/x/sys/windows/svc/mgr"
 )
 
 const (
@@ -61,23 +64,9 @@ const (
 	// for vlan tagged arp requests
 	SDNRemoteArpMacAddress = "12-34-56-78-9a-bc"
 
-	// Command to get SDNRemoteArpMacAddress registry key
-	GetSdnRemoteArpMacAddressCommand = "(Get-ItemProperty " +
-		"-Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SDNRemoteArpMacAddress).SDNRemoteArpMacAddress"
-
-	// Command to set SDNRemoteArpMacAddress registry key
-	SetSdnRemoteArpMacAddressCommand = "Set-ItemProperty " +
-		"-Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State -Name SDNRemoteArpMacAddress -Value \"12-34-56-78-9a-bc\""
-
-	// Command to check if system has hns state path or not
-	CheckIfHNSStatePathExistsCommand = "Test-Path " +
-		"-Path HKLM:\\SYSTEM\\CurrentControlSet\\Services\\hns\\State"
-
 	// Command to fetch netadapter and pnp id
+	// TODO: can we replace this (and things in endpoint_windows) with other utils from "golang.org/x/sys/windows"?
 	GetMacAddressVFPPnpIDMapping = "Get-NetAdapter | Select-Object MacAddress, PnpDeviceID| Format-Table -HideTableHeaders"
-
-	// Command to restart HNS service
-	RestartHnsServiceCommand = "Restart-Service -Name hns"
 
 	// Interval between successive checks for mellanox adapter's PriorityVLANTag value
 	defaultMellanoxMonitorInterval = 30 * time.Second
@@ -128,16 +117,42 @@ func (p *execClient) GetLastRebootTime() (time.Time, error) {
 	return rebootTime.UTC(), nil
 }
 
-func (p *execClient) ExecuteCommand(command string) (string, error) {
+// Deprecated: ExecuteRawCommand is deprecated, it is recommended to use ExecuteCommand when possible
+func (p *execClient) ExecuteRawCommand(command string) (string, error) {
 	if p.logger != nil {
-		p.logger.Info("[Azure-Utils]", zap.String("ExecuteCommand", command))
+		p.logger.Info("[Azure-Utils]", zap.String("ExecuteRawCommand", command))
 	} else {
-		log.Printf("[Azure-Utils] ExecuteCommand: %q", command)
+		log.Printf("[Azure-Utils] ExecuteRawCommand: %q", command)
 	}
 
 	var stderr, stdout bytes.Buffer
 
 	cmd := exec.Command("cmd", "/c", command)
+	cmd.Stderr = &stderr
+	cmd.Stdout = &stdout
+
+	if err := cmd.Run(); err != nil {
+		return "", errors.Wrapf(err, "ExecuteRawCommand failed. stdout: %q, stderr: %q", stdout.String(), stderr.String())
+	}
+
+	return stdout.String(), nil
+}
+
+// ExecuteCommand passes its parameters to an exec.CommandContext, runs the command, and returns its output, or an error if the command fails or times out
+func (p *execClient) ExecuteCommand(ctx context.Context, command string, args ...string) (string, error) {
+	if p.logger != nil {
+		p.logger.Info("[Azure-Utils]", zap.String("ExecuteCommand", command), zap.Strings("args", args))
+	} else {
+		log.Printf("[Azure-Utils] ExecuteCommand: %q %v", command, args)
+	}
+
+	var stderr, stdout bytes.Buffer
+
+	// Create a new context and add a timeout to it
+	derivedCtx, cancel := context.WithTimeout(ctx, p.Timeout)
+	defer cancel() // The cancel should be deferred so resources are cleaned up
+
+	cmd := exec.CommandContext(derivedCtx, command, args...)
 	cmd.Stderr = &stderr
 	cmd.Stdout = &stdout
 
@@ -169,11 +184,12 @@ func (p *execClient) ClearNetworkConfiguration() (bool, error) {
 
 func (p *execClient) KillProcessByName(processName string) error {
 	cmd := fmt.Sprintf("taskkill /IM %v /F", processName)
-	_, err := p.ExecuteCommand(cmd)
+	_, err := p.ExecuteRawCommand(cmd)
 	return err // nolint
 }
 
 // ExecutePowershellCommand executes powershell command
+// Deprecated: ExecutePowershellCommand is deprecated, it is recommended to use ExecuteCommand when possible
 func (p *execClient) ExecutePowershellCommand(command string) (string, error) {
 	ps, err := exec.LookPath("powershell.exe")
 	if err != nil {
@@ -201,6 +217,7 @@ func (p *execClient) ExecutePowershellCommand(command string) (string, error) {
 }
 
 // ExecutePowershellCommandWithContext executes powershell command wth context
+// Deprecated: ExecutePowershellCommandWithContext is deprecated, it is recommended to use ExecuteCommand when possible
 func (p *execClient) ExecutePowershellCommandWithContext(ctx context.Context, command string) (string, error) {
 	ps, err := exec.LookPath("powershell.exe")
 	if err != nil {
@@ -229,40 +246,73 @@ func (p *execClient) ExecutePowershellCommandWithContext(ctx context.Context, co
 }
 
 // SetSdnRemoteArpMacAddress sets the regkey for SDNRemoteArpMacAddress needed for multitenancy if hns is enabled
-func SetSdnRemoteArpMacAddress(execClient ExecClient) error {
-	exists, err := execClient.ExecutePowershellCommand(CheckIfHNSStatePathExistsCommand)
+func SetSdnRemoteArpMacAddress(ctx context.Context) error {
+	log.Printf("Setting SDNRemoteArpMacAddress regKey")
+	// open the registry key
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Services\hns\State`, registry.READ|registry.SET_VALUE)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to check the existent of hns state path due to error %s", err.Error())
-		log.Printf(errMsg)
-		return errors.Errorf(errMsg)
+		if errors.Is(err, registry.ErrNotExist) {
+			return nil
+		}
+		return errors.Wrap(err, "could not open registry key")
 	}
-	if strings.EqualFold(exists, "false") {
-		log.Printf("hns state path does not exist, skip setting SdnRemoteArpMacAddress")
-		return nil
+	defer k.Close()
+	// check the key value
+	if v, _, _ := k.GetStringValue("SDNRemoteArpMacAddress"); v == SDNRemoteArpMacAddress {
+		log.Printf("SDNRemoteArpMacAddress regKey already set")
+		return nil // already set
 	}
-	if sdnRemoteArpMacAddressSet == false {
-		result, err := execClient.ExecutePowershellCommand(GetSdnRemoteArpMacAddressCommand)
+	if err = k.SetStringValue("SDNRemoteArpMacAddress", SDNRemoteArpMacAddress); err != nil {
+		return errors.Wrap(err, "could not set registry key")
+	}
+	log.Printf("SDNRemoteArpMacAddress regKey set successfully")
+	log.Printf("Restarting HNS service")
+	// connect to the service manager
+	m, err := mgr.Connect()
+	if err != nil {
+		return errors.Wrap(err, "could not connect to service manager")
+	}
+	defer m.Disconnect() //nolint:errcheck // ignore error
+	// open the HNS service
+	service, err := m.OpenService("hns")
+	if err != nil {
+		return errors.Wrap(err, "could not access service")
+	}
+	defer service.Close()
+	if err := restartService(ctx, service); err != nil {
+		return errors.Wrap(err, "could not restart service")
+	}
+	log.Printf("HNS service restarted successfully")
+	return nil
+}
+
+func restartService(ctx context.Context, s *mgr.Service) error {
+	// Stop the service
+	_, err := s.Control(svc.Stop)
+	if err != nil {
+		return errors.Wrap(err, "could not stop service")
+	}
+	// Wait for the service to stop
+	ticker := time.NewTicker(500 * time.Millisecond) //nolint:gomnd // 500ms
+	defer ticker.Stop()
+	for { // hacky cancellable do-while
+		status, err := s.Query()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "could not query service status")
 		}
-
-		// Set the reg key if not already set or has incorrect value
-		if result != SDNRemoteArpMacAddress {
-			if _, err = execClient.ExecutePowershellCommand(SetSdnRemoteArpMacAddressCommand); err != nil {
-				log.Printf("Failed to set SDNRemoteArpMacAddress due to error %s", err.Error())
-				return err
-			}
-
-			log.Printf("[Azure CNS] SDNRemoteArpMacAddress regKey set successfully. Restarting hns service.")
-			if _, err := execClient.ExecutePowershellCommand(RestartHnsServiceCommand); err != nil {
-				log.Printf("Failed to Restart HNS Service due to error %s", err.Error())
-				return err
-			}
+		if status.State == svc.Stopped {
+			break
 		}
-
-		sdnRemoteArpMacAddressSet = true
+		select {
+		case <-ctx.Done():
+			return errors.New("context cancelled")
+		case <-ticker.C:
+		}
 	}
-
+	// Start the service again
+	if err := s.Start(); err != nil {
+		return errors.Wrap(err, "could not start service")
+	}
 	return nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-container-networking/network"
 	"github.com/Azure/azure-container-networking/network/policy"
 	cniTypesCurr "github.com/containernetworking/cni/pkg/types/100"
+	"go.uber.org/zap"
 )
 
 const (
@@ -37,13 +38,15 @@ func addSnatForDNS(gwIPString string, epInfo *network.EndpointInfo, result *netw
 func setNetworkOptions(cnsNwConfig *cns.GetNetworkContainerResponse, nwInfo *network.EndpointInfo) {
 	if cnsNwConfig != nil && cnsNwConfig.MultiTenancyInfo.ID != 0 {
 		logger.Info("Setting Network Options")
-		vlanMap := make(map[string]interface{})
-		vlanMap[network.VlanIDKey] = strconv.Itoa(cnsNwConfig.MultiTenancyInfo.ID)
-		vlanMap[network.SnatBridgeIPKey] = cnsNwConfig.LocalIPConfiguration.GatewayIPAddress + "/" + strconv.Itoa(int(cnsNwConfig.LocalIPConfiguration.IPSubnet.PrefixLength))
-		nwInfo.Options[dockerNetworkOption] = vlanMap
+		optionsMap := make(map[string]interface{})
+		optionsMap[network.VlanIDKey] = strconv.Itoa(cnsNwConfig.MultiTenancyInfo.ID)
+		optionsMap[network.SnatBridgeIPKey] = cnsNwConfig.LocalIPConfiguration.GatewayIPAddress + "/" + strconv.Itoa(int(cnsNwConfig.LocalIPConfiguration.IPSubnet.PrefixLength))
+		logger.Info("Add vlanIDkey and SnatBridgeIPKey to optionsMap", zap.String("vlanIDKey", network.VlanIDKey), zap.String("SnatBridgeIPKey", network.SnatBridgeIPKey))
+		nwInfo.Options[dockerNetworkOption] = optionsMap
 	}
 }
 
+// update epInfo data field, allow host to nc, allow nc to host, and network container id
 func setEndpointOptions(cnsNwConfig *cns.GetNetworkContainerResponse, epInfo *network.EndpointInfo, vethName string) {
 	if cnsNwConfig != nil && cnsNwConfig.MultiTenancyInfo.ID != 0 {
 		logger.Info("Setting Endpoint Options")

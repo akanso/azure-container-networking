@@ -124,7 +124,7 @@ func (v *Validator) ValidateStateFile(ctx context.Context) error {
 }
 
 func (v *Validator) validateIPs(ctx context.Context, stateFileIps stateFileIpsFunc, cmd []string, checkType, namespace, labelSelector, containerName string) error {
-	log.Printf("Validating %s state file", checkType)
+	log.Printf("Validating %s state file for %s on %s", checkType, v.cni, v.os)
 	nodes, err := acnk8s.GetNodeListByLabelSelector(ctx, v.clientset, nodeSelectorMap[v.os])
 	if err != nil {
 		return errors.Wrapf(err, "failed to get node list")
@@ -258,6 +258,24 @@ func cnsCacheStateFileIps(result []byte) (map[string]string, error) {
 	cnsPodIps := make(map[string]string)
 	for index := range cnsLocalCache.IPConfigurationStatus {
 		cnsPodIps[cnsLocalCache.IPConfigurationStatus[index].IPAddress] = cnsLocalCache.IPConfigurationStatus[index].PodInfo.Name()
+	}
+	return cnsPodIps, nil
+}
+
+func cnsManagedStateFileIps(result []byte) (map[string]string, error) {
+	var cnsResult CnsManagedState
+	err := json.Unmarshal(result, &cnsResult)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal cns endpoint list")
+	}
+
+	cnsPodIps := make(map[string]string)
+	for _, v := range cnsResult.Endpoints {
+		for ifName, ip := range v.IfnameToIPMap {
+			if ifName == "eth0" {
+				cnsPodIps[ip.IPv4[0].IP.String()] = v.PodName
+			}
+		}
 	}
 	return cnsPodIps, nil
 }

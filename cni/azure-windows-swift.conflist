@@ -1,12 +1,10 @@
 {
-    "cniVersion": "0.3.0",
+    "cniVersion": "1.0.0",
     "name": "azure",
     "adapterName" : "",
     "plugins": [
         {
             "type": "azure-vnet",
-            "mode": "bridge",
-            "bridge": "azure0",
             "executionMode": "v4swift",
             "capabilities": {
                 "portMappings": true,

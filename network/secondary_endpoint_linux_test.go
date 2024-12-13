@@ -36,6 +36,7 @@ func TestSecondaryAddEndpoints(t *testing.T) {
 				netUtilsClient: networkutils.NewNetworkUtils(nl, plc),
 				netioshim:      netio.NewMockNetIO(false, 0),
 				ep:             &endpoint{SecondaryInterfaces: make(map[string]*InterfaceInfo)},
+				dhcpClient:     &mockDHCP{},
 			},
 			epInfo:  &EndpointInfo{MacAddress: mac},
 			wantErr: false,
@@ -78,6 +79,7 @@ func TestSecondaryAddEndpoints(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.client.ep.SecondaryInterfaces["eth1"].MacAddress, tt.epInfo.MacAddress)
+				require.Equal(t, "eth1", tt.epInfo.IfName, "interface name should update based on mac address here before being referenced later")
 			}
 		})
 	}
@@ -206,7 +208,7 @@ func TestSecondaryDeleteEndpoints(t *testing.T) {
 						Dst: net.IPNet{IP: net.ParseIP("192.168.0.4"), Mask: net.CIDRMask(ipv4FullMask, ipv4Bits)},
 					},
 				},
-				NICType: cns.DelegatedVMNIC,
+				NICType: cns.NodeNetworkInterfaceFrontendNIC,
 				SecondaryInterfaces: map[string]*InterfaceInfo{
 					"eth1": {
 						Name: "eth1",
@@ -255,6 +257,7 @@ func TestSecondaryConfigureContainerInterfacesAndRoutes(t *testing.T) {
 				plClient:       platform.NewMockExecClient(false),
 				netUtilsClient: networkutils.NewNetworkUtils(nl, plc),
 				netioshim:      netio.NewMockNetIO(false, 0),
+				dhcpClient:     &mockDHCP{},
 				ep:             &endpoint{SecondaryInterfaces: map[string]*InterfaceInfo{"eth1": {Name: "eth1"}}},
 			},
 			epInfo: &EndpointInfo{
@@ -280,6 +283,7 @@ func TestSecondaryConfigureContainerInterfacesAndRoutes(t *testing.T) {
 				plClient:       platform.NewMockExecClient(false),
 				netUtilsClient: networkutils.NewNetworkUtils(netlink.NewMockNetlink(true, ""), plc),
 				netioshim:      netio.NewMockNetIO(false, 0),
+				dhcpClient:     &mockDHCP{},
 				ep:             &endpoint{SecondaryInterfaces: map[string]*InterfaceInfo{"eth1": {Name: "eth1"}}},
 			},
 			epInfo: &EndpointInfo{
@@ -301,6 +305,7 @@ func TestSecondaryConfigureContainerInterfacesAndRoutes(t *testing.T) {
 				plClient:       platform.NewMockExecClient(false),
 				netUtilsClient: networkutils.NewNetworkUtils(nl, plc),
 				netioshim:      netio.NewMockNetIO(true, 1),
+				dhcpClient:     &mockDHCP{},
 				ep:             &endpoint{SecondaryInterfaces: map[string]*InterfaceInfo{"eth1": {Name: "eth1"}}},
 			},
 			epInfo: &EndpointInfo{
@@ -327,6 +332,7 @@ func TestSecondaryConfigureContainerInterfacesAndRoutes(t *testing.T) {
 				plClient:       platform.NewMockExecClient(false),
 				netUtilsClient: networkutils.NewNetworkUtils(nl, plc),
 				netioshim:      netio.NewMockNetIO(false, 0),
+				dhcpClient:     &mockDHCP{},
 				ep:             &endpoint{SecondaryInterfaces: map[string]*InterfaceInfo{"eth1": {Name: "eth1"}}},
 			},
 			epInfo: &EndpointInfo{
@@ -348,6 +354,7 @@ func TestSecondaryConfigureContainerInterfacesAndRoutes(t *testing.T) {
 				plClient:       platform.NewMockExecClient(false),
 				netUtilsClient: networkutils.NewNetworkUtils(nl, plc),
 				netioshim:      netio.NewMockNetIO(false, 0),
+				dhcpClient:     &mockDHCP{},
 				ep:             &endpoint{SecondaryInterfaces: map[string]*InterfaceInfo{"eth1": {Name: "eth1"}}},
 			},
 			epInfo: &EndpointInfo{

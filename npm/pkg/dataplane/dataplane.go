@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Azure/azure-container-networking/common"
@@ -18,11 +19,12 @@ import (
 const (
 	reconcileDuration = time.Duration(5 * time.Minute)
 
-	contextBackground      = "BACKGROUND"
-	contextApplyDP         = "APPLY-DP"
-	contextAddNetPol       = "ADD-NETPOL"
-	contextAddNetPolBootup = "BOOTUP-ADD-NETPOL"
-	contextDelNetPol       = "DEL-NETPOL"
+	contextBackground          = "BACKGROUND"
+	contextApplyDP             = "APPLY-DP"
+	contextAddNetPol           = "ADD-NETPOL"
+	contextAddNetPolBootup     = "BOOTUP-ADD-NETPOL"
+	contextAddNetPolPrecaution = "ADD-NETPOL-PRECAUTION"
+	contextDelNetPol           = "DEL-NETPOL"
 )
 
 var (
@@ -43,8 +45,14 @@ type Config struct {
 	NetPolInBackground bool
 	MaxPendingNetPols  int
 	NetPolInterval     time.Duration
+	EnableNPMLite      bool
 	*ipsets.IPSetManagerCfg
 	*policies.PolicyManagerCfg
+}
+
+type removePolicyInfo struct {
+	sync.Mutex
+	previousRemovePolicyIPSetsFailed bool
 }
 
 type DataPlane struct {
@@ -57,13 +65,17 @@ type DataPlane struct {
 	nodeName           string
 	// endpointCache stores all endpoints of the network (including off-node)
 	// Key is PodIP
-	endpointCache  *endpointCache
-	ioShim         *common.IOShim
-	updatePodCache *updatePodCache
-	endpointQuery  *endpointQuery
-	applyInfo      *applyInfo
-	netPolQueue    *netPolQueue
-	stopChannel    <-chan struct{}
+	endpointCache              *endpointCache
+	ioShim                     *common.IOShim
+	updatePodCache             *updatePodCache
+	endpointQuery              *endpointQuery
+	endpointQueryAttachedState *endpointQuery // windows -> filter for state 2 (attached) endpoints in l1vh
+	applyInfo                  *applyInfo
+	netPolQueue                *netPolQueue
+	// removePolicyInfo tracks when a policy was removed yet had ApplyIPSet failures.
+	// This field is only relevant for Linux.
+	removePolicyInfo removePolicyInfo
+	stopChannel      <-chan struct{}
 }
 
 func NewDataPlane(nodeName string, ioShim *common.IOShim, cfg *Config, stopChannel <-chan struct{}) (*DataPlane, error) {
@@ -78,11 +90,12 @@ func NewDataPlane(nodeName string, ioShim *common.IOShim, cfg *Config, stopChann
 		policyMgr: policies.NewPolicyManager(ioShim, cfg.PolicyManagerCfg),
 		ipsetMgr:  ipsets.NewIPSetManager(cfg.IPSetManagerCfg, ioShim),
 		// networkID is set when initializing Windows dataplane
-		networkID:     "",
-		endpointCache: newEndpointCache(),
-		nodeName:      nodeName,
-		ioShim:        ioShim,
-		endpointQuery: new(endpointQuery),
+		networkID:                  "",
+		endpointCache:              newEndpointCache(),
+		nodeName:                   nodeName,
+		ioShim:                     ioShim,
+		endpointQuery:              new(endpointQuery),
+		endpointQueryAttachedState: new(endpointQuery),
 		applyInfo: &applyInfo{
 			inBootupPhase: true,
 		},
@@ -118,7 +131,6 @@ func NewDataPlane(nodeName string, ioShim *common.IOShim, cfg *Config, stopChann
 	} else {
 		metrics.SendLog(util.DaemonDataplaneID, "[DataPlane] dataplane configured to NOT add netpols in background", true)
 	}
-
 	return dp, nil
 }
 
@@ -334,6 +346,9 @@ func (dp *DataPlane) applyDataPlaneNow(context string) error {
 	}
 	klog.Infof("[DataPlane] [ApplyDataPlane] [%s] finished applying ipsets", context)
 
+	// see comment in RemovePolicy() for why this is here
+	dp.setRemovePolicyFailure(false)
+
 	if dp.applyInBackground {
 		dp.applyInfo.Lock()
 		dp.applyInfo.numBatches = 0
@@ -471,6 +486,20 @@ func (dp *DataPlane) addPolicies(netPols []*policies.NPMNetworkPolicy) error {
 		}
 	}
 
+	if dp.hadRemovePolicyFailure() {
+		if inBootupPhase {
+			// this should never happen because bootup phase is for windows, but just in case, we don't want to applyDataplaneNow() or else there will be a deadlock on dp.applyInfo
+			msg := fmt.Sprintf("[DataPlane] [%s] at risk of improperly applying a policy which is removed then readded", contextAddNetPolPrecaution)
+			klog.Warning(msg)
+			metrics.SendErrorLogAndMetric(util.DaemonDataplaneID, msg)
+		} else {
+			// prevent #2977
+			if err := dp.applyDataPlaneNow(contextAddNetPolPrecaution); err != nil {
+				return err // nolint:wrapcheck // unnecessary to wrap error since the provided context is included in the error
+			}
+		}
+	}
+
 	// 1. Add IPSets and apply for each NetPol.
 	// Apply IPSets after each NetworkPolicy unless ApplyInBackground=true and we're in the bootup phase (only happens for Windows currently)
 	for _, netPol := range netPols {
@@ -506,6 +535,9 @@ func (dp *DataPlane) addPolicies(netPols []*policies.NPMNetworkPolicy) error {
 					return fmt.Errorf("[DataPlane] [%s] error while applying IPSets: %w", contextAddNetPolBootup, err)
 				}
 				klog.Infof("[DataPlane] [%s] finished applying ipsets", contextAddNetPolBootup)
+
+				// see comment in RemovePolicy() for why this is here
+				dp.setRemovePolicyFailure(false)
 
 				dp.applyInfo.numBatches = 0
 			}
@@ -603,7 +635,16 @@ func (dp *DataPlane) RemovePolicy(policyKey string) error {
 		return err
 	}
 
-	return dp.applyDataPlaneNow(contextApplyDP)
+	if err := dp.applyDataPlaneNow(contextDelNetPol); err != nil {
+		// Failed to apply IPSets while removing this policy.
+		// Consider this removepolicy call a failure until apply IPSets is successful.
+		// Related to #2977
+		klog.Info("[DataPlane] remove policy has failed to apply ipsets. setting remove policy failure")
+		dp.setRemovePolicyFailure(true)
+		return err // nolint:wrapcheck // unnecessary to wrap error since the provided context is included in the error
+	}
+
+	return nil
 }
 
 // UpdatePolicy takes in updated policy object, calculates the delta and applies changes
@@ -724,4 +765,24 @@ func (dp *DataPlane) deleteIPSetsAndReferences(sets []*ipsets.TranslatedIPSet, n
 		dp.ipsetMgr.DeleteIPSet(set.Metadata.GetPrefixName(), false)
 	}
 	return nil
+}
+
+func (dp *DataPlane) setRemovePolicyFailure(failed bool) {
+	if util.IsWindowsDP() {
+		return
+	}
+
+	dp.removePolicyInfo.Lock()
+	defer dp.removePolicyInfo.Unlock()
+	dp.removePolicyInfo.previousRemovePolicyIPSetsFailed = failed
+}
+
+func (dp *DataPlane) hadRemovePolicyFailure() bool {
+	if util.IsWindowsDP() {
+		return false
+	}
+
+	dp.removePolicyInfo.Lock()
+	defer dp.removePolicyInfo.Unlock()
+	return dp.removePolicyInfo.previousRemovePolicyIPSetsFailed
 }

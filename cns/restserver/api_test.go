@@ -20,6 +20,7 @@ import (
 
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/cns/common"
+	"github.com/Azure/azure-container-networking/cns/configuration"
 	"github.com/Azure/azure-container-networking/cns/fakes"
 	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/types"
@@ -29,6 +30,7 @@ import (
 	"github.com/Azure/azure-container-networking/store"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -172,8 +174,10 @@ func TestMain(m *testing.M) {
 	var err error
 	logger.InitLogger("testlogs", 0, 0, "./")
 
-	// Create the service.
-	if err = startService(); err != nil {
+	// Create the service. If CRD channel mode is needed, then at the start of the test,
+	// it can stop the service (service.Stop), invoke startService again with new ServiceConfig (with CRD mode)
+	// perform the test and then restore the service again.
+	if err = startService(common.ServiceConfig{ChannelMode: cns.Direct}, configuration.CNSConfig{}); err != nil {
 		fmt.Printf("Failed to start CNS Service. Error: %v", err)
 		os.Exit(1)
 	}
@@ -1053,7 +1057,7 @@ func TestUnpublishNCViaCNS(t *testing.T) {
 		"/machine/plugins/?comp=nmagent&type=NetworkManagement/interfaces/dummyIntf/networkContainers/dummyNCURL/authenticationToke/" +
 		"8636c99d-7861-401f-b0d3-7e5b7dc8183c" +
 		"/api-version/1/method/DELETE"
-	err = unpublishNCViaCNS("vnet1", "ethWebApp", deleteNetworkContainerURL)
+	err = unpublishNCViaCNS("vnet1", "ethWebApp", deleteNetworkContainerURL, []byte(`""`+"\n"))
 	if err == nil {
 		t.Fatal("Expected a bad request error due to delete network url being incorrect")
 	}
@@ -1064,7 +1068,7 @@ func TestUnpublishNCViaCNS(t *testing.T) {
 		"/machine/plugins/?comp=nmagent&NetworkManagement/interfaces/dummyIntf/networkContainers/dummyNCURL/authenticationToken/" +
 		"8636c99d-7861-401f-b0d3-7e5b7dc8183c8636c99d-7861-401f-b0d3-7e5b7dc8183c" +
 		"/api-version/1/method/DELETE"
-	err = unpublishNCViaCNS("vnet1", "ethWebApp", deleteNetworkContainerURL)
+	err = unpublishNCViaCNS("vnet1", "ethWebApp", deleteNetworkContainerURL, []byte(`""`+"\n"))
 	if err == nil {
 		t.Fatal("Expected a bad request error due to create network url having more characters than permitted in auth token")
 	}
@@ -1072,9 +1076,61 @@ func TestUnpublishNCViaCNS(t *testing.T) {
 	// now actually perform the deletion:
 	deleteNetworkContainerURL = "http://" + nmagentEndpoint +
 		"/machine/plugins/?comp=nmagent&type=NetworkManagement/interfaces/dummyIntf/networkContainers/dummyNCURL/authenticationToken/dummyT/api-version/1/method/DELETE"
-	err = unpublishNCViaCNS("vnet1", "ethWebApp", deleteNetworkContainerURL)
+	err = unpublishNCViaCNS("vnet1", "ethWebApp", deleteNetworkContainerURL, []byte(`""`+"\n"))
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestUnpublishViaCNSRequestBody(t *testing.T) {
+	createNetworkContainerURL := "http://" + nmagentEndpoint +
+		"/machine/plugins/?comp=nmagent&type=NetworkManagement/interfaces/dummyIntf/networkContainers/dummyNCURL/authenticationToken/dummyT/api-version/1"
+	deleteNetworkContainerURL := "http://" + nmagentEndpoint +
+		"/machine/plugins/?comp=nmagent&type=NetworkManagement/interfaces/dummyIntf/networkContainers/dummyNCURL/authenticationToken/dummyT/api-version/1/method/DELETE"
+	vnet := "vnet1"
+	wsProxy := fakes.WireserverProxyFake{}
+	cleanup := setWireserverProxy(svc, &wsProxy)
+	defer cleanup()
+
+	tests := []struct {
+		name         string
+		ncID         string
+		body         []byte
+		requireError bool
+	}{
+		{
+			name:         "Delete NC with invalid body",
+			ncID:         "ncID1",
+			body:         []byte(`invalid` + "\n"),
+			requireError: true,
+		},
+		{
+			name:         "Delete NC with valid non-AZR body",
+			ncID:         "ncID2",
+			body:         []byte(`""` + "\n"),
+			requireError: false,
+		},
+		{
+			name:         "Delete NC with valid AZR body",
+			ncID:         "ncID3",
+			body:         []byte(`{"azID":1,"azrEnabled":true}`),
+			requireError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			errPublish := publishNCViaCNS(vnet, tt.ncID, createNetworkContainerURL)
+			require.NoError(t, errPublish)
+			errUnpublish := unpublishNCViaCNS(vnet, tt.ncID, deleteNetworkContainerURL, tt.body)
+			if tt.requireError {
+				require.Error(t, errUnpublish)
+				require.Contains(t, errUnpublish.Error(), "error decoding json")
+			} else {
+				require.NoError(t, errUnpublish)
+			}
+		})
 	}
 }
 
@@ -1157,7 +1213,7 @@ func TestUnpublishNCViaCNS401(t *testing.T) {
 	}
 }
 
-func unpublishNCViaCNS(networkID, networkContainerID, deleteNetworkContainerURL string) error {
+func unpublishNCViaCNS(networkID, networkContainerID, deleteNetworkContainerURL string, bodyBytes []byte) error {
 	joinNetworkURL := "http://" + nmagentEndpoint + "/dummyVnetURL"
 
 	unpublishNCRequest := &cns.UnpublishNetworkContainerRequest{
@@ -1165,7 +1221,7 @@ func unpublishNCViaCNS(networkID, networkContainerID, deleteNetworkContainerURL 
 		NetworkContainerID:                networkContainerID,
 		JoinNetworkURL:                    joinNetworkURL,
 		DeleteNetworkContainerURL:         deleteNetworkContainerURL,
-		DeleteNetworkContainerRequestBody: []byte("{}"),
+		DeleteNetworkContainerRequestBody: bodyBytes,
 	}
 
 	var body bytes.Buffer
@@ -1666,9 +1722,9 @@ func setEnv(t *testing.T) *httptest.ResponseRecorder {
 	return w
 }
 
-func startService() error {
+func startService(serviceConfig common.ServiceConfig, _ configuration.CNSConfig) error {
 	// Create the service.
-	config := common.ServiceConfig{}
+	config := serviceConfig
 
 	// Create the key value fileStore.
 	fileStore, err := store.NewJsonFileStore(cnsJsonFileName, processlock.NewMockFileLock(false), nil)
@@ -1679,7 +1735,8 @@ func startService() error {
 	config.Store = fileStore
 
 	nmagentClient := &fakes.NMAgentClientFake{}
-	service, err = NewHTTPRestService(&config, &fakes.WireserverClientFake{}, &fakes.WireserverProxyFake{}, nmagentClient, nil, nil, nil)
+	service, err = NewHTTPRestService(&config, &fakes.WireserverClientFake{}, &fakes.WireserverProxyFake{},
+		nmagentClient, nil, nil, nil, fakes.NewMockIMDSClient())
 	if err != nil {
 		return err
 	}
@@ -1756,6 +1813,43 @@ func contains(networkContainers []cns.GetNetworkContainerResponse, str string) b
 		}
 	}
 	return false
+}
+
+// Testing GetVMUniqueID API handler with success
+func TestGetVMUniqueIDSuccess(t *testing.T) {
+	req, err := http.NewRequestWithContext(context.TODO(), http.MethodGet, cns.GetVMUniqueID, http.NoBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	var vmIDResp cns.GetVMUniqueIDResponse
+	err = decodeResponse(w, &vmIDResp)
+	require.NoError(t, err)
+	assert.Equal(t, types.Success, vmIDResp.Response.ReturnCode)
+	assert.Equal(t, "55b8499d-9b42-4f85-843f-24ff69f4a643", vmIDResp.VMUniqueID)
+}
+
+// Testing GetVMUniqueID API handler with failure
+func TestGetVMUniqueIDFailed(t *testing.T) {
+	ctx := context.TODO()
+	ctx = context.WithValue(ctx, fakes.SimulateError, Interface{})
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cns.GetVMUniqueID, http.NoBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	var vmIDResp cns.GetVMUniqueIDResponse
+	err = json.NewDecoder(w.Body).Decode(&vmIDResp)
+	require.NoError(t, err)
+	assert.Equal(t, types.UnexpectedError, vmIDResp.Response.ReturnCode)
 }
 
 // IGNORE TEST AS IT IS FAILING. TODO:- Fix it https://msazure.visualstudio.com/One/_workitems/edit/7720083

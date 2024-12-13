@@ -22,11 +22,7 @@ const (
 	DeleteNetworkPath             = "/network/delete"
 	CreateHnsNetworkPath          = "/network/hns/create"
 	DeleteHnsNetworkPath          = "/network/hns/delete"
-	ReserveIPAddressPath          = "/network/ip/reserve"
-	ReleaseIPAddressPath          = "/network/ip/release"
 	GetHostLocalIPPath            = "/network/ip/hostlocal"
-	GetIPAddressUtilizationPath   = "/network/ip/utilization"
-	GetUnhealthyIPAddressesPath   = "/network/ipaddresses/unhealthy"
 	GetHealthReportPath           = "/network/health"
 	NumberOfCPUCoresPath          = "/hostcpucores"
 	CreateHostNCApipaEndpointPath = "/network/createhostncapipaendpoint"
@@ -306,8 +302,8 @@ type IpamPoolMonitorStateSnapshot struct {
 
 // Response describes generic response from CNS.
 type Response struct {
-	ReturnCode types.ResponseCode
-	Message    string
+	ReturnCode types.ResponseCode `json:"ReturnCode"`
+	Message    string             `json:"Message"`
 }
 
 // NumOfCPUCoresResponse describes num of cpu cores present on host.
@@ -372,4 +368,9 @@ type EndpointRequest struct {
 	HnsEndpointID string `json:"hnsEndpointID"`
 	HostVethName  string `json:"hostVethName"`
 	InterfaceName string `json:"InterfaceName"`
+}
+
+type GetVMUniqueIDResponse struct {
+	Response   Response `json:"response"`
+	VMUniqueID string   `json:"vmuniqueid"`
 }

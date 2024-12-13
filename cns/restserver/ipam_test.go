@@ -2,6 +2,7 @@ package restserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/netip"
@@ -15,9 +16,11 @@ import (
 	"github.com/Azure/azure-container-networking/cns/middlewares"
 	"github.com/Azure/azure-container-networking/cns/middlewares/mock"
 	"github.com/Azure/azure-container-networking/cns/types"
+	nma "github.com/Azure/azure-container-networking/nmagent"
 	"github.com/Azure/azure-container-networking/store"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -70,11 +73,13 @@ type ncState struct {
 	ips  []string
 }
 
-func getTestService() *HTTPRestService {
+func getTestService(orchestratorType string) *HTTPRestService {
 	var config common.ServiceConfig
-	httpsvc, _ := NewHTTPRestService(&config, &fakes.WireserverClientFake{}, &fakes.WireserverProxyFake{}, &fakes.NMAgentClientFake{}, store.NewMockStore(""), nil, nil)
+	httpsvc, _ := NewHTTPRestService(&config, &fakes.WireserverClientFake{}, &fakes.WireserverProxyFake{},
+		&fakes.NMAgentClientFake{}, store.NewMockStore(""), nil, nil,
+		fakes.NewMockIMDSClient())
 	svc = httpsvc
-	setOrchestratorTypeInternal(cns.KubernetesCRD)
+	setOrchestratorTypeInternal(orchestratorType)
 
 	return httpsvc
 }
@@ -205,7 +210,7 @@ func TestEndpointStateReadAndWriteMultipleNCs(t *testing.T) {
 
 // Tests the creation of an endpoint using the NCs and IPs as input and then tests the deletion of that endpoint
 func EndpointStateReadAndWrite(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
 	for i := range ncStates {
 		state := NewPodState(ncStates[i].ips[0], ipIDs[i][0], ncStates[i].ncID, types.Available, 0)
@@ -308,7 +313,7 @@ func TestIPAMGetAvailableIPConfigMultipleNCs(t *testing.T) {
 
 // Add one IP per NC to the pool and request those IPs
 func IPAMGetAvailableIPConfig(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	for i := range ncStates {
 		ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
@@ -387,7 +392,7 @@ func TestIPAMGetNextAvailableIPConfigMultipleNCs(t *testing.T) {
 
 // First IP is already assigned to a pod, want second IP
 func IPAMGetNextAvailableIPConfig(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// Add already assigned pod ip to state
 	for i := range ncStates {
@@ -466,7 +471,7 @@ func TestIPAMGetAlreadyAssignedIPConfigForSamePodMultipleNCs(t *testing.T) {
 }
 
 func IPAMGetAlreadyAssignedIPConfigForSamePod(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// Add Assigned Pod IP to state
 	for i := range ncStates {
@@ -544,7 +549,7 @@ func TestIPAMAttemptToRequestIPNotFoundInPoolMultipleNCs(t *testing.T) {
 }
 
 func IPAMAttemptToRequestIPNotFoundInPool(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// Add Available Pod IP to state
 	for i := range ncStates {
@@ -604,7 +609,7 @@ func TestIPAMGetDesiredIPConfigWithSpecfiedIPMultipleNCs(t *testing.T) {
 }
 
 func IPAMGetDesiredIPConfigWithSpecfiedIP(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// Add Available Pod IP to state
 	for i := range ncStates {
@@ -683,7 +688,7 @@ func TestIPAMFailToGetDesiredIPConfigWithAlreadyAssignedSpecfiedIPMultipleNCs(t 
 }
 
 func IPAMFailToGetDesiredIPConfigWithAlreadyAssignedSpecfiedIP(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// set state as already assigned
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
@@ -747,7 +752,7 @@ func TestIPAMFailToGetIPWhenAllIPsAreAssignedMultipleNCs(t *testing.T) {
 }
 
 func IPAMFailToGetIPWhenAllIPsAreAssigned(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
 	// Add already assigned pod ip to state
@@ -808,7 +813,7 @@ func TestIPAMRequestThenReleaseThenRequestAgainMultipleNCs(t *testing.T) {
 // Release PodInfo1
 // Request 10.0.0.1 with PodInfo2 (Success)
 func IPAMRequestThenReleaseThenRequestAgain(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// set state as already assigned
 	for i := range ncStates {
@@ -913,7 +918,7 @@ func TestIPAMReleaseIPIdempotencyMultipleNCs(t *testing.T) {
 }
 
 func IPAMReleaseIPIdempotency(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	// set state as already assigned
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
 	for i := range ncStates {
@@ -969,7 +974,7 @@ func TestIPAMAllocateIPIdempotencyMultipleNCs(t *testing.T) {
 }
 
 func IPAMAllocateIPIdempotency(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	// set state as already assigned
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
 	for i := range ncStates {
@@ -1024,7 +1029,7 @@ func TestAvailableIPConfigsMultipleNCs(t *testing.T) {
 }
 
 func AvailableIPConfigs(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	IDsToBeDeleted := make([]string, len(ncStates))
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
@@ -1137,7 +1142,7 @@ func TestIPAMMarkIPCountAsPendingMultipleNCs(t *testing.T) {
 }
 
 func IPAMMarkIPCountAsPending(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	// set state as already assigned
 	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
 	for i := range ncStates {
@@ -1186,7 +1191,7 @@ func IPAMMarkIPCountAsPending(t *testing.T, ncStates []ncState) {
 }
 
 func TestIPAMMarkIPAsPendingWithPendingProgrammingIPs(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	secondaryIPConfigs := make(map[string]cns.SecondaryIPConfig)
 	// Default Programmed NC version is -1, set nc version as 0 will result in pending programming state.
@@ -1299,7 +1304,7 @@ func TestIPAMMarkExistingIPConfigAsPendingMultipleNCs(t *testing.T) {
 }
 
 func IPAMMarkExistingIPConfigAsPending(t *testing.T, ncStates []ncState) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// Add already assigned pod ip to state
 	for i := range ncStates {
@@ -1361,7 +1366,7 @@ func IPAMMarkExistingIPConfigAsPending(t *testing.T, ncStates []ncState) {
 }
 
 func TestIPAMFailToRequestIPsWithNoNCsSpecificIP(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	req := cns.IPConfigsRequest{
 		PodInterfaceID:   testPod1Info.InterfaceID(),
 		InfraContainerID: testPod1Info.InfraContainerID(),
@@ -1379,7 +1384,7 @@ func TestIPAMFailToRequestIPsWithNoNCsSpecificIP(t *testing.T) {
 }
 
 func TestIPAMFailToRequestIPsWithNoNCsAnyIP(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	req := cns.IPConfigsRequest{
 		PodInterfaceID:   testPod1Info.InterfaceID(),
 		InfraContainerID: testPod1Info.InfraContainerID(),
@@ -1395,7 +1400,7 @@ func TestIPAMFailToRequestIPsWithNoNCsAnyIP(t *testing.T) {
 }
 
 func TestIPAMReleaseOneIPWhenExpectedToHaveTwo(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// set state as already assigned
 	testState, _ := NewPodStateWithOrchestratorContext(testIP1, testPod1GUID, testNCID, types.Assigned, 24, 0, testPod1Info)
@@ -1425,7 +1430,7 @@ func TestIPAMReleaseOneIPWhenExpectedToHaveTwo(t *testing.T) {
 }
 
 func TestIPAMFailToRequestOneIPWhenExpectedToHaveTwo(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// set state as already assigned
 	testState := NewPodState(testIP1, ipIDs[0][0], testNCID, types.Available, 0)
@@ -1461,7 +1466,7 @@ func TestIPAMFailToRequestOneIPWhenExpectedToHaveTwo(t *testing.T) {
 }
 
 func TestIPAMFailToReleasePartialIPsInPool(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// set state as already assigned
 	testState, _ := NewPodStateWithOrchestratorContext(testIP1, testIPID1, testNCID, types.Assigned, 24, 0, testPod1Info)
@@ -1491,7 +1496,7 @@ func TestIPAMFailToReleasePartialIPsInPool(t *testing.T) {
 }
 
 func TestIPAMFailToRequestPartialIPsInPool(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 
 	// set state as already assigned
 	testState := NewPodState(testIP1, testIPID1, testNCID, types.Available, 0)
@@ -1531,7 +1536,7 @@ func TestIPAMFailToRequestPartialIPsInPool(t *testing.T) {
 }
 
 func TestIPAMReleaseSWIFTV2PodIPSuccess(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	middleware := middlewares.K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	svc.AttachIPConfigsHandlerMiddleware(&middleware)
 
@@ -1582,7 +1587,7 @@ func TestIPAMReleaseSWIFTV2PodIPSuccess(t *testing.T) {
 }
 
 func TestIPAMGetK8sSWIFTv2IPSuccess(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	middleware := middlewares.K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	svc.AttachIPConfigsHandlerMiddleware(&middleware)
 
@@ -1645,7 +1650,7 @@ func TestIPAMGetK8sSWIFTv2IPSuccess(t *testing.T) {
 }
 
 func TestIPAMGetK8sSWIFTv2IPFailure(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	middleware := middlewares.K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	svc.AttachIPConfigsHandlerMiddleware(&middleware)
 	ncStates := []ncState{
@@ -1715,7 +1720,7 @@ func TestIPAMGetK8sSWIFTv2IPFailure(t *testing.T) {
 }
 
 func TestIPAMGetK8sInfinibandSuccess(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	middleware := middlewares.K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	svc.AttachIPConfigsHandlerMiddleware(&middleware)
 	updatePnpIDMacAddressState(svc)
@@ -1780,7 +1785,7 @@ func TestIPAMGetK8sInfinibandSuccess(t *testing.T) {
 
 // Test intednd to check for on single backend nic without the delegaed nic
 func TestIPAMGetK8sInfinibandSuccessOneNic(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	middleware := middlewares.K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	svc.AttachIPConfigsHandlerMiddleware(&middleware)
 	updatePnpIDMacAddressState(svc)
@@ -1840,7 +1845,7 @@ func TestIPAMGetK8sInfinibandSuccessOneNic(t *testing.T) {
 }
 
 func TestIPAMGetK8sInfinibandFailure(t *testing.T) {
-	svc := getTestService()
+	svc := getTestService(cns.KubernetesCRD)
 	middleware := middlewares.K8sSWIFTv2Middleware{Cli: mock.NewClient()}
 	svc.AttachIPConfigsHandlerMiddleware(&middleware)
 	updatePnpIDMacAddressState(svc)
@@ -1889,5 +1894,388 @@ func TestIPAMGetK8sInfinibandFailure(t *testing.T) {
 	_, err := wrappedHandler(context.TODO(), req)
 	if err == nil {
 		t.Fatalf("Expected failing requesting IPs due to not able to set routes")
+	}
+}
+
+func TestIPAMGetStandaloneSWIFTv2(t *testing.T) {
+	svc := getTestService(cns.ServiceFabric)
+	middleware := middlewares.StandaloneSWIFTv2Middleware{}
+	svc.AttachIPConfigsHandlerMiddleware(&middleware)
+
+	orchestratorContext, _ := testPod1Info.OrchestratorContext()
+	mockMACAddress := "00:00:00:00:00:00"
+	mockGatewayIP := "10.0.0.1" // from mock wireserver gateway calculation on host subnet
+
+	tt := []struct {
+		name             string
+		req              cns.IPConfigsRequest
+		mockNMAgent      *fakes.NMAgentClientFake
+		expectedResponse *cns.IPConfigsResponse
+	}{
+		{
+			name: "Successful single IPAM for Standalone SwiftV2 pod, when NMAgent returns error for GetNCVersionList",
+			req: cns.IPConfigsRequest{
+				DesiredIPAddresses:  []string{testIP1},
+				OrchestratorContext: orchestratorContext,
+				PodInterfaceID:      testPod1Info.InterfaceID(),
+				InfraContainerID:    testPod1Info.InfraContainerID(),
+			},
+			mockNMAgent: &fakes.NMAgentClientFake{
+				GetNCVersionListF: func(_ context.Context) (nma.NCVersionList, error) {
+					// NMAgent returns an error, eg. NC is not programmed
+					return nma.NCVersionList{
+						Containers: []nma.NCVersion{},
+					}, errors.New("any NMAgent error")
+				},
+			},
+			expectedResponse: &cns.IPConfigsResponse{
+				Response: cns.Response{
+					ReturnCode: types.Success,
+				},
+				PodIPInfo: []cns.PodIpInfo{
+					{
+						PodIPConfig: cns.IPSubnet{
+							IPAddress: testIP1,
+						},
+						NetworkContainerPrimaryIPConfig: cns.IPConfiguration{
+							IPSubnet: cns.IPSubnet{
+								IPAddress: testIP1,
+							},
+							GatewayIPAddress: mockGatewayIP,
+						},
+						MacAddress: mockMACAddress,
+						NICType:    cns.DelegatedVMNIC,
+						HostPrimaryIPInfo: cns.HostIPInfo{
+							Gateway:   mockGatewayIP,
+							PrimaryIP: fakes.HostPrimaryIP,
+							Subnet:    fakes.HostSubnet,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Successful single IPAM for Standalone SwiftV2 pod, when NMAgent returns empty response and no error for GetNCVersionList",
+			req: cns.IPConfigsRequest{
+				DesiredIPAddresses:  []string{testIP1},
+				OrchestratorContext: orchestratorContext,
+				PodInterfaceID:      testPod1Info.InterfaceID(),
+				InfraContainerID:    testPod1Info.InfraContainerID(),
+			},
+			mockNMAgent: &fakes.NMAgentClientFake{
+				GetNCVersionListF: func(_ context.Context) (nma.NCVersionList, error) {
+					// NMAgent returns an empty response with no error
+					return nma.NCVersionList{
+						Containers: []nma.NCVersion{},
+					}, nil
+				},
+			},
+			expectedResponse: &cns.IPConfigsResponse{
+				Response: cns.Response{
+					ReturnCode: types.Success,
+				},
+				PodIPInfo: []cns.PodIpInfo{
+					{
+						PodIPConfig: cns.IPSubnet{
+							IPAddress: testIP1,
+						},
+						NetworkContainerPrimaryIPConfig: cns.IPConfiguration{
+							IPSubnet: cns.IPSubnet{
+								IPAddress: testIP1,
+							},
+							GatewayIPAddress: mockGatewayIP,
+						},
+						MacAddress: mockMACAddress,
+						NICType:    cns.DelegatedVMNIC,
+						HostPrimaryIPInfo: cns.HostIPInfo{
+							Gateway:   mockGatewayIP,
+							PrimaryIP: fakes.HostPrimaryIP,
+							Subnet:    fakes.HostSubnet,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Successful single IPAM for Standalone SwiftV2 pod, when NMAgent returns an NC for GetNCVersionList even if it's not programmed",
+			req: cns.IPConfigsRequest{
+				DesiredIPAddresses:  []string{testIP1},
+				OrchestratorContext: orchestratorContext,
+				PodInterfaceID:      testPod1Info.InterfaceID(),
+				InfraContainerID:    testPod1Info.InfraContainerID(),
+			},
+			mockNMAgent: &fakes.NMAgentClientFake{
+				GetNCVersionListF: func(_ context.Context) (nma.NCVersionList, error) {
+					// NMAgent returns an NC even if it's not programmed
+					return nma.NCVersionList{
+						Containers: []nma.NCVersion{
+							{
+								NetworkContainerID: testNCID,
+								Version:            "0",
+							},
+						},
+					}, nil
+				},
+			},
+			expectedResponse: &cns.IPConfigsResponse{
+				Response: cns.Response{
+					ReturnCode: types.Success,
+				},
+				PodIPInfo: []cns.PodIpInfo{
+					{
+						PodIPConfig: cns.IPSubnet{
+							IPAddress: testIP1,
+						},
+						NetworkContainerPrimaryIPConfig: cns.IPConfiguration{
+							IPSubnet: cns.IPSubnet{
+								IPAddress: testIP1,
+							},
+							GatewayIPAddress: mockGatewayIP,
+						},
+						MacAddress: mockMACAddress,
+						NICType:    cns.DelegatedVMNIC,
+						HostPrimaryIPInfo: cns.HostIPInfo{
+							Gateway:   mockGatewayIP,
+							PrimaryIP: fakes.HostPrimaryIP,
+							Subnet:    fakes.HostSubnet,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Fail validation when orchestrator context can't be unmarshalled",
+			req: cns.IPConfigsRequest{
+				DesiredIPAddresses:  []string{testIP1},
+				OrchestratorContext: json.RawMessage("invalid"),
+				PodInterfaceID:      testPod1Info.InterfaceID(),
+				InfraContainerID:    testPod1Info.InfraContainerID(),
+			},
+			expectedResponse: &cns.IPConfigsResponse{
+				Response: cns.Response{
+					ReturnCode: types.UnsupportedOrchestratorContext,
+				},
+			},
+		},
+		{
+			name: "Fail validation when orchestrator context is nil",
+			req: cns.IPConfigsRequest{
+				DesiredIPAddresses:  []string{testIP1},
+				OrchestratorContext: nil,
+				PodInterfaceID:      testPod1Info.InterfaceID(),
+				InfraContainerID:    testPod1Info.InfraContainerID(),
+			},
+			expectedResponse: &cns.IPConfigsResponse{
+				Response: cns.Response{
+					ReturnCode: types.EmptyOrchestratorContext,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// setup CNS state with SwiftV2 NC
+			createAndSaveMockNCRequest(t, svc, testNCID, orchestratorContext, tc.req.DesiredIPAddresses[0], mockGatewayIP, mockMACAddress)
+
+			// IMPORTANT: although SwiftV2 reuses the concept of NCs, NMAgent doesn't program NCs for SwiftV2, but
+			// instead programs NICs. When getting SwiftV2 NCs, we want the NIC type and MAC address of the NCs.
+			// TODO: we need another way to verify and sync NMAgent's NIC programming status. currently pending a new NMAgent API or NIC programming status to be passed in the SwiftV2 create NC request.
+			setupMockNMAgent(t, svc, tc.mockNMAgent)
+
+			// invoke the SwiftV2 IPAM wrapper handler with the standalone SwiftV2 middleware
+			wrappedHandler := svc.IPConfigsHandlerMiddleware.IPConfigsRequestHandlerWrapper(svc.requestIPConfigHandlerHelperStandalone, nil)
+			resp, err := wrappedHandler(context.TODO(), tc.req)
+
+			if tc.expectedResponse.Response.ReturnCode == types.Success {
+				require.NoError(t, err)
+
+				// assert CNS response code
+				require.Equal(t, tc.expectedResponse.Response.ReturnCode, resp.Response.ReturnCode)
+
+				expectedPodIPInfo := tc.expectedResponse.PodIPInfo
+				actualPodIPInfo := resp.PodIPInfo
+
+				for i, expected := range expectedPodIPInfo {
+					// assert SwiftV2 IP is returned
+					assert.Len(t, actualPodIPInfo, len(tc.req.DesiredIPAddresses), "Expected list of IPs returned matches the number of desired IPs from CNI IPAM request")
+					assert.Equal(t, expected.PodIPConfig.IPAddress, actualPodIPInfo[i].PodIPConfig.IPAddress)
+					assert.Equal(t, expected.MacAddress, actualPodIPInfo[i].MacAddress)
+					assert.Equal(t, expected.NICType, actualPodIPInfo[i].NICType)
+
+					// assert that PodIPInfo contains interface information
+					assert.Equal(t, expected.HostPrimaryIPInfo.Gateway, actualPodIPInfo[i].HostPrimaryIPInfo.Gateway)
+					assert.Equal(t, expected.HostPrimaryIPInfo.PrimaryIP, actualPodIPInfo[i].HostPrimaryIPInfo.PrimaryIP)
+					assert.Equal(t, expected.HostPrimaryIPInfo.Subnet, actualPodIPInfo[i].HostPrimaryIPInfo.Subnet)
+				}
+			} else {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedResponse.Response.ReturnCode, resp.Response.ReturnCode)
+			}
+		})
+	}
+}
+
+func setupMockNMAgent(t *testing.T, svc *HTTPRestService, mockNMAgent *fakes.NMAgentClientFake) {
+	t.Helper()
+	t.Log("Started mock NMAgent")
+	cleanupNMAgentMock := setMockNMAgent(svc, mockNMAgent)
+	t.Cleanup(func() {
+		cleanupNMAgentMock()
+		t.Log("Stopped mock NMAgent")
+	})
+}
+
+func createAndSaveMockNCRequest(t *testing.T, svc *HTTPRestService, ncID string, orchestratorContext json.RawMessage, desiredIP, mockGatewayIP, mockMACAddress string) {
+	t.Helper()
+
+	createNCReq := &cns.CreateNetworkContainerRequest{
+		NetworkContainerType: "Docker",
+		NetworkContainerid:   ncID,
+		OrchestratorContext:  orchestratorContext,
+		IPConfiguration: cns.IPConfiguration{
+			IPSubnet: cns.IPSubnet{
+				IPAddress:    desiredIP,
+				PrefixLength: ipPrefixBitsv4,
+			},
+			GatewayIPAddress: mockGatewayIP,
+		},
+		// SwiftV2 NIC info
+		NetworkInterfaceInfo: cns.NetworkInterfaceInfo{
+			NICType:    cns.DelegatedVMNIC,
+			MACAddress: mockMACAddress,
+		},
+	}
+	err := createNCReq.Validate()
+	require.NoError(t, err)
+
+	// save SwiftV2 NC state in CNS
+	returnCode, returnMessage := svc.saveNetworkContainerGoalState(*createNCReq)
+	require.Equal(t, types.Success, returnCode)
+	require.Empty(t, returnMessage)
+}
+
+// Validate Statefile in Stateless CNI scenarios
+func TestStatelessCNIStateFile(t *testing.T) {
+	svc := getTestService(cns.KubernetesCRD)
+	svc.EndpointStateStore = store.NewMockStore("")
+	// test Case 1 - AKS SIngleTenancy
+	endpointInfo1ContainerID := "0a4917617e15d24dc495e407d8eb5c88e4406e58fa209e4eb75a2c2fb7045eea"
+	endpointInfo1 := &EndpointInfo{IfnameToIPMap: make(map[string]*IPInfo)}
+	endpointInfo1.IfnameToIPMap["eth0"] = &IPInfo{IPv4: []net.IPNet{{IP: net.IPv4(10, 0, 0, 1), Mask: net.IPv4Mask(255, 255, 255, 0)}}}
+	req1 := make(map[string]*IPInfo)
+	req1["eth0"] = &IPInfo{IPv4: []net.IPNet{{IP: net.IPv4(10, 0, 0, 1), Mask: net.IPv4Mask(255, 255, 255, 0)}}, HnsEndpointID: "5c15cccc-830a-4dff-81f3-4b1e55cb7dcb", NICType: cns.InfraNIC}
+	testPod1Info = cns.NewPodInfo(endpointInfo1ContainerID, endpointInfo1ContainerID, "pod1", "default")
+	req := cns.IPConfigsRequest{
+		PodInterfaceID:   testPod1Info.InterfaceID(),
+		InfraContainerID: testPod1Info.InfraContainerID(),
+	}
+	// test Case 2 - ACI
+	endpointInfo2ContainerID := "1b4917617e15d24dc495e407d8eb5c88e4406e58fa209e4eb75a2c2fb7045eea"
+	endpointInfo2 := &EndpointInfo{IfnameToIPMap: make(map[string]*IPInfo)}
+	endpointInfo2.IfnameToIPMap["eth2"] = &IPInfo{
+		IPv4:          nil,
+		NICType:       cns.DelegatedVMNIC,
+		HnsEndpointID: "5c15cccc-830a-4dff-81f3-4b1e55cb7dcb",
+		HnsNetworkID:  "5c0712cd-824c-4898-b1c0-2fcb16ede4fb",
+		MacAddress:    "7c:1e:52:06:d3:4b",
+	}
+	// test cases
+	tests := []struct {
+		name       string
+		endpointID string
+		req        map[string]*IPInfo
+		store      store.KeyValueStore
+		want       *EndpointInfo
+		wantErr    bool
+	}{
+		{
+			name:       "single-tenancy: update endpoint without error",
+			endpointID: endpointInfo1ContainerID,
+			req:        req1,
+			store:      svc.EndpointStateStore,
+			want: &EndpointInfo{
+				PodName: "pod1", PodNamespace: "default", IfnameToIPMap: map[string]*IPInfo{
+					"eth0": {
+						IPv4:          []net.IPNet{{IP: net.IPv4(10, 0, 0, 1), Mask: net.IPv4Mask(255, 255, 255, 0)}},
+						HnsEndpointID: "5c15cccc-830a-4dff-81f3-4b1e55cb7dcb",
+						NICType:       cns.InfraNIC,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "ACI: update and create absent endpoint without error",
+			endpointID: endpointInfo2ContainerID,
+			req:        endpointInfo2.IfnameToIPMap,
+			store:      svc.EndpointStateStore,
+			want:       endpointInfo2,
+			wantErr:    false,
+		},
+	}
+	ncStates := []ncState{
+		{
+			ncID: testNCID,
+			ips: []string{
+				testIP1,
+			},
+		},
+	}
+
+	ipconfigs := make(map[string]cns.IPConfigurationStatus, 0)
+	for i := range ncStates {
+		state := NewPodState(ncStates[i].ips[0], ipIDs[i][0], ncStates[i].ncID, types.Available, 0)
+		ipconfigs[state.ID] = state
+		err := UpdatePodIPConfigState(t, svc, ipconfigs, ncStates[i].ncID)
+		if err != nil {
+			t.Fatalf("Expected to not fail update service with config: %+v", err)
+		}
+	}
+	t.Log(ipconfigs)
+	b, _ := testPod1Info.OrchestratorContext()
+	req.OrchestratorContext = b
+	req.Ifname = "eth0"
+	podIPInfo, err := requestIPConfigsHelper(svc, req)
+	if err != nil {
+		t.Fatalf("Expected to not fail getting pod ip info: %+v", err)
+	}
+
+	ipInfo := &IPInfo{}
+	for i := range podIPInfo {
+		ip, ipnet, errIP := net.ParseCIDR(podIPInfo[i].PodIPConfig.IPAddress + "/" + strconv.FormatUint(uint64(podIPInfo[i].PodIPConfig.PrefixLength), 10))
+		if errIP != nil {
+			t.Fatalf("failed to parse pod ip address: %+v", errIP)
+		}
+		ipconfig := net.IPNet{IP: ip, Mask: ipnet.Mask}
+		if ip.To4() == nil { // is an ipv6 address
+			ipInfo.IPv6 = append(ipInfo.IPv6, ipconfig)
+		} else {
+			ipInfo.IPv4 = append(ipInfo.IPv4, ipconfig)
+		}
+	}
+
+	// add goalState
+	err = svc.updateEndpointState(req, testPod1Info, podIPInfo)
+	if err != nil {
+		t.Fatalf("Expected to not fail updating endpoint state: %+v", err)
+	}
+	// update State
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			err := svc.UpdateEndpointHelper(tt.endpointID, tt.req)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			got, err := svc.GetEndpointHelper(tt.endpointID)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

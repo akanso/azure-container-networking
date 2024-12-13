@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/Azure/azure-container-networking/cns"
@@ -28,6 +29,7 @@ type CNSConfig struct {
 	EnableAsyncPodDelete        bool
 	EnableCNIConflistGeneration bool
 	EnableIPAMv2                bool
+	EnableK8sDevicePlugin       bool
 	EnablePprof                 bool
 	EnableStateMigration        bool
 	EnableSubnetScarcity        bool
@@ -52,6 +54,7 @@ type CNSConfig struct {
 	WatchPods                   bool `json:"-"`
 	WireserverIP                string
 	GRPCSettings                GRPCSettings
+	MinTLSVersion               string
 }
 
 type TelemetrySettings struct {
@@ -77,6 +80,8 @@ type TelemetrySettings struct {
 	DebugMode bool
 	// Interval for sending snapshot events.
 	SnapshotIntervalInMins int
+	// Interval for sending config snapshot events.
+	ConfigSnapshotIntervalInMins int
 	// AppInsightsInstrumentationKey allows the user to override the default appinsights ikey
 	AppInsightsInstrumentationKey string
 }
@@ -227,6 +232,15 @@ func SetCNSConfigDefaults(config *CNSConfig) {
 	if config.GRPCSettings.Port == 0 {
 		config.GRPCSettings.Port = 8080
 	}
+
+	if config.MinTLSVersion == "" {
+		config.MinTLSVersion = "TLS 1.2"
+	}
 	config.GRPCSettings.Enable = false
 	config.WatchPods = config.EnableIPAMv2 || config.EnableSwiftV2
+}
+
+// isStalessCNIMode verify if the CNI is running stateless mode
+func (cnsconfig *CNSConfig) IsStalessCNIWindows() bool {
+	return !cnsconfig.InitializeFromCNI && cnsconfig.ManageEndpointState && runtime.GOOS == "windows"
 }

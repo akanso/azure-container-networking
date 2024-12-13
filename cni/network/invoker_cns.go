@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/Azure/azure-container-networking/cni"
+	"github.com/Azure/azure-container-networking/cni/log"
 	"github.com/Azure/azure-container-networking/cni/util"
 	"github.com/Azure/azure-container-networking/cns"
 	cnscli "github.com/Azure/azure-container-networking/cns/client"
@@ -53,6 +54,7 @@ type IPResultInfo struct {
 	macAddress         string
 	skipDefaultRoutes  bool
 	routes             []cns.Route
+	pnpID              string
 }
 
 func (i IPResultInfo) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
@@ -135,7 +137,6 @@ func (invoker *CNSIPAMInvoker) Add(addConfig IPAMAddConfig) (IPAMAddResult, erro
 			}
 		} else {
 			logger.Info("Failed to get IP address from CNS",
-				zap.Error(err),
 				zap.Any("response", response))
 			return IPAMAddResult{}, errors.Wrap(err, "Failed to get IP address from CNS")
 		}
@@ -143,6 +144,7 @@ func (invoker *CNSIPAMInvoker) Add(addConfig IPAMAddConfig) (IPAMAddResult, erro
 
 	addResult := IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
 	numInterfacesWithDefaultRoutes := 0
+
 	for i := 0; i < len(response.PodIPInfo); i++ {
 		info := IPResultInfo{
 			podIPAddress:       response.PodIPInfo[i].PodIPConfig.IPAddress,
@@ -156,6 +158,7 @@ func (invoker *CNSIPAMInvoker) Add(addConfig IPAMAddConfig) (IPAMAddResult, erro
 			macAddress:         response.PodIPInfo[i].MacAddress,
 			skipDefaultRoutes:  response.PodIPInfo[i].SkipDefaultRoutes,
 			routes:             response.PodIPInfo[i].Routes,
+			pnpID:              response.PodIPInfo[i].PnPID,
 		}
 
 		logger.Info("Received info for pod",
@@ -166,8 +169,8 @@ func (invoker *CNSIPAMInvoker) Add(addConfig IPAMAddConfig) (IPAMAddResult, erro
 		// Do we want to leverage this lint skip in other places of our code?
 		key := invoker.getInterfaceInfoKey(info.nicType, info.macAddress)
 		switch info.nicType {
-		case cns.DelegatedVMNIC:
-			// only handling single v4 PodIPInfo for Frontend NICs at the moment, will have to update once v6 gets added
+		case cns.NodeNetworkInterfaceFrontendNIC:
+			// only handling single v4 PodIPInfo for NodeNetworkInterfaceFrontendNIC and AccelnetNIC at the moment, will have to update once v6 gets added
 			if !info.skipDefaultRoutes {
 				numInterfacesWithDefaultRoutes++
 			}
@@ -178,6 +181,12 @@ func (invoker *CNSIPAMInvoker) Add(addConfig IPAMAddConfig) (IPAMAddResult, erro
 			info.hostGateway = response.PodIPInfo[i].HostPrimaryIPInfo.Gateway
 
 			if err := configureSecondaryAddResult(&info, &addResult, &response.PodIPInfo[i].PodIPConfig, key); err != nil {
+				return IPAMAddResult{}, err
+			}
+		case cns.BackendNIC:
+			// TODO: check whether setting default route on IB interface
+			// handle ipv4 PodIPInfo for BackendNIC
+			if err := addBackendNICToResult(&info, &addResult, key); err != nil {
 				return IPAMAddResult{}, err
 			}
 		case cns.InfraNIC, "":
@@ -312,8 +321,9 @@ func (invoker *CNSIPAMInvoker) Delete(address *net.IPNet, nwCfg *cni.NetworkConf
 				if errors.As(err, &connectionErr) {
 					addErr := fsnotify.AddFile(ipConfigs.PodInterfaceID, args.ContainerID, watcherPath)
 					if addErr != nil {
-						logger.Error("Failed to add file to watcher", zap.String("podInterfaceID", ipConfigs.PodInterfaceID), zap.String("containerID", args.ContainerID), zap.Error(addErr))
-						return errors.Wrap(addErr, fmt.Sprintf("failed to add file to watcher with containerID %s and podInterfaceID %s", args.ContainerID, ipConfigs.PodInterfaceID))
+						logger.Error("Failed to add file to watcher (unsupported api path)",
+							zap.String("podInterfaceID", ipConfigs.PodInterfaceID), zap.String("containerID", args.ContainerID), zap.Error(log.NewErrorWithoutStackTrace(addErr)))
+						return errors.Wrap(addErr, fmt.Sprintf("failed to add file to watcher with containerID %s and podInterfaceID %s (unsupported api path)", args.ContainerID, ipConfigs.PodInterfaceID))
 					}
 				} else {
 					logger.Error("Failed to release IP address from CNS using ReleaseIPAddress ",
@@ -327,7 +337,8 @@ func (invoker *CNSIPAMInvoker) Delete(address *net.IPNet, nwCfg *cni.NetworkConf
 			if errors.As(err, &connectionErr) {
 				addErr := fsnotify.AddFile(ipConfigs.PodInterfaceID, args.ContainerID, watcherPath)
 				if addErr != nil {
-					logger.Error("Failed to add file to watcher", zap.String("podInterfaceID", ipConfigs.PodInterfaceID), zap.String("containerID", args.ContainerID), zap.Error(addErr))
+					logger.Error("Failed to add file to watcher", zap.String("podInterfaceID", ipConfigs.PodInterfaceID), zap.String("containerID", args.ContainerID),
+						zap.Error(log.NewErrorWithoutStackTrace(addErr)))
 					return errors.Wrap(addErr, fmt.Sprintf("failed to add file to watcher with containerID %s and podInterfaceID %s", args.ContainerID, ipConfigs.PodInterfaceID))
 				}
 			} else {
@@ -464,6 +475,7 @@ func configureSecondaryAddResult(info *IPResultInfo, addResult *IPAMAddResult, p
 
 	macAddress, err := net.ParseMAC(info.macAddress)
 	if err != nil {
+		logger.Error("Invalid mac address", zap.Error(err))
 		return errors.Wrap(err, "Invalid mac address")
 	}
 
@@ -491,8 +503,31 @@ func configureSecondaryAddResult(info *IPResultInfo, addResult *IPAMAddResult, p
 	return nil
 }
 
+func addBackendNICToResult(info *IPResultInfo, addResult *IPAMAddResult, key string) error {
+	macAddress, err := net.ParseMAC(info.macAddress)
+	if err != nil {
+		logger.Error("Invalid mac address", zap.Error(err))
+		return errors.Wrap(err, "Invalid mac address")
+	}
+
+	// return error if pnp id is missing in cns goalstate
+	if info.pnpID == "" {
+		logger.Error("pnp id is not received from cns")
+		return errors.Wrap(err, "pnp id is not received from cns")
+	}
+
+	addResult.interfaceInfo[key] = network.InterfaceInfo{
+		NICType:           info.nicType,
+		MacAddress:        macAddress,
+		SkipDefaultRoutes: info.skipDefaultRoutes,
+		PnPID:             info.pnpID,
+	}
+
+	return nil
+}
+
 func (invoker *CNSIPAMInvoker) getInterfaceInfoKey(nicType cns.NICType, macAddress string) string {
-	if nicType == cns.DelegatedVMNIC {
+	if nicType == cns.NodeNetworkInterfaceFrontendNIC || nicType == cns.BackendNIC {
 		return macAddress
 	}
 	return string(nicType)

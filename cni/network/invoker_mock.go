@@ -20,7 +20,7 @@ const (
 var (
 	errV4             = errors.New("v4 fail")
 	errV6             = errors.New("v6 Fail")
-	errDelegatedVMNIC = errors.New("delegatedVMNIC fail")
+	errDelegatedVMNIC = errors.New("NodeNetworkInterfaceFrontendNIC fail")
 	errDeleteIpam     = errors.New("delete fail")
 )
 
@@ -31,7 +31,7 @@ type MockIpamInvoker struct {
 	delegatedVMNIC     bool
 	delegatedVMNICFail bool
 	ipMap              map[string]bool
-	customReturn       map[string]network.InterfaceInfo
+	add                func(opt IPAMAddConfig) (ipamAddResult IPAMAddResult, err error)
 }
 
 func NewMockIpamInvoker(ipv6, v4Fail, v6Fail, delegatedVMNIC, delegatedVMNICFail bool) *MockIpamInvoker {
@@ -47,8 +47,11 @@ func NewMockIpamInvoker(ipv6, v4Fail, v6Fail, delegatedVMNIC, delegatedVMNICFail
 
 func NewCustomMockIpamInvoker(customReturn map[string]network.InterfaceInfo) *MockIpamInvoker {
 	return &MockIpamInvoker{
-		customReturn: customReturn,
-
+		add: func(_ IPAMAddConfig) (ipamAddResult IPAMAddResult, err error) {
+			ipamAddResult = IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
+			ipamAddResult.interfaceInfo = customReturn
+			return ipamAddResult, nil
+		},
 		ipMap: make(map[string]bool),
 	}
 }
@@ -108,13 +111,12 @@ func (invoker *MockIpamInvoker) Add(opt IPAMAddConfig) (ipamAddResult IPAMAddRes
 		ipRes = append(ipRes, &network.IPConfig{Address: *ipnet})
 		ipamAddResult.interfaceInfo[string(cns.InfraNIC)] = network.InterfaceInfo{
 			IPConfigs: ipRes,
-			NICType:   cns.DelegatedVMNIC,
+			NICType:   cns.NodeNetworkInterfaceFrontendNIC,
 		}
 	}
 
-	if invoker.customReturn != nil {
-		ipamAddResult.interfaceInfo = invoker.customReturn
-		return ipamAddResult, nil
+	if invoker.add != nil {
+		return invoker.add(opt)
 	}
 
 	return ipamAddResult, nil

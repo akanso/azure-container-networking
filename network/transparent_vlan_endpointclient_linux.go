@@ -371,12 +371,12 @@ func (client *TransparentVlanEndpointClient) PopulateVnet(epInfo *EndpointInfo) 
 	}
 	client.vnetMac = vnetVethIf.HardwareAddr
 	// Disable rp filter again to allow asymmetric routing for tunneling packets
-	_, err = client.plClient.ExecuteCommand(DisableRPFilterCmd)
+	_, err = client.plClient.ExecuteRawCommand(DisableRPFilterCmd)
 	if err != nil {
 		return errors.Wrap(err, "transparent vlan failed to disable rp filter in vnet")
 	}
 	disableRPFilterVlanIfCmd := strings.Replace(DisableRPFilterCmd, "all", client.vlanIfName, 1)
-	_, err = client.plClient.ExecuteCommand(disableRPFilterVlanIfCmd)
+	_, err = client.plClient.ExecuteRawCommand(disableRPFilterVlanIfCmd)
 	if err != nil {
 		return errors.Wrap(err, "transparent vlan failed to disable rp filter vlan interface in vnet")
 	}
@@ -635,7 +635,7 @@ func (client *TransparentVlanEndpointClient) DeleteEndpoints(ep *endpoint) error
 		return client.DeleteEndpointsImpl(ep, getNumRoutesLeft)
 	})
 	if err != nil {
-		return err
+		logger.Warn("could not delete transparent vlan endpoints", zap.String("errorMsg", err.Error()))
 	}
 
 	// VM NS

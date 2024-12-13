@@ -1,21 +1,21 @@
 parameters:
   name: ""
   platforms: ""
-  os_versions: ""
 
 steps:
 
-  - task: AzureCLI@1
+  - task: AzureCLI@2
     displayName: "Login"
     inputs:
       azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
       scriptLocation: "inlineScript"
+      scriptType: "bash"
       inlineScript: |
         az acr login -n $(ACR)
 
   - script: |
       set -e
-      make ${{ parameters.name }}-manifest-build PLATFORMS="${{ parameters.platforms }}" OS_VERSIONS="${{ parameters.os_versions }}"
+      make ${{ parameters.name }}-manifest-build PLATFORMS="${{ parameters.platforms }}" 
     name: manifest_build
     displayName: Manifest Build
     retryCountOnTaskFailure: 3
@@ -36,11 +36,12 @@ steps:
     displayName: Manifest Push
     retryCountOnTaskFailure: 3
 
-  - task: AzureCLI@1
+  - task: AzureCLI@2
     displayName: "Logout"
     inputs:
       azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
       scriptLocation: "inlineScript"
+      scriptType: "bash"
       inlineScript: |
         docker logout
 

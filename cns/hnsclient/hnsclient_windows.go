@@ -14,8 +14,10 @@ import (
 	"github.com/Azure/azure-container-networking/network/policy"
 	"github.com/Microsoft/hcsshim"
 	"github.com/Microsoft/hcsshim/hcn"
+	"github.com/pkg/errors"
 )
 
+// TODO redesign hnsclient on windows
 const (
 	// Name of the external hns network
 	ExtHnsNetworkName = "ext"
@@ -28,7 +30,6 @@ const (
 
 	// HNS network types
 	hnsL2Bridge = "l2bridge"
-	hnsL2Tunnel = "l2tunnel"
 
 	// hcnSchemaVersionMajor indicates major version number for hcn schema
 	hcnSchemaVersionMajor = 2
@@ -52,6 +53,9 @@ const (
 	// Name of the loopback adapter needed to create Host NC apipa network
 	hostNCLoopbackAdapterName = "LoopbackAdapterHostNCConnectivity"
 
+	// HNS rehydration issue requires this GW to be different than the loopback adapter ip, so we set it to .2
+	defaultHnsGwIPAddress       = "169.254.128.2"
+	hnsLoopbackAdapterIPAddress = "169.254.128.1"
 	// protocolTCP indicates the TCP protocol identifier in HCN
 	protocolTCP = "6"
 
@@ -75,6 +79,9 @@ const (
 
 	// signals a APIPA endpoint type
 	apipaEndpointType = "APIPA"
+
+	// default network name used by HNS
+	defaultNetworkName = "azure"
 )
 
 // Named Lock for network and endpoint creation/deletion
@@ -137,7 +144,7 @@ func CreateDefaultExtNetwork(networkType string) error {
 		return nil
 	}
 
-	if networkType != hnsL2Bridge && networkType != hnsL2Tunnel {
+	if networkType != hnsL2Bridge {
 		return fmt.Errorf("Invalid hns network type %s", networkType)
 	}
 
@@ -297,7 +304,7 @@ func createHostNCApipaNetwork(
 		if interfaceExists, _ := networkcontainers.InterfaceExists(hostNCLoopbackAdapterName); !interfaceExists {
 			ipconfig := cns.IPConfiguration{
 				IPSubnet: cns.IPSubnet{
-					IPAddress:    localIPConfiguration.GatewayIPAddress,
+					IPAddress:    hnsLoopbackAdapterIPAddress,
 					PrefixLength: localIPConfiguration.IPSubnet.PrefixLength,
 				},
 				GatewayIPAddress: localIPConfiguration.GatewayIPAddress,
@@ -506,7 +513,7 @@ func configureHostNCApipaEndpoint(
 	endpointPolicies, err := configureAclSettingHostNCApipaEndpoint(
 		protocolList,
 		networkContainerApipaIP,
-		hostApipaIP,
+		hnsLoopbackAdapterIPAddress,
 		allowNCToHostCommunication,
 		allowHostToNCCommunication,
 		ncPolicies)
@@ -569,6 +576,7 @@ func CreateHostNCApipaEndpoint(
 		return endpoint.Id, nil
 	}
 
+	updateGwForLocalIPConfiguration(&localIPConfiguration)
 	if network, err = createHostNCApipaNetwork(localIPConfiguration); err != nil {
 		logger.Errorf("[Azure CNS] Failed to create HostNCApipaNetwork. Error: %v", err)
 		return "", err
@@ -598,6 +606,17 @@ func CreateHostNCApipaEndpoint(
 	logger.Printf("[Azure CNS] Successfully created HostNCApipaEndpoint: %+v", endpoint)
 
 	return endpoint.Id, nil
+}
+
+// updateGwForLocalIPConfiguration applies change on gw IP address for apipa NW and endpoint.
+// Currently, cns using the same ip address "169.254.128.1" for both apipa gw and loopback adapter. This cause conflict issue when hns get restarted and not able to rehydrate the apipa endpoints.
+// This func is to overwrite the address to 169.254.128.2 when the gateway address is 169.254.128.1
+func updateGwForLocalIPConfiguration(localIPConfiguration *cns.IPConfiguration) {
+	// When gw address is 169.254.128.1, should use .2 instead. If gw address is not .1, that mean this value is
+	// configured from dnc, we should keep it
+	if localIPConfiguration.GatewayIPAddress == "169.254.128.1" {
+		localIPConfiguration.GatewayIPAddress = defaultHnsGwIPAddress
+	}
 }
 
 func getHostNCApipaEndpointName(
@@ -684,4 +703,69 @@ func DeleteHostNCApipaEndpoint(
 	logger.Debugf("[Azure CNS] Successfully deleted HostNCApipaEndpoint: %s", endpointName)
 
 	return nil
+}
+
+// DeleteHNSEndpointbyID deletes the HNS endpoint
+func DeleteHNSEndpointbyID(hnsEndpointID string) error {
+	var (
+		hcnEndpoint *hcn.HostComputeEndpoint
+		err         error
+	)
+
+	logger.Printf("Deleting hcn endpoint with id %v", hnsEndpointID)
+	hcnEndpoint, err = hcn.GetEndpointByID(hnsEndpointID)
+	if err != nil {
+		// If error is anything other than EndpointNotFoundError, return error.
+		// else log the error but don't return error because endpoint is already deleted.
+		var notFoundErr hcn.EndpointNotFoundError
+		if errors.As(err, &notFoundErr) {
+			return fmt.Errorf("Failed to get hcn endpoint with id: %s due to err: %w", hnsEndpointID, err)
+		}
+
+		logger.Errorf("Delete called on the Endpoint which doesn't exist. Error:%v", err)
+		return nil
+	}
+
+	// Remove this endpoint from the namespace
+	if err = hcn.RemoveNamespaceEndpoint(hcnEndpoint.HostComputeNamespace, hcnEndpoint.Id); err != nil {
+		logger.Errorf("Failed to remove hcn endpoint %s from namespace %s due to err: %v", hcnEndpoint.Id, hcnEndpoint.HostComputeNamespace, err)
+	}
+
+	if err = hcnEndpoint.Delete(); err != nil {
+		return fmt.Errorf("Failed to delete endpoint: %s. Error: %w", hnsEndpointID, err)
+	}
+
+	logger.Errorf("[Azure CNS] Successfully deleted endpoint: %+v", hnsEndpointID)
+
+	return nil
+}
+
+// GetHNSEndpointbyIP returns an HNSEndpoint with the corrsponding HNS Endpoint ID that matches an specific IP Address.
+func GetHNSEndpointbyIP(ipv4, ipv6 []net.IPNet) (string, error) {
+	logger.Printf("Fetching missing HNS endpoint id for endpoints in network with id %s", defaultNetworkName)
+	hnsResponse, err := hcn.GetNetworkByName(defaultNetworkName)
+	if err != nil || hnsResponse == nil {
+		return "", errors.Wrapf(err, "HNS Network or endpoints not found")
+	}
+	hcnEndpoints, err := hcn.ListEndpointsOfNetwork(hnsResponse.Id)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to fetch HNS endpoints for the given network")
+	}
+	for i := range hcnEndpoints {
+		for _, ipConfiguration := range hcnEndpoints[i].IpConfigurations {
+			for _, ip := range ipv4 {
+				if ipConfiguration.IpAddress == ip.IP.String() {
+					logger.Printf("Successfully found hcn endpoint id for endpoint %s with ip %s", hcnEndpoints[i].Id, ip.IP.String())
+					return hcnEndpoints[i].Id, nil
+				}
+			}
+			for _, ip := range ipv6 {
+				if ipConfiguration.IpAddress == ip.IP.String() {
+					logger.Printf("Successfully found hcn endpoint id for endpoint %s with ip %s", hcnEndpoints[i].Id, ip.IP.String())
+					return hcnEndpoints[i].Id, nil
+				}
+			}
+		}
+	}
+	return "", errors.Wrapf(err, "No HNSEndpointID matches the IPAddress")
 }

@@ -24,7 +24,6 @@ import (
 const (
 	// HNS network types.
 	hnsL2bridge            = "l2bridge"
-	hnsL2tunnel            = "l2tunnel"
 	CnetAddressSpace       = "cnetAddressSpace"
 	vEthernetAdapterPrefix = "vEthernet"
 	baseDecimal            = 10
@@ -58,7 +57,7 @@ func UseHnsV2(netNs string) (bool, error) {
 	var err error
 	if _, err = uuid.Parse(netNs); err == nil {
 		useHnsV2 = true
-		if err = hcn.V2ApiSupported(); err != nil {
+		if err = Hnsv2.HNSV2Supported(); err != nil {
 			logger.Info("HNSV2 is not supported on this windows platform")
 		}
 	}
@@ -113,6 +112,7 @@ func (nm *networkManager) newNetworkImplHnsV1(nwInfo *EndpointInfo, extIf *exter
 	// Initialize HNS network.
 	hnsNetwork := &hcsshim.HNSNetwork{
 		Name:               nwInfo.NetworkID,
+		Type:               hnsL2bridge,
 		NetworkAdapterName: networkAdapterName,
 		Policies:           policy.SerializePolicies(policy.NetworkPolicy, nwInfo.NetworkPolicies, nil, false, false),
 	}
@@ -130,16 +130,6 @@ func (nm *networkManager) newNetworkImplHnsV1(nwInfo *EndpointInfo, extIf *exter
 		hnsNetwork.Policies = append(hnsNetwork.Policies, serializedVlanPolicy)
 
 		vlanid = (int)(vlanPolicy.VLAN)
-	}
-
-	// Set network mode.
-	switch nwInfo.Mode {
-	case opModeBridge:
-		hnsNetwork.Type = hnsL2bridge
-	case opModeTunnel:
-		hnsNetwork.Type = hnsL2tunnel
-	default:
-		return nil, errNetworkModeInvalid
 	}
 
 	// Populate subnets.
@@ -214,13 +204,13 @@ func (nm *networkManager) appIPV6RouteEntry(nwInfo *EndpointInfo) error {
 
 		cmd := fmt.Sprintf(routeCmd, "delete", nwInfo.Subnets[1].Prefix.String(),
 			ifName, ipv6DefaultHop)
-		if out, err = nm.plClient.ExecuteCommand(cmd); err != nil {
+		if out, err = nm.plClient.ExecuteRawCommand(cmd); err != nil {
 			logger.Error("Deleting ipv6 route failed", zap.Any("out", out), zap.Error(err))
 		}
 
 		cmd = fmt.Sprintf(routeCmd, "add", nwInfo.Subnets[1].Prefix.String(),
 			ifName, ipv6DefaultHop)
-		if out, err = nm.plClient.ExecuteCommand(cmd); err != nil {
+		if out, err = nm.plClient.ExecuteRawCommand(cmd); err != nil {
 			logger.Error("Adding ipv6 route failed", zap.Any("out", out), zap.Error(err))
 		}
 	}
@@ -233,6 +223,7 @@ func (nm *networkManager) configureHcnNetwork(nwInfo *EndpointInfo, extIf *exter
 	// Initialize HNS network.
 	hcnNetwork := &hcn.HostComputeNetwork{
 		Name: nwInfo.NetworkID,
+		Type: hcn.L2Bridge,
 		Ipams: []hcn.Ipam{
 			{
 				Type: hcnIpamTypeStatic,
@@ -287,19 +278,13 @@ func (nm *networkManager) configureHcnNetwork(nwInfo *EndpointInfo, extIf *exter
 		vlanid = (int)(vlanID)
 	}
 
-	// Set network mode.
-	switch nwInfo.Mode {
-	case opModeBridge:
-		hcnNetwork.Type = hcn.L2Bridge
-	case opModeTunnel:
-		hcnNetwork.Type = hcn.L2Tunnel
-	default:
-		return nil, errNetworkModeInvalid
-	}
-
-	if nwInfo.NICType == cns.DelegatedVMNIC {
+	// AccelnetNIC flag: hcn.EnableIov(9216) - treat Delegated/FrontendNIC also the same as Accelnet
+	// For L1VH with accelnet, hcn.DisableHostPort and hcn.EnableIov must be configured
+	if nwInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC {
 		hcnNetwork.Type = hcn.Transparent
-		hcnNetwork.Flags = hcn.DisableHostPort
+		// set transparent network as non-persistent so that networks will be gone after the node gets rebooted
+		// hcnNetwork.flags = hcn.DisableHostPort | hcn.EnableIov | hcn.EnableNonPersistent (1024 + 8192 + 8 = 9224)
+		hcnNetwork.Flags = hcn.DisableHostPort | hcn.EnableIov | hcn.EnableNonPersistent
 	}
 
 	// Populate subnets.
@@ -356,6 +341,11 @@ func (nm *networkManager) addIPv6DefaultRoute() error {
 
 // newNetworkImplHnsV2 creates a new container network for HNSv2.
 func (nm *networkManager) newNetworkImplHnsV2(nwInfo *EndpointInfo, extIf *externalInterface) (*network, error) {
+	// network creation is not required for IB
+	if nwInfo.NICType == cns.BackendNIC {
+		return &network{Endpoints: make(map[string]*endpoint)}, nil
+	}
+
 	hcnNetwork, err := nm.configureHcnNetwork(nwInfo, extIf)
 	if err != nil {
 		logger.Error("Failed to configure hcn network due to", zap.Error(err))
@@ -373,13 +363,19 @@ func (nm *networkManager) newNetworkImplHnsV2(nwInfo *EndpointInfo, extIf *exter
 			if err != nil {
 				return nil, fmt.Errorf("Failed to create hcn network: %s due to error: %v", hcnNetwork.Name, err)
 			}
-
 			logger.Info("Successfully created hcn network with response", zap.Any("hnsResponse", hnsResponse))
 		} else {
 			// we can't validate if the network already exists, don't continue
 			return nil, fmt.Errorf("Failed to create hcn network: %s, failed to query for existing network with error: %v", hcnNetwork.Name, err)
 		}
 	} else {
+		if hcnNetwork.Type == hcn.Transparent {
+			// CNI triggers Add() for new pod first and then delete older pod later
+			// for transparent network type, do not ignore network creation if network already exists
+			// return error to avoid creating second endpoint
+			logger.Error("HNS network with name already exists. Returning error for transparent network", zap.String("networkName", hcnNetwork.Name))
+			return nil, fmt.Errorf("HNS network with name:%s already exists. Returning error for transparent network", hcnNetwork.Name) //nolint
+		}
 		logger.Info("Network with name already exists", zap.String("name", hcnNetwork.Name))
 	}
 
@@ -430,7 +426,13 @@ func (nm *networkManager) newNetworkImpl(nwInfo *EndpointInfo, extIf *externalIn
 }
 
 // DeleteNetworkImpl deletes an existing container network.
-func (nm *networkManager) deleteNetworkImpl(nw *network) error {
+func (nm *networkManager) deleteNetworkImpl(nw *network, nicType cns.NICType) error {
+	if nicType != cns.NodeNetworkInterfaceFrontendNIC { //nolint
+		return nil
+	}
+
+	logger.Info("Deleting HNS network", zap.String("networkID", nw.HnsId), zap.Any("nictype", nicType))
+
 	if useHnsV2, err := UseHnsV2(nw.NetNs); useHnsV2 {
 		if err != nil {
 			return err

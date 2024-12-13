@@ -28,6 +28,7 @@ stages:
       commitID: $[ stagedependencies.setup.env.outputs['SetEnvVars.commitID'] ]
     dependsOn:
       - setup
+      - build_images
     displayName: "Create Cluster - ${{ parameters.clusterName }}"
     jobs:
       - job: create_aks_cluster_with_${{ parameters.name }}
@@ -68,7 +69,7 @@ stages:
         - job: deploy_cilium_components
           displayName: Deploy Cilium
           steps:
-            - task: AzureCLI@1
+            - task: AzureCLI@2
               displayName: "Install Cilium, CNS, and ip-masq-agent"
               inputs:
                 azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
@@ -90,7 +91,7 @@ stages:
                   fi
 
                   echo "install Cilium ${CILIUM_VERSION_TAG}"
-                  export DIR=${CILIUM_VERSION_TAG%.*}
+                  export DIR=$(echo ${CILIUM_VERSION_TAG#v} | cut -d. -f1,2)
                   echo "installing files from ${DIR}"
 
                   echo "deploy Cilium ConfigMap"
@@ -112,7 +113,7 @@ stages:
                   else
                     envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
                   fi
-                  
+
                   envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
                   kubectl get po -owide -A
 
@@ -123,7 +124,7 @@ stages:
         - job: deploy_cilium_components
           displayName: Deploy Cilium with Hubble
           steps:
-            - task: AzureCLI@1
+            - task: AzureCLI@2
               displayName: "Install Cilium, CNS, and ip-masq-agent"
               inputs:
                 azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
@@ -141,7 +142,7 @@ stages:
 
                   echo "install Cilium onto Overlay Cluster with hubble enabled"
                   export CILIUM_VERSION_TAG=${CILIUM_HUBBLE_VERSION_TAG}
-                  export DIR=${CILIUM_VERSION_TAG%.*}
+                  export DIR=$(echo ${CILIUM_VERSION_TAG#v} | cut -d. -f1,2)
                   echo "installing files from ${DIR}"
                   kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config-hubble.yaml
                   kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
@@ -204,7 +205,7 @@ stages:
         dependsOn: restart_cns
         steps:
           - template: ../../templates/cilium-cli.yaml
-          - task: AzureCLI@1
+          - task: AzureCLI@2
             inputs:
               azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
               scriptLocation: "inlineScript"
@@ -237,10 +238,13 @@ stages:
           os: ${{ parameters.os }}
           cni: cilium
           dependsOn: cni_tests
-          datapath: true
           dns: true
           portforward: true
           service: true
+          ${{ if eq(parameters.dualstackVersion, '') }}:
+            datapath: true
+          ${{ else }}:
+            dualstack: true
       - job: failedE2ELogs
         displayName: "Failure Logs"
         dependsOn:

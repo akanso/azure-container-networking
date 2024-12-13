@@ -2,29 +2,30 @@ parameters:
   arch: ""
   name: ""
   os: ""
-  os_version: ""
 
 steps:
-- task: AzureCLI@1
+- task: AzureCLI@2
   displayName: "Login"
   inputs:
     azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
     scriptLocation: "inlineScript"
+    scriptType: "bash"
     inlineScript: |
       az acr login -n $(ACR)
 
 - script: |
     set -e
     if [ ${{ parameters.os }} = 'windows' ]; then export BUILDX_ACTION='--push'; fi
-    make ${{ parameters.name }}-image OS=${{ parameters.os }} ARCH=${{ parameters.arch }} OS_VERSION=${{ parameters.os_version }}
+    make ${{ parameters.name }}-image OS=${{ parameters.os }} ARCH=${{ parameters.arch }}
   name: image_build
   displayName: Image Build
   retryCountOnTaskFailure: 3
 
-- task: AzureCLI@1
+- task: AzureCLI@2
   displayName: "Logout"
   inputs:
     azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
     scriptLocation: "inlineScript"
+    scriptType: "bash"
     inlineScript: |
       docker logout

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"os/exec"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/Azure/azure-container-networking/platform/windows/adapter/mocks"
 	"github.com/golang/mock/gomock"
@@ -86,14 +86,14 @@ func TestUpdatePriorityVLANTagIfRequiredIfCurrentValNotEqualDesiredValAndSetRetu
 	assert.EqualError(t, result, "error while setting Priority VLAN Tag value: test failure")
 }
 
-func TestExecuteCommand(t *testing.T) {
-	out, err := NewExecClient(nil).ExecuteCommand("dir")
+func TestExecuteRawCommand(t *testing.T) {
+	out, err := NewExecClient(nil).ExecuteRawCommand("dir")
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
 }
 
-func TestExecuteCommandError(t *testing.T) {
-	_, err := NewExecClient(nil).ExecuteCommand("dontaddtopath")
+func TestExecuteRawCommandError(t *testing.T) {
+	_, err := NewExecClient(nil).ExecuteRawCommand("dontaddtopath")
 	require.Error(t, err)
 
 	var xErr *exec.ExitError
@@ -101,39 +101,17 @@ func TestExecuteCommandError(t *testing.T) {
 	assert.Equal(t, 1, xErr.ExitCode())
 }
 
-func TestSetSdnRemoteArpMacAddress_hnsNotEnabled(t *testing.T) {
-	mockExecClient := NewMockExecClient(false)
-	// testing skip setting SdnRemoteArpMacAddress when hns not enabled
-	mockExecClient.SetPowershellCommandResponder(func(_ string) (string, error) {
-		return "False", nil
-	})
-	err := SetSdnRemoteArpMacAddress(mockExecClient)
-	assert.NoError(t, err)
-	assert.Equal(t, false, sdnRemoteArpMacAddressSet)
-
-	// testing the scenario when there is an error in checking if hns is enabled or not
-	mockExecClient.SetPowershellCommandResponder(func(_ string) (string, error) {
-		return "", errTestFailure
-	})
-	err = SetSdnRemoteArpMacAddress(mockExecClient)
-	assert.ErrorAs(t, err, &errTestFailure)
-	assert.Equal(t, false, sdnRemoteArpMacAddressSet)
+func TestExecuteCommand(t *testing.T) {
+	_, err := NewExecClient(nil).ExecuteCommand(context.Background(), "ping", "localhost")
+	if err != nil {
+		t.Errorf("TestExecuteCommand failed with error %v", err)
+	}
 }
 
-func TestSetSdnRemoteArpMacAddress_hnsEnabled(t *testing.T) {
-	mockExecClient := NewMockExecClient(false)
-	// happy path
-	mockExecClient.SetPowershellCommandResponder(func(cmd string) (string, error) {
-		if strings.Contains(cmd, "Test-Path") {
-			return "True", nil
-		}
-		return "", nil
-	})
-	err := SetSdnRemoteArpMacAddress(mockExecClient)
-	assert.NoError(t, err)
-	assert.Equal(t, true, sdnRemoteArpMacAddressSet)
-	// reset sdnRemoteArpMacAddressSet
-	sdnRemoteArpMacAddressSet = false
+func TestExecuteCommandError(t *testing.T) {
+	_, err := NewExecClient(nil).ExecuteCommand(context.Background(), "dontaddtopath")
+	require.Error(t, err)
+	require.ErrorIs(t, err, exec.ErrNotFound)
 }
 
 func TestFetchPnpIDMapping(t *testing.T) {
@@ -143,19 +121,28 @@ func TestFetchPnpIDMapping(t *testing.T) {
 		return "6C-A1-00-50-E4-2D PCI\\VEN_8086&DEV_2723&SUBSYS_00808086&REV_1A\\4&328243d9&0&00E0\n80-6D-97-1E-CF-4E USB\\VID_17EF&PID_A359\\3010019E3", nil
 	})
 	vfmapping, _ := FetchMacAddressPnpIDMapping(context.Background(), mockExecClient)
-	require.Len(t, 2, len(vfmapping))
+	require.Len(t, vfmapping, 2)
 
 	// Test when no adapters are found
 	mockExecClient.SetPowershellCommandResponder(func(cmd string) (string, error) {
 		return "", nil
 	})
 	vfmapping, _ = FetchMacAddressPnpIDMapping(context.Background(), mockExecClient)
-	require.Empty(t, 0, len(vfmapping))
+	require.Empty(t, vfmapping)
 	// Adding carriage returns
 	mockExecClient.SetPowershellCommandResponder(func(cmd string) (string, error) {
 		return "6C-A1-00-50-E4-2D PCI\\VEN_8086&DEV_2723&SUBSYS_00808086&REV_1A\\4&328243d9&0&00E0\r\n\r80-6D-97-1E-CF-4E USB\\VID_17EF&PID_A359\\3010019E3", nil
 	})
 
 	vfmapping, _ = FetchMacAddressPnpIDMapping(context.Background(), mockExecClient)
-	require.Len(t, 2, len(vfmapping))
+	require.Len(t, vfmapping, 2)
+}
+
+// ping -t localhost will ping indefinitely and should exceed the 5 second timeout
+func TestExecuteCommandTimeout(t *testing.T) {
+	const timeout = 5 * time.Second
+	client := NewExecClientTimeout(timeout)
+
+	_, err := client.ExecuteCommand(context.Background(), "ping", "-t", "localhost")
+	require.Error(t, err)
 }
