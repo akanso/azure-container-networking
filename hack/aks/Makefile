@@ -64,7 +64,7 @@ public-ipv6: rg-up
 		--location $(REGION) \
 		--sku Standard \
 		--tier Regional \
-		--version IPv4
+		--version IPv6
 
 set-kubeconf: ## Adds the kubeconf for $CLUSTER
 	$(AZCLI) aks get-credentials -n $(CLUSTER) -g $(GROUP)
