@@ -424,7 +424,7 @@ dualstack-overlay-up: rg-up overlay-net-up ## Brings up an dualstack Overlay clu
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4), /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4),/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--subscription $(SUB) \
@@ -443,7 +443,7 @@ dualstack-overlay-byocni-up: rg-up overlay-net-up ## Brings up an dualstack Over
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4), /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4),/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--subscription $(SUB) \
@@ -462,7 +462,7 @@ cilium-dualstack-up: rg-up overlay-net-up ## Brings up a Cilium Dualstack Overla
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4), /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4),/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--network-dataplane cilium \
@@ -482,7 +482,7 @@ dualstack-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up a Dualstack o
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4), /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
+		--load-balancer-outbound-ips /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv4),/subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/publicIPAddresses/$(PUBLIC_IPv6) \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--subscription $(SUB) \
