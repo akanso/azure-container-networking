@@ -684,3 +684,43 @@ func checkOnlyPortRuleExists(
 	}
 	return nil
 }
+
+func HasCIDRBlock(netPolSpec *networkingv1.NetworkPolicySpec) bool {
+	for _, ingress := range netPolSpec.Ingress {
+		for _, from := range ingress.From {
+			if from.IPBlock != nil && from.IPBlock.CIDR != "" {
+				return true
+			}
+		}
+	}
+
+	for _, egress := range netPolSpec.Egress {
+		for _, to := range egress.To {
+			if to.IPBlock != nil && to.IPBlock.CIDR != "" {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func HasNamedPort(netPolObj *networkingv1.NetworkPolicySpec) bool {
+	for _, ingress := range netPolObj.Ingress {
+		for _, port := range ingress.Ports {
+			if t, err := portType(port); err != nil && t == namedPortType {
+				return true
+			}
+		}
+	}
+
+	for _, egress := range netPolObj.Egress {
+		for _, port := range egress.Ports {
+			if t, err := portType(port); err != nil && t == namedPortType {
+				return true
+			}
+		}
+	}
+
+	return false
+}

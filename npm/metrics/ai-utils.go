@@ -100,13 +100,16 @@ func SendLog(operationID int, msg string, printLog bool) {
 }
 
 func SendHeartbeatWithNumPolicies() {
-	var message string
 	numPolicies, err := GetNumPolicies()
-	if err == nil {
-		message = fmt.Sprintf("info: NPM heartbeat. Current num policies: %d", numPolicies)
+	numPoliciesString := "unknown"
+	if err != nil {
+		klog.Warningf("warn: NPM hearbeat. Couldn't get number of policies for telemetry log: %s", err.Error())
 	} else {
-		message = fmt.Sprintf("warn: NPM hearbeat. Couldn't get number of policies for telemetry log: %v", err)
-		klog.Warning(message)
+		numPoliciesString = fmt.Sprint(numPolicies)
 	}
+
+	cidrNetPols := GetCidrNetPols()
+	namedPortNetPols := GetNamedPortNetPols()
+	message := fmt.Sprintf("info: NPM hearbeat. Total policies: %s, CIDR policies: %d, NamedPort policies: %d", numPoliciesString, cidrNetPols, namedPortNetPols)
 	SendLog(util.NpmID, message, DonotPrint)
 }

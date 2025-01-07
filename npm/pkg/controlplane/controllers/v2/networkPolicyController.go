@@ -301,10 +301,14 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 		return metrics.NoOp, nil
 	}
 
-	_, policyExisted := c.rawNpSpecMap[netpolKey]
+	oldNetPolSpec, policyExisted := c.rawNpSpecMap[netpolKey]
+	hadCIDR := false
+	hadNamedPort := false
 	var operationKind metrics.OperationKind
 	if policyExisted {
 		operationKind = metrics.UpdateOp
+		hadCIDR = translation.HasCIDRBlock(oldNetPolSpec)
+		hadNamedPort = translation.HasNamedPort(oldNetPolSpec)
 	} else {
 		operationKind = metrics.CreateOp
 	}
@@ -320,9 +324,25 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 		return operationKind, fmt.Errorf("[syncAddAndUpdateNetPol] Error: failed to update translated NPMNetworkPolicy into Dataplane due to %w", err)
 	}
 
-	if !policyExisted {
+	if policyExisted {
+		if hadCIDR && !translation.HasCIDRBlock(&netPolObj.Spec) {
+			metrics.DecCidrNetPols()
+		}
+
+		if hadNamedPort && !translation.HasNamedPort(&netPolObj.Spec) {
+			metrics.DecNamedPortNetPols()
+		}
+	} else {
 		// inc metric for NumPolicies only if it a new network policy
 		metrics.IncNumPolicies()
+
+		if translation.HasCIDRBlock(&netPolObj.Spec) {
+			metrics.IncCidrNetPols()
+		}
+
+		if translation.HasNamedPort(&netPolObj.Spec) {
+			metrics.IncNamedPortNetPols()
+		}
 	}
 
 	c.rawNpSpecMap[netpolKey] = &netPolObj.Spec
@@ -331,7 +351,7 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 
 // DeleteNetworkPolicy handles deleting network policy based on netPolKey.
 func (c *NetworkPolicyController) cleanUpNetworkPolicy(netPolKey string) error {
-	_, cachedNetPolObjExists := c.rawNpSpecMap[netPolKey]
+	cachedNetPolSpec, cachedNetPolObjExists := c.rawNpSpecMap[netPolKey]
 	// if there is no applied network policy with the netPolKey, do not need to clean up process.
 	if !cachedNetPolObjExists {
 		return nil
@@ -340,6 +360,14 @@ func (c *NetworkPolicyController) cleanUpNetworkPolicy(netPolKey string) error {
 	err := c.dp.RemovePolicy(netPolKey)
 	if err != nil {
 		return fmt.Errorf("[cleanUpNetworkPolicy] Error: failed to remove policy due to %w", err)
+	}
+
+	if translation.HasCIDRBlock(cachedNetPolSpec) {
+		metrics.DecCidrNetPols()
+	}
+
+	if translation.HasNamedPort(cachedNetPolSpec) {
+		metrics.DecNamedPortNetPols()
 	}
 
 	// Success to clean up ipset and iptables operations in kernel and delete the cached network policy from RawNpMap
