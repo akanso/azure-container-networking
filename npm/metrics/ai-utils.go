@@ -105,7 +105,7 @@ func SendHeartbeatWithNumPolicies() {
 	if err != nil {
 		klog.Warningf("warn: NPM hearbeat. Couldn't get number of policies for telemetry log: %s", err.Error())
 	} else {
-		numPoliciesString = fmt.Sprint(numPolicies)
+		numPoliciesString = strconv.Itoa(numPolicies)
 	}
 
 	cidrNetPols := GetCidrNetPols()
