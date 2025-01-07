@@ -116,8 +116,24 @@ func start(config npmconfig.Config, flags npmconfig.Flags) error {
 	resyncPeriod := time.Duration(float64(minResyncPeriod.Nanoseconds()) * factor)
 	klog.Infof("Resync period for NPM pod is set to %d.", int(resyncPeriod/time.Minute))
 	factory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
+	podFactory := factory // // Separate podFactory for different versions in npm and npm lite.
+	// npm-lite -> daemon set will listen to pods only in its own node
+	if config.Toggles.EnableNPMLite {
+		podFactory = informers.NewSharedInformerFactoryWithOptions(
+			clientset,
+			resyncPeriod,
+			informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+				// Use field selector to filter pods based on their assigned node
+				klog.Infof("NPM agent is listening to pods only under its node")
+				options.FieldSelector = "spec.nodeName=" + models.GetNodeName()
+			}),
+		)
+	}
 
-	k8sServerVersion := k8sServerVersion(clientset)
+	err = metrics.CreateTelemetryHandle(config.NPMVersion(), version, npm.GetAIMetadata())
+	if err != nil {
+		klog.Infof("CreateTelemetryHandle failed with error %v. AITelemetry is not initialized.", err)
+	}
 
 	var dp dataplane.GenericDataplane
 	stopChannel := wait.NeverStop
@@ -181,11 +197,9 @@ func start(config npmconfig.Config, flags npmconfig.Flags) error {
 		}
 		dp.RunPeriodicTasks()
 	}
-	npMgr := npm.NewNetworkPolicyManager(config, factory, dp, exec.New(), version, k8sServerVersion)
-	err = metrics.CreateTelemetryHandle(config.NPMVersion(), version, npm.GetAIMetadata())
-	if err != nil {
-		klog.Infof("CreateTelemetryHandle failed with error %v. AITelemetry is not initialized.", err)
-	}
+
+	k8sServerVersion := k8sServerVersion(clientset)
+	npMgr := npm.NewNetworkPolicyManager(config, factory, podFactory, dp, exec.New(), version, k8sServerVersion)
 
 	go restserver.NPMRestServerListenAndServe(config, npMgr)
 
