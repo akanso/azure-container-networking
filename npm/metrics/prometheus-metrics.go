@@ -162,6 +162,9 @@ func InitializeAll() {
 		return
 	}
 
+	// initialize global variable (see counts.go)
+	nonPrometheusCounts = &counts{}
+
 	initializeDaemonMetrics()
 	initializeControllerMetrics()
 
