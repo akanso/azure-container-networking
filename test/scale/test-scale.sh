@@ -433,7 +433,7 @@ fi
 
 ## DELETE PRIOR STATE
 echo "cleaning up previous scale test state..."
-$KUBECTL $KUBECONFIG_ARG delete ns scale-test connectivity-test --ignore-not-found
+## $KUBECTL $KUBECONFIG_ARG delete ns scale-test connectivity-test --ignore-not-found
 $KUBECTL $KUBECONFIG_ARG delete node -l type=kwok
 
 if [[ $USING_NPM == true ]]; then
