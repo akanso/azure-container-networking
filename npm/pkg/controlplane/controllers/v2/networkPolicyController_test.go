@@ -176,10 +176,13 @@ func addNetPol(f *netPolFixture, netPolObj *networkingv1.NetworkPolicy) {
 	f.netPolController.processNextWorkItem()
 }
 
-func deleteNetPol(t *testing.T, f *netPolFixture, netPolObj *networkingv1.NetworkPolicy, isDeletedFinalStateUnknownObject IsDeletedFinalStateUnknownObject) {
+func addAndDeleteNetPol(t *testing.T, f *netPolFixture, netPolObj *networkingv1.NetworkPolicy, isDeletedFinalStateUnknownObject IsDeletedFinalStateUnknownObject) {
 	addNetPol(f, netPolObj)
 	t.Logf("Complete adding network policy event")
+	deleteNetPol(t, f, netPolObj, isDeletedFinalStateUnknownObject)
+}
 
+func deleteNetPol(t *testing.T, f *netPolFixture, netPolObj *networkingv1.NetworkPolicy, isDeletedFinalStateUnknownObject IsDeletedFinalStateUnknownObject) {
 	// simulate network policy deletion event and delete network policy object from sharedInformer cache
 	err := f.kubeInformer.Networking().V1().NetworkPolicies().Informer().GetIndexer().Delete(netPolObj)
 	if err != nil {
@@ -203,16 +206,19 @@ func deleteNetPol(t *testing.T, f *netPolFixture, netPolObj *networkingv1.Networ
 	f.netPolController.processNextWorkItem()
 }
 
-func updateNetPol(t *testing.T, f *netPolFixture, oldNetPolObj, netNetPolObj *networkingv1.NetworkPolicy) {
+func addAndUpdateNetPol(t *testing.T, f *netPolFixture, oldNetPolObj, newNetPolObj *networkingv1.NetworkPolicy) {
 	addNetPol(f, oldNetPolObj)
 	t.Logf("Complete adding network policy event")
+	updateNetPol(t, f, oldNetPolObj, newNetPolObj)
+}
 
+func updateNetPol(t *testing.T, f *netPolFixture, oldNetPolObj, newNetPolObj *networkingv1.NetworkPolicy) {
 	// simulate network policy update event and update the network policy to shared informer's cache
-	err := f.kubeInformer.Networking().V1().NetworkPolicies().Informer().GetIndexer().Update(netNetPolObj)
+	err := f.kubeInformer.Networking().V1().NetworkPolicies().Informer().GetIndexer().Update(newNetPolObj)
 	if err != nil {
-		f.t.Errorf("Failed to update network policy %s to shared informer cache: %v", netNetPolObj.Name, err)
+		f.t.Errorf("Failed to update network policy %s to shared informer cache: %v", newNetPolObj.Name, err)
 	}
-	f.netPolController.updateNetworkPolicy(oldNetPolObj, netNetPolObj)
+	f.netPolController.updateNetworkPolicy(oldNetPolObj, newNetPolObj)
 
 	if f.netPolController.workqueue.Len() == 0 {
 		return
@@ -406,7 +412,7 @@ func TestDeleteNetworkPolicy(t *testing.T) {
 	dp.EXPECT().UpdatePolicy(gomock.Any()).Times(1)
 	dp.EXPECT().RemovePolicy(gomock.Any()).Times(1)
 
-	deleteNetPol(t, f, netPolObj, DeletedFinalStateknownObject)
+	addAndDeleteNetPol(t, f, netPolObj, DeletedFinalStateknownObject)
 	testCases := []expectedNetPolValues{
 		{0, 0, netPolPromVals{0, 1, 0, 1}},
 	}
@@ -457,7 +463,7 @@ func TestDeleteNetworkPolicyWithTombstoneAfterAddingNetworkPolicy(t *testing.T) 
 	dp.EXPECT().UpdatePolicy(gomock.Any()).Times(1)
 	dp.EXPECT().RemovePolicy(gomock.Any()).Times(1)
 
-	deleteNetPol(t, f, netPolObj, DeletedFinalStateUnknownObject)
+	addAndDeleteNetPol(t, f, netPolObj, DeletedFinalStateUnknownObject)
 	testCases := []expectedNetPolValues{
 		{0, 0, netPolPromVals{0, 1, 0, 1}},
 	}
@@ -486,7 +492,7 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	newNetPolObj.ResourceVersion = fmt.Sprintf("%d", newRV+1)
 	dp.EXPECT().UpdatePolicy(gomock.Any()).Times(1)
 
-	updateNetPol(t, f, oldNetPolObj, newNetPolObj)
+	addAndUpdateNetPol(t, f, oldNetPolObj, newNetPolObj)
 	testCases := []expectedNetPolValues{
 		{1, 0, netPolPromVals{1, 1, 0, 0}},
 	}
@@ -520,10 +526,464 @@ func TestLabelUpdateNetworkPolicy(t *testing.T) {
 	newNetPolObj.ResourceVersion = fmt.Sprintf("%d", newRV+1)
 	dp.EXPECT().UpdatePolicy(gomock.Any()).Times(2)
 
-	updateNetPol(t, f, oldNetPolObj, newNetPolObj)
+	addAndUpdateNetPol(t, f, oldNetPolObj, newNetPolObj)
 
 	testCases := []expectedNetPolValues{
 		{1, 0, netPolPromVals{1, 1, 1, 0}},
 	}
 	checkNetPolTestResult("TestUpdateNetPol", f, testCases)
+}
+
+func TestCountsAddAndDeleteNetPol(t *testing.T) {
+	tests := []struct {
+		name string
+		// network policy to add
+		netPolSpec     *networkingv1.NetworkPolicySpec
+		cidrCount      int
+		namedPortCount int
+	}{
+		{
+			name: "no-cidr-namedPort",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+					networkingv1.PolicyTypeEgress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								PodSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{"app": "test"},
+								},
+							},
+						},
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{IntVal: 8000},
+							},
+						},
+					},
+				},
+				Egress: []networkingv1.NetworkPolicyEgressRule{
+					{
+						To: []networkingv1.NetworkPolicyPeer{
+							{
+								PodSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{"app": "test"},
+								},
+							},
+						},
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{IntVal: 8000},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "cidr-ingress",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "0.0.0.0/0",
+								},
+							},
+						},
+					},
+				},
+			},
+			cidrCount: 1,
+		},
+		{
+			name: "cidr-egress",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeEgress,
+				},
+				Egress: []networkingv1.NetworkPolicyEgressRule{
+					{
+						To: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "0.0.0.0/0",
+								},
+							},
+						},
+					},
+				},
+			},
+			cidrCount: 1,
+		},
+		{
+			name: "namedPort-ingress",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "abc"},
+							},
+						},
+					},
+				},
+			},
+			namedPortCount: 1,
+		},
+		{
+			name: "namedPort-egress",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeEgress,
+				},
+				Egress: []networkingv1.NetworkPolicyEgressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "abc"},
+							},
+						},
+					},
+				},
+			},
+			namedPortCount: 1,
+		},
+		{
+			name: "cidr-and-namedPort",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "0.0.0.0/0",
+								},
+							},
+						},
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "abc"},
+							},
+						},
+					},
+				},
+			},
+			cidrCount:      1,
+			namedPortCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			f := newNetPolFixture(t)
+			netPolObj := createNetPol()
+			netPolObj.Spec = *tt.netPolSpec
+			f.netPolLister = append(f.netPolLister, netPolObj)
+			f.kubeobjects = append(f.kubeobjects, netPolObj)
+			stopCh := make(chan struct{})
+			defer close(stopCh)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			dp := dpmocks.NewMockGenericDataplane(ctrl)
+			f.newNetPolController(stopCh, dp, false)
+
+			dp.EXPECT().UpdatePolicy(gomock.Any()).Times(1)
+			dp.EXPECT().RemovePolicy(gomock.Any()).Times(1)
+
+			addNetPol(f, netPolObj)
+			testCases := []expectedNetPolValues{
+				{1, 0, netPolPromVals{1, 1, 0, 0}},
+			}
+			checkNetPolTestResult("TestCountsCreateNetPol", f, testCases)
+			require.Equal(t, tt.cidrCount, metrics.GetCidrNetPols())
+			require.Equal(t, tt.namedPortCount, metrics.GetNamedPortNetPols())
+
+			deleteNetPol(t, f, netPolObj, DeletedFinalStateknownObject)
+			testCases = []expectedNetPolValues{
+				{0, 0, netPolPromVals{0, 1, 0, 1}},
+			}
+			checkNetPolTestResult("TestCountsDelNetPol", f, testCases)
+			require.Equal(t, 0, metrics.GetCidrNetPols())
+			require.Equal(t, 0, metrics.GetNamedPortNetPols())
+		})
+	}
+}
+
+func TestCountsUpdateNetPol(t *testing.T) {
+	tests := []struct {
+		name                  string
+		netPolSpec            *networkingv1.NetworkPolicySpec
+		updatedNetPolSpec     *networkingv1.NetworkPolicySpec
+		cidrCount             int
+		namedPortCount        int
+		updatedCidrCount      int
+		updatedNamedPortCount int
+	}{
+		{
+			name: "cidr-to-no-cidr",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "0.0.0.0/0",
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedNetPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								PodSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{"app": "test"},
+								},
+							},
+						},
+					},
+				},
+			},
+			cidrCount:        1,
+			updatedCidrCount: 0,
+		},
+		{
+			name: "no-cidr-to-cidr",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								PodSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{"app": "test"},
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedNetPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "0.0.0.0/0",
+								},
+							},
+						},
+					},
+				},
+			},
+			cidrCount:        0,
+			updatedCidrCount: 1,
+		},
+		{
+			name: "cidr-to-cidr",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "0.0.0.0/0",
+								},
+							},
+						},
+					},
+				},
+			},
+			updatedNetPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "1.0.0.0/32",
+								},
+							},
+						},
+					},
+				},
+			},
+			cidrCount:        1,
+			updatedCidrCount: 1,
+		},
+		{
+			name: "namedPort-to-no-namedPort",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "abc"},
+							},
+						},
+					},
+				},
+			},
+			updatedNetPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{IntVal: 8000},
+							},
+						},
+					},
+				},
+			},
+			namedPortCount:        1,
+			updatedNamedPortCount: 0,
+		},
+		{
+			name: "no-namedPort-to-namedPort",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{IntVal: 8000},
+							},
+						},
+					},
+				},
+			},
+			updatedNetPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "abc"},
+							},
+						},
+					},
+				},
+			},
+			namedPortCount:        0,
+			updatedNamedPortCount: 1,
+		},
+		{
+			name: "namedPort-to-namedPort",
+			netPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "abc"},
+							},
+						},
+					},
+				},
+			},
+			updatedNetPolSpec: &networkingv1.NetworkPolicySpec{
+				PolicyTypes: []networkingv1.PolicyType{
+					networkingv1.PolicyTypeIngress,
+				},
+				Ingress: []networkingv1.NetworkPolicyIngressRule{
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Port: &intstr.IntOrString{StrVal: "xyz"},
+							},
+						},
+					},
+				},
+			},
+			namedPortCount:        1,
+			updatedNamedPortCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			f := newNetPolFixture(t)
+			netPolObj := createNetPol()
+			netPolObj.Spec = *tt.netPolSpec
+			f.netPolLister = append(f.netPolLister, netPolObj)
+			f.kubeobjects = append(f.kubeobjects, netPolObj)
+			stopCh := make(chan struct{})
+			defer close(stopCh)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			dp := dpmocks.NewMockGenericDataplane(ctrl)
+			f.newNetPolController(stopCh, dp, false)
+
+			dp.EXPECT().UpdatePolicy(gomock.Any()).Times(2)
+
+			addNetPol(f, netPolObj)
+			testCases := []expectedNetPolValues{
+				{1, 0, netPolPromVals{1, 1, 0, 0}},
+			}
+			checkNetPolTestResult("TestCountsAddNetPol", f, testCases)
+			require.Equal(t, tt.cidrCount, metrics.GetCidrNetPols())
+			require.Equal(t, tt.namedPortCount, metrics.GetNamedPortNetPols())
+
+			newNetPolObj := createNetPol()
+			newNetPolObj.Spec = *tt.updatedNetPolSpec
+			newRV, _ := strconv.Atoi(netPolObj.ResourceVersion)
+			newNetPolObj.ResourceVersion = fmt.Sprintf("%d", newRV+1)
+			updateNetPol(t, f, netPolObj, newNetPolObj)
+			testCases = []expectedNetPolValues{
+				{1, 0, netPolPromVals{1, 1, 1, 0}},
+			}
+			checkNetPolTestResult("TestCountsUpdateNetPol", f, testCases)
+			require.Equal(t, tt.updatedCidrCount, metrics.GetCidrNetPols())
+			require.Equal(t, tt.updatedNamedPortCount, metrics.GetNamedPortNetPols())
+		})
+	}
 }
