@@ -302,13 +302,9 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 	}
 
 	oldNetPolSpec, policyExisted := c.rawNpSpecMap[netpolKey]
-	hadCIDR := false
-	hadNamedPort := false
 	var operationKind metrics.OperationKind
 	if policyExisted {
 		operationKind = metrics.UpdateOp
-		hadCIDR = translation.HasCIDRBlock(oldNetPolSpec)
-		hadNamedPort = translation.HasNamedPort(oldNetPolSpec)
 	} else {
 		operationKind = metrics.CreateOp
 	}
@@ -325,24 +321,24 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 	}
 
 	if policyExisted {
-		if hadCIDR && !translation.HasCIDRBlock(&netPolObj.Spec) {
+		if translation.HasCIDRBlock(oldNetPolSpec) {
 			metrics.DecCidrNetPols()
 		}
 
-		if hadNamedPort && !translation.HasNamedPort(&netPolObj.Spec) {
+		if translation.HasNamedPort(oldNetPolSpec) {
 			metrics.DecNamedPortNetPols()
 		}
 	} else {
 		// inc metric for NumPolicies only if it a new network policy
 		metrics.IncNumPolicies()
+	}
 
-		if translation.HasCIDRBlock(&netPolObj.Spec) {
-			metrics.IncCidrNetPols()
-		}
+	if translation.HasCIDRBlock(&netPolObj.Spec) {
+		metrics.IncCidrNetPols()
+	}
 
-		if translation.HasNamedPort(&netPolObj.Spec) {
-			metrics.IncNamedPortNetPols()
-		}
+	if translation.HasNamedPort(&netPolObj.Spec) {
+		metrics.IncNamedPortNetPols()
 	}
 
 	c.rawNpSpecMap[netpolKey] = &netPolObj.Spec

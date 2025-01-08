@@ -103,13 +103,13 @@ func SendHeartbeatWithNumPolicies() {
 	numPolicies, err := GetNumPolicies()
 	numPoliciesString := "unknown"
 	if err != nil {
-		klog.Warningf("warn: NPM hearbeat. Couldn't get number of policies for telemetry log: %s", err.Error())
+		klog.Warningf("warn: NPM heartbeat. Couldn't get number of policies for telemetry log: %s", err.Error())
 	} else {
 		numPoliciesString = strconv.Itoa(numPolicies)
 	}
 
 	cidrNetPols := GetCidrNetPols()
 	namedPortNetPols := GetNamedPortNetPols()
-	message := fmt.Sprintf("info: NPM hearbeat. Total policies: %s, CIDR policies: %d, NamedPort policies: %d", numPoliciesString, cidrNetPols, namedPortNetPols)
+	message := fmt.Sprintf("info: NPM heartbeat. Total policies: %s, CIDR policies: %d, NamedPort policies: %d", numPoliciesString, cidrNetPols, namedPortNetPols)
 	SendLog(util.NpmID, message, DonotPrint)
 }
