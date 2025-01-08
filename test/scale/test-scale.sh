@@ -472,7 +472,7 @@ echo "STARTING RUN at $startDate"
 echo
 
 set -x
-$KUBECTL $KUBECONFIG_ARG create ns scale-test
+$KUBECTL $KUBECONFIG_ARG create ns scale-test --dry-run=client -o yaml | $KUBECTL $KUBECONFIG_ARG apply -f -
 set +x
 
 if [[ $numKwokNodes -gt 0 ]]; then
