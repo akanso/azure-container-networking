@@ -201,10 +201,12 @@ func deleteNetPol(t *testing.T, f *netPolFixture, netPolObj *networkingv1.Networ
 	}
 
 	if f.netPolController.workqueue.Len() == 0 {
+		t.Logf("Complete deleting network policy event. workqueue is empty")
 		return
 	}
 
 	f.netPolController.processNextWorkItem()
+	t.Logf("Complete deleting network policy event")
 }
 
 func addAndUpdateNetPol(t *testing.T, f *netPolFixture, oldNetPolObj, newNetPolObj *networkingv1.NetworkPolicy) {
@@ -226,6 +228,8 @@ func updateNetPol(t *testing.T, f *netPolFixture, oldNetPolObj, newNetPolObj *ne
 	}
 
 	f.netPolController.processNextWorkItem()
+
+	t.Logf("Complete updating network policy event")
 }
 
 type expectedNetPolValues struct {
@@ -558,7 +562,7 @@ func TestUpdateNetworkPolicy(t *testing.T) {
 	newNetPolObj := oldNetPolObj.DeepCopy()
 	// oldNetPolObj.ResourceVersion value is "0"
 	newRV, _ := strconv.Atoi(oldNetPolObj.ResourceVersion)
-	newNetPolObj.ResourceVersion = fmt.Sprintf("%d", newRV+1)
+	newNetPolObj.ResourceVersion = strconv.Itoa(newRV + 1)
 	var testCases []expectedNetPolValues
 
 	if util.IsWindowsDP() {
@@ -603,7 +607,7 @@ func TestLabelUpdateNetworkPolicy(t *testing.T) {
 	}
 	// oldNetPolObj.ResourceVersion value is "0"
 	newRV, _ := strconv.Atoi(oldNetPolObj.ResourceVersion)
-	newNetPolObj.ResourceVersion = fmt.Sprintf("%d", newRV+1)
+	newNetPolObj.ResourceVersion = strconv.Itoa(newRV + 1)
 
 	var testCases []expectedNetPolValues
 
@@ -1067,7 +1071,7 @@ func TestCountsUpdateNetPol(t *testing.T) {
 			newNetPolObj := createNetPol()
 			newNetPolObj.Spec = *tt.updatedNetPolSpec
 			newRV, _ := strconv.Atoi(netPolObj.ResourceVersion)
-			newNetPolObj.ResourceVersion = fmt.Sprintf("%d", newRV+1)
+			newNetPolObj.ResourceVersion = strconv.Itoa(newRV + 1)
 			updateNetPol(t, f, netPolObj, newNetPolObj)
 			testCases = []expectedNetPolValues{
 				{1, 0, netPolPromVals{1, 1, 1, 0}},
