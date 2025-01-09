@@ -7,8 +7,8 @@ var nonPrometheusCounts *counts
 // counts is a struct holding non-Prometheus counts.
 type counts struct {
 	sync.Mutex
-	cidrNetPols      int
-	namedPortNetPols int
+	cidrNetPols    int
+	endPortNetPols int
 }
 
 func IncCidrNetPols() {
@@ -38,29 +38,29 @@ func GetCidrNetPols() int {
 	return nonPrometheusCounts.cidrNetPols
 }
 
-func IncNamedPortNetPols() {
+func IncEndPortNetPols() {
 	if nonPrometheusCounts == nil {
 		return
 	}
 	nonPrometheusCounts.Lock()
 	defer nonPrometheusCounts.Unlock()
-	nonPrometheusCounts.namedPortNetPols++
+	nonPrometheusCounts.endPortNetPols++
 }
 
-func DecNamedPortNetPols() {
+func DecEndPortNetPols() {
 	if nonPrometheusCounts == nil {
 		return
 	}
 	nonPrometheusCounts.Lock()
 	defer nonPrometheusCounts.Unlock()
-	nonPrometheusCounts.namedPortNetPols--
+	nonPrometheusCounts.endPortNetPols--
 }
 
-func GetNamedPortNetPols() int {
+func GetEndPortNetPols() int {
 	if nonPrometheusCounts == nil {
 		return 0
 	}
 	nonPrometheusCounts.Lock()
 	defer nonPrometheusCounts.Unlock()
-	return nonPrometheusCounts.namedPortNetPols
+	return nonPrometheusCounts.endPortNetPols
 }

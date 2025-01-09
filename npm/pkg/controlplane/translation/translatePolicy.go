@@ -705,10 +705,14 @@ func HasCIDRBlock(netPolSpec *networkingv1.NetworkPolicySpec) bool {
 	return false
 }
 
-func HasNamedPort(netPolObj *networkingv1.NetworkPolicySpec) bool {
+func HasEndPort(netPolObj *networkingv1.NetworkPolicySpec) bool {
 	for _, ingress := range netPolObj.Ingress {
 		for _, port := range ingress.Ports {
-			if t, err := portType(port); err == nil && t == namedPortType {
+			if port.EndPort == nil {
+				continue
+			}
+
+			if t, err := portType(port); err == nil && t == numericPortType {
 				return true
 			}
 		}
@@ -716,7 +720,11 @@ func HasNamedPort(netPolObj *networkingv1.NetworkPolicySpec) bool {
 
 	for _, egress := range netPolObj.Egress {
 		for _, port := range egress.Ports {
-			if t, err := portType(port); err == nil && t == namedPortType {
+			if port.EndPort == nil {
+				continue
+			}
+
+			if t, err := portType(port); err == nil && t == numericPortType {
 				return true
 			}
 		}

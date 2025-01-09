@@ -24,6 +24,13 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+var (
+	eightyFive        int32 = 85
+	eightyFivePointer       = &eightyFive
+	eightySix         int32 = 86
+	eightySixPointer        = &eightySix
+)
+
 type netPolFixture struct {
 	t *testing.T
 
@@ -633,12 +640,12 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 	tests := []struct {
 		name string
 		// network policy to add
-		netPolSpec     *networkingv1.NetworkPolicySpec
-		cidrCount      int
-		namedPortCount int
+		netPolSpec   *networkingv1.NetworkPolicySpec
+		cidrCount    int
+		endPortCount int
 	}{
 		{
-			name: "no-cidr-namedPort",
+			name: "no-cidr-endPort",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeIngress,
@@ -719,7 +726,7 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 			cidrCount: 1,
 		},
 		{
-			name: "namedPort-ingress",
+			name: "endPort-ingress",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeIngress,
@@ -728,16 +735,17 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 					{
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "abc"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightyFivePointer,
 							},
 						},
 					},
 				},
 			},
-			namedPortCount: 1,
+			endPortCount: 1,
 		},
 		{
-			name: "namedPort-egress",
+			name: "endPort-egress",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeEgress,
@@ -746,16 +754,17 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 					{
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "abc"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightyFivePointer,
 							},
 						},
 					},
 				},
 			},
-			namedPortCount: 1,
+			endPortCount: 1,
 		},
 		{
-			name: "cidr-and-namedPort",
+			name: "cidr-and-endPort",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeIngress,
@@ -771,14 +780,15 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 						},
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "abc"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightyFivePointer,
 							},
 						},
 					},
 				},
 			},
-			cidrCount:      1,
-			namedPortCount: 1,
+			cidrCount:    1,
+			endPortCount: 1,
 		},
 	}
 
@@ -807,7 +817,7 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 			}
 			checkNetPolTestResult("TestCountsCreateNetPol", f, testCases)
 			require.Equal(t, tt.cidrCount, metrics.GetCidrNetPols())
-			require.Equal(t, tt.namedPortCount, metrics.GetNamedPortNetPols())
+			require.Equal(t, tt.endPortCount, metrics.GetEndPortNetPols())
 
 			deleteNetPol(t, f, netPolObj, DeletedFinalStateknownObject)
 			testCases = []expectedNetPolValues{
@@ -815,20 +825,20 @@ func TestCountsAddAndDeleteNetPol(t *testing.T) {
 			}
 			checkNetPolTestResult("TestCountsDelNetPol", f, testCases)
 			require.Equal(t, 0, metrics.GetCidrNetPols())
-			require.Equal(t, 0, metrics.GetNamedPortNetPols())
+			require.Equal(t, 0, metrics.GetEndPortNetPols())
 		})
 	}
 }
 
 func TestCountsUpdateNetPol(t *testing.T) {
 	tests := []struct {
-		name                  string
-		netPolSpec            *networkingv1.NetworkPolicySpec
-		updatedNetPolSpec     *networkingv1.NetworkPolicySpec
-		cidrCount             int
-		namedPortCount        int
-		updatedCidrCount      int
-		updatedNamedPortCount int
+		name                string
+		netPolSpec          *networkingv1.NetworkPolicySpec
+		updatedNetPolSpec   *networkingv1.NetworkPolicySpec
+		cidrCount           int
+		endPortCount        int
+		updatedCidrCount    int
+		updatedEndPortCount int
 	}{
 		{
 			name: "cidr-to-no-cidr",
@@ -942,7 +952,7 @@ func TestCountsUpdateNetPol(t *testing.T) {
 			updatedCidrCount: 1,
 		},
 		{
-			name: "namedPort-to-no-namedPort",
+			name: "endPort-to-no-endPort",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeIngress,
@@ -951,7 +961,8 @@ func TestCountsUpdateNetPol(t *testing.T) {
 					{
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "abc"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightyFivePointer,
 							},
 						},
 					},
@@ -971,11 +982,11 @@ func TestCountsUpdateNetPol(t *testing.T) {
 					},
 				},
 			},
-			namedPortCount:        1,
-			updatedNamedPortCount: 0,
+			endPortCount:        1,
+			updatedEndPortCount: 0,
 		},
 		{
-			name: "no-namedPort-to-namedPort",
+			name: "no-endPort-to-endPort",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeIngress,
@@ -998,17 +1009,18 @@ func TestCountsUpdateNetPol(t *testing.T) {
 					{
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "abc"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightyFivePointer,
 							},
 						},
 					},
 				},
 			},
-			namedPortCount:        0,
-			updatedNamedPortCount: 1,
+			endPortCount:        0,
+			updatedEndPortCount: 1,
 		},
 		{
-			name: "namedPort-to-namedPort",
+			name: "endPort-to-endPort",
 			netPolSpec: &networkingv1.NetworkPolicySpec{
 				PolicyTypes: []networkingv1.PolicyType{
 					networkingv1.PolicyTypeIngress,
@@ -1017,7 +1029,8 @@ func TestCountsUpdateNetPol(t *testing.T) {
 					{
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "abc"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightyFivePointer,
 							},
 						},
 					},
@@ -1031,14 +1044,15 @@ func TestCountsUpdateNetPol(t *testing.T) {
 					{
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
-								Port: &intstr.IntOrString{StrVal: "xyz"},
+								Port:    &intstr.IntOrString{IntVal: 80},
+								EndPort: eightySixPointer,
 							},
 						},
 					},
 				},
 			},
-			namedPortCount:        1,
-			updatedNamedPortCount: 1,
+			endPortCount:        1,
+			updatedEndPortCount: 1,
 		},
 	}
 
@@ -1066,7 +1080,7 @@ func TestCountsUpdateNetPol(t *testing.T) {
 			}
 			checkNetPolTestResult("TestCountsAddNetPol", f, testCases)
 			require.Equal(t, tt.cidrCount, metrics.GetCidrNetPols())
-			require.Equal(t, tt.namedPortCount, metrics.GetNamedPortNetPols())
+			require.Equal(t, tt.endPortCount, metrics.GetEndPortNetPols())
 
 			newNetPolObj := createNetPol()
 			newNetPolObj.Spec = *tt.updatedNetPolSpec
@@ -1078,7 +1092,7 @@ func TestCountsUpdateNetPol(t *testing.T) {
 			}
 			checkNetPolTestResult("TestCountsUpdateNetPol", f, testCases)
 			require.Equal(t, tt.updatedCidrCount, metrics.GetCidrNetPols())
-			require.Equal(t, tt.updatedNamedPortCount, metrics.GetNamedPortNetPols())
+			require.Equal(t, tt.updatedEndPortCount, metrics.GetEndPortNetPols())
 		})
 	}
 }

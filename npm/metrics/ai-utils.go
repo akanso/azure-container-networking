@@ -120,7 +120,7 @@ func SendHeartbeatWithNumPolicies() {
 	}
 
 	cidrNetPols := GetCidrNetPols()
-	namedPortNetPols := GetNamedPortNetPols()
-	message := fmt.Sprintf("info: NPM heartbeat. Total policies: %s, CIDR policies: %d, NamedPort policies: %d", numPoliciesString, cidrNetPols, namedPortNetPols)
+	endPortNetPols := GetEndPortNetPols()
+	message := fmt.Sprintf("info: NPM heartbeat. Total policies: %s, CIDR policies: %d, EndPort policies: %d", numPoliciesString, cidrNetPols, endPortNetPols)
 	SendLog(util.NpmID, message, DonotPrint)
 }

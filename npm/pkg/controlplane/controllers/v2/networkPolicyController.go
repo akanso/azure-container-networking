@@ -325,8 +325,8 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 			metrics.DecCidrNetPols()
 		}
 
-		if translation.HasNamedPort(oldNetPolSpec) {
-			metrics.DecNamedPortNetPols()
+		if translation.HasEndPort(oldNetPolSpec) {
+			metrics.DecEndPortNetPols()
 		}
 	} else {
 		// inc metric for NumPolicies only if it a new network policy
@@ -337,8 +337,8 @@ func (c *NetworkPolicyController) syncAddAndUpdateNetPol(netPolObj *networkingv1
 		metrics.IncCidrNetPols()
 	}
 
-	if translation.HasNamedPort(&netPolObj.Spec) {
-		metrics.IncNamedPortNetPols()
+	if translation.HasEndPort(&netPolObj.Spec) {
+		metrics.IncEndPortNetPols()
 	}
 
 	c.rawNpSpecMap[netpolKey] = &netPolObj.Spec
@@ -362,8 +362,8 @@ func (c *NetworkPolicyController) cleanUpNetworkPolicy(netPolKey string) error {
 		metrics.DecCidrNetPols()
 	}
 
-	if translation.HasNamedPort(cachedNetPolSpec) {
-		metrics.DecNamedPortNetPols()
+	if translation.HasEndPort(cachedNetPolSpec) {
+		metrics.DecEndPortNetPols()
 	}
 
 	// Success to clean up ipset and iptables operations in kernel and delete the cached network policy from RawNpMap
