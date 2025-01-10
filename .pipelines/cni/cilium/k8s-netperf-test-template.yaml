@@ -45,7 +45,7 @@ steps:
         pols=${{ parameters.numPolicies }}
         minShared=$((pols+2))
 
-        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=${{ parameters.numDeployments }} --num-real-replicas=${{ parameters.numReplicasPerDeployment }} --num-network-policies=${{ parameters.numPolicies }} --num-unapplied-network-policies=${{ parameters.numUnappliedPolicies }} --num-unique-labels-per-pod=1 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=$minShared --num-real-services=${{ parameters.numServices }}
+        ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=${{ parameters.numDeployments }} --num-real-replicas=${{ parameters.numReplicasPerDeployment }} --num-network-policies=${{ parameters.numPolicies }} --num-unapplied-network-policies=${{ parameters.numUnappliedPolicies }} --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=$minShared --num-real-services=${{ parameters.numServices }}
         
         echo "Number of pods in scale test namespace"
         kubectl get pods -owide -n scale-test --no-headers | wc -l
