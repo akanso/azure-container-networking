@@ -21,9 +21,9 @@ use strict;
 use JSON::Parse ':all';
 
 #maximum number of measurements in different types
-my $numberOfLocalhostMeasurements = 2;
+my $numberOfLocalhostMeasurements = 4;
 my $numberOfInterNodeMeasurements = 4;
-my $iperfTime = 40;
+my $iperfTime = 30;
 
 my $netperfRequestPacketSize = 32;
 my $netperfResponsePacketSize = 1024;
