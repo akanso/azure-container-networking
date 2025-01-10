@@ -509,7 +509,8 @@ add_shared_labels() {
         set +x
     fi
 }
-
+echo "sleeping for 60"
+sleep 60
 add_shared_labels
 
 if [[ $numUniqueLabelsPerPod -gt 0 ]]; then

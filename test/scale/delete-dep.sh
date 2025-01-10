@@ -23,3 +23,13 @@ for Service_name in $Services; do
     kubectl delete -n scale-test service $Service_name
     sleep 2s
 done
+
+echo "Waiting for all pods in namespace scale-test to be deleted..."
+while true; do
+    POD_COUNT=$(kubectl -n scale-test get pods --no-headers 2>/dev/null | wc -l)
+    if [ "$POD_COUNT" -eq 0 ]; then
+        break
+    fi
+    echo "$POD_COUNT pods remaining..."
+    sleep 10s
+done
