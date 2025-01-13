@@ -32,7 +32,7 @@ resources:
 variables:
   # Local analysis is only enabled on PR branches
   Codeql.AnalyzeInPipeline: $[startsWith(variables['Build.SourceBranch'], 'refs/pull/')]
-#  Codeql.ADO.Build.Repository.Uri: $(Build.Repository.Uri)
+  Codeql.ADO.Build.Repository.Uri: $(Build.Repository.Uri)
 #  Codeql.ADO.Build.Repository.Name: $(Build.Repository.Name)
 #  Codeql.ADO.Build.SourceVersion: $(Build.SourceVersion)
 #  Codeql.ADO.Build.DefinitionName: $(Build.DefinitionName)
