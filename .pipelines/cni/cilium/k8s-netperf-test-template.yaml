@@ -80,22 +80,26 @@ steps:
         mkdir -p $ARTIFACT_DIR
         sudo cp ./*.log $ARTIFACT_DIR
 
-  - task: AzureCLI@2
-    name: "throughput_cleanup_${{parameters.name}}"
-    displayName: "Cleanup ${{parameters.name}} throughput"
-    inputs:
-      azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      addSpnToEnvironment: true
-      inlineScript: |
-        cd test/scale
-        chmod +x delete-dep.sh
-        ./delete-dep.sh
+        # Get node info 
+        kubectl describe nodes > ./nodestatus.txt
+        sudo cp ./nodestatus.txt $ARTIFACT_DIR
+
+  # - task: AzureCLI@2
+  #   name: "throughput_cleanup_${{parameters.name}}"
+  #   displayName: "Cleanup ${{parameters.name}} throughput"
+  #   inputs:
+  #     azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+  #     scriptLocation: "inlineScript"
+  #     scriptType: "bash"
+  #     addSpnToEnvironment: true
+  #     inlineScript: |
+  #       cd test/scale
+  #       chmod +x delete-dep.sh
+  #       ./delete-dep.sh
         
-        echo "Number of pods in scale test namespace"
-        kubectl get pods -owide -n scale-test --no-headers | wc -l
-        echo "Number of network policies in scale test namespace"
-        kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
-        echo "Number of services in scale test namespace"
-        kubectl get svc -owide -n scale-test --no-headers | wc -l
+  #       echo "Number of pods in scale test namespace"
+  #       kubectl get pods -owide -n scale-test --no-headers | wc -l
+  #       echo "Number of network policies in scale test namespace"
+  #       kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
+  #       echo "Number of services in scale test namespace"
+  #       kubectl get svc -owide -n scale-test --no-headers | wc -l
