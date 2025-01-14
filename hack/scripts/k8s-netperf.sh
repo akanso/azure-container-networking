@@ -16,7 +16,7 @@ done
 
 echo "All resources are ready!"
 
-for i in {1..3}; do
+for i in {1..1}; do
     perl runNetPerfTestIperfOnly.pl --nobaseline > "out-${i}.log"
     kubectl get pods -owide | grep netperf >> "out-${i}.log"
     echo "Finished Perf Test Iter ${i}"
