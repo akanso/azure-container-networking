@@ -511,6 +511,11 @@ add_shared_labels() {
 }
 echo "sleeping for 60"
 sleep 60
+
+# to better evaluate time to apply ACLs, wait for pods to come up first (takes a variable amount of time) before applying the NetPols
+wait_for_pods
+$KUBECTL $KUBECONFIG_ARG get deployments -n scale-test
+
 add_shared_labels
 
 if [[ $numUniqueLabelsPerPod -gt 0 ]]; then
@@ -528,9 +533,6 @@ if [[ $numUniqueLabelsPerPod -gt 0 ]]; then
         set +x
     done
 fi
-
-# to better evaluate time to apply ACLs, wait for pods to come up first (takes a variable amount of time) before applying the NetPols
-wait_for_pods
 
 if [[ $numUnappliedNetworkPolicies -gt 0 ]]; then
     set -x
