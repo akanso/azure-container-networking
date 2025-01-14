@@ -21,9 +21,9 @@ use strict;
 use JSON::Parse ':all';
 
 #maximum number of measurements in different types
-my $numberOfLocalhostMeasurements = 4;
+my $numberOfLocalhostMeasurements = 50;
 my $numberOfInterNodeMeasurements = 4;
-my $iperfTime = 30;
+my $iperfTime = 15;
 
 my $netperfRequestPacketSize = 32;
 my $netperfResponsePacketSize = 1024;
@@ -131,6 +131,7 @@ foreach my $podName (keys %randHash) {
 	my $targetIP = $pods{$randHash{$podName}}->{'IPaddress'};
 	
 	my $iperf = &runIperf($podName, $targetIP, $iperfTime);
+	print `kubectl get pod $podName -n default -o wide`; # added so we know what node it comes from
 	print "Localhost Iperf throughput test between POD $podName and POD $randHash{$podName}: $iperf\n"; 
 
 	my $netperfRR = &runNetperf($podName, $targetIP, $iperfTime, 'TCP_RR', 'P50_LATENCY,P90_LATENCY,P99_LATENCY,THROUGHPUT,THROUGHPUT_UNITS');
