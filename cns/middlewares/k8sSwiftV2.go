@@ -267,15 +267,15 @@ func (k *K8sSWIFTv2Middleware) GetCidrs() (v4IPs, v6IPs []string, err error) {
 	fmt.Printf("Received infraVNETCIDRsv4: %v, infraVNETCIDRsv6: %v", infraVNETCIDRs, infraVNETCIDRsv6)
 
 	// Get and parse podCIDRs from env
-	podCIDRs, err := configuration.PodCIDRs()
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to get podCIDRs from env")
-	}
-	podCIDRsV4, podCIDRv6, err := utils.ParseCIDRs(podCIDRs)
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to parse podCIDRs")
-	}
-	fmt.Printf("Received podCIDRsV4: %v, podCIDRv6: %v", podCIDRsV4, podCIDRv6)
+	// podCIDRs, err := configuration.PodCIDRs()
+	// if err != nil {
+	// 	return nil, nil, errors.Wrapf(err, "failed to get podCIDRs from env")
+	// }
+	// podCIDRsV4, podCIDRv6, err := utils.ParseCIDRs(podCIDRs)
+	// if err != nil {
+	// 	return nil, nil, errors.Wrapf(err, "failed to parse podCIDRs")
+	// }
+	// fmt.Printf("Received podCIDRsV4: %v, podCIDRv6: %v", podCIDRsV4, podCIDRv6)
 
 	// Get and parse serviceCIDRs from env
 	serviceCIDRs, err := configuration.ServiceCIDRs()
@@ -289,11 +289,11 @@ func (k *K8sSWIFTv2Middleware) GetCidrs() (v4IPs, v6IPs []string, err error) {
 	fmt.Printf("Received ServiceCIDRsv4: %v, ServiceCIDRsv6: %v", serviceCIDRsV4, serviceCIDRsV6)
 
 	v4IPs = append(v4IPs, infraVNETCIDRsv4...)
-	v4IPs = append(v4IPs, podCIDRsV4...)
+	// v4IPs = append(v4IPs, podCIDRsV4...)
 	v4IPs = append(v4IPs, serviceCIDRsV4...)
 
 	v6IPs = append(v6IPs, infraVNETCIDRsv6...)
-	v6IPs = append(v6IPs, podCIDRv6...)
+	// v6IPs = append(v6IPs, podCIDRv6...)
 	v6IPs = append(v6IPs, serviceCIDRsV6...)
 
 	return v4IPs, v6IPs, nil
