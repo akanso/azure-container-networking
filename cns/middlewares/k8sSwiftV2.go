@@ -264,7 +264,7 @@ func (k *K8sSWIFTv2Middleware) GetCidrs() (v4IPs, v6IPs []string, err error) {
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to parse infraVNETCIDRs")
 	}
-	log.Printf("Received infraVNETCIDRsv4: %v, infraVNETCIDRsv6: %v", infraVNETCIDRs, infraVNETCIDRsv6)
+	fmt.Printf("Received infraVNETCIDRsv4: %v, infraVNETCIDRsv6: %v", infraVNETCIDRs, infraVNETCIDRsv6)
 
 	// Get and parse podCIDRs from env
 	podCIDRs, err := configuration.PodCIDRs()
@@ -275,7 +275,7 @@ func (k *K8sSWIFTv2Middleware) GetCidrs() (v4IPs, v6IPs []string, err error) {
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to parse podCIDRs")
 	}
-	log.Printf("Received podCIDRsV4: %v, podCIDRv6: %v", podCIDRsV4, podCIDRv6)
+	fmt.Printf("Received podCIDRsV4: %v, podCIDRv6: %v", podCIDRsV4, podCIDRv6)
 
 	// Get and parse serviceCIDRs from env
 	serviceCIDRs, err := configuration.ServiceCIDRs()
@@ -286,7 +286,7 @@ func (k *K8sSWIFTv2Middleware) GetCidrs() (v4IPs, v6IPs []string, err error) {
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to parse serviceCIDRs")
 	}
-	log.Printf("Received ServiceCIDRsv4: %v, ServiceCIDRsv6: %v", serviceCIDRsV4, serviceCIDRsV6)
+	fmt.Printf("Received ServiceCIDRsv4: %v, ServiceCIDRsv6: %v", serviceCIDRsV4, serviceCIDRsV6)
 
 	v4IPs = append(v4IPs, infraVNETCIDRsv4...)
 	v4IPs = append(v4IPs, podCIDRsV4...)
