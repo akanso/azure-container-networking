@@ -286,11 +286,11 @@ func (k *K8sSWIFTv2Middleware) GetCidrs() (v4IPs, v6IPs []string, err error) {
 	}
 
 	v4IPs = append(v4IPs, infraVNETCIDRsv4...)
-	// v4IPs = append(v4IPs, podCIDRsV4...)
+	v4IPs = append(v4IPs, podCIDRsV4...)
 	v4IPs = append(v4IPs, serviceCIDRsV4...)
 
 	v6IPs = append(v6IPs, infraVNETCIDRsv6...)
-	// v6IPs = append(v6IPs, podCIDRv6...)
+	v6IPs = append(v6IPs, podCIDRv6...)
 	v6IPs = append(v6IPs, serviceCIDRsV6...)
 
 	return v4IPs, v6IPs, nil
