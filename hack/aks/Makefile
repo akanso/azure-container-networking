@@ -342,6 +342,20 @@ vnetscale-swift-up: rg-up vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT 
 		--yes
 	@$(MAKE) set-kubeconf
 
+nodesubnet-cilium-up: rg-up overlay-net-up ## Brings up a Nodesubnet Cilium cluster
+	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--auto-upgrade-channel $(AUTOUPGRADE) \
+		--node-os-upgrade-channel $(NODEUPGRADE) \
+		--kubernetes-version $(K8S_VER) \
+		--node-count $(NODE_COUNT) \
+		--node-vm-size $(VM_SIZE) \
+		--network-plugin azure \
+		--network-dataplane cilium \
+		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
+		--no-ssh-key \
+		--yes
+	@$(MAKE) set-kubeconf	
+
 windows-cniv1-up: rg-up overlay-net-up ## Bring up a Windows CNIv1 cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
