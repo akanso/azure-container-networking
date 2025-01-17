@@ -1,0 +1,131 @@
+parameters:
+  - name: resourceGroup
+    type: string
+    default: ''
+  - name: clusterName
+    type: string
+    default: ''
+  - name: name
+    type: string
+    default: ''
+  - name: numDeployments
+    type: string
+    default: '0'
+  - name: numReplicasPerDeployment
+    type: string
+    default: '0'
+  - name: numPolicies
+    type: string
+    default: '0'
+  - name: numUnappliedPolicies
+    type: string
+    default: '0'
+  - name: numServices
+    type: string
+    default: '0'
+  - name: dependsOn
+    type: string
+    default: ''
+  - name: artifactDir
+    type: string
+    default: "$(Build.ArtifactStagingDirectory)/throughput"
+
+jobs:
+  - job: "${{ parameters.name }}"
+    displayName: "${{ parameters.name }} pod throughput"
+    timeoutInMinutes: 180
+    dependsOn: ${{ parameters.dependsOn }}
+    steps:
+      - task: AzureCLI@2
+        name: "throughput_${{ parameters.name }}"
+        displayName: "Setup ${{ parameters.name }} pod throughput"
+        inputs:
+          azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+          scriptLocation: "inlineScript"
+          scriptType: "bash"
+          addSpnToEnvironment: true
+          inlineScript: |
+            ARTIFACT_DIR=${{ parameters.artifactDir }}
+            mkdir -p $ARTIFACT_DIR
+            echo $ARTIFACT_DIR
+
+            set -e
+            
+            az aks get-credentials --resource-group ${{ parameters.resourceGroup }} --name ${{ parameters.clusterName }}
+
+            cd test/scale
+            chmod +x test-scale.sh
+            echo "numDeployments: ${{ parameters.numDeployments }}"
+            echo "numReplicasPerDeployment: ${{ parameters.numReplicasPerDeployment }}"
+            echo "numPolicies: ${{ parameters.numPolicies }}"
+            echo "numUnappliedPolicies: ${{ parameters.numUnappliedPolicies }}"
+            echo "numServices: ${{ parameters.numServices }}"
+
+            pols=${{ parameters.numPolicies }}
+            minShared=$((pols+2))
+
+            if [[ $minShared -eq 2 ]]; then
+                minShared=0
+            fi
+
+            ./test-scale.sh --max-kwok-pods-per-node=0 --num-kwok-deployments=0 --num-kwok-replicas=0 --max-real-pods-per-node=${REAL_PODS_PER_NODE_NETPOL} --num-real-deployments=${{ parameters.numDeployments }} --num-real-replicas=${{ parameters.numReplicasPerDeployment }} --num-network-policies=${{ parameters.numPolicies }} --num-unapplied-network-policies=${{ parameters.numUnappliedPolicies }} --num-unique-labels-per-pod=0 --num-unique-labels-per-deployment=5 --num-shared-labels-per-pod=$minShared --num-real-services=${{ parameters.numServices }}
+            
+            echo "Number of pods in scale test namespace"
+            kubectl get pods -owide -n scale-test --no-headers | wc -l
+            echo "Number of network policies in scale test namespace"
+            kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
+            echo "Number of services in scale test namespace"
+            kubectl get svc -owide -n scale-test --no-headers | wc -l
+
+      - task: AzureCLI@2
+        name: "throughput_test_${{ parameters.name }}"
+        displayName: "Test ${{ parameters.name }} throughput"
+        inputs:
+          azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+          scriptLocation: "inlineScript"
+          scriptType: "bash"
+          addSpnToEnvironment: true
+          inlineScript: |
+            # Apply and run tests                
+            az aks get-credentials --resource-group ${{ parameters.resourceGroup }} --name ${{ parameters.clusterName }}
+            cd hack/scripts/
+            chmod +x k8s-netperf.sh
+            bash k8s-netperf.sh
+
+            # Copy test results into staging directory
+            ARTIFACT_DIR="$(Build.ArtifactStagingDirectory)/${CLUSTER}/${{ parameters.name }}"
+            echo "Saving results to ${ARTIFACT_DIR}"
+            mkdir -p $ARTIFACT_DIR
+            sudo cp ./*.log $ARTIFACT_DIR
+
+            # Get node info 
+            kubectl describe nodes > ./nodestatus.txt
+            sudo cp ./nodestatus.txt $ARTIFACT_DIR
+
+      - task: AzureCLI@2
+        name: "throughput_cleanup_${{ parameters.name }}"
+        displayName: "Cleanup ${{ parameters.name }} throughput"
+        inputs:
+          azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+          scriptLocation: "inlineScript"
+          scriptType: "bash"
+          addSpnToEnvironment: true
+          inlineScript: |
+            cd test/scale
+            chmod +x delete-dep.sh
+            ./delete-dep.sh
+            
+            echo "Number of pods in scale test namespace"
+            kubectl get pods -owide -n scale-test --no-headers | wc -l
+            echo "Number of network policies in scale test namespace"
+            kubectl get networkpolicies -owide -n scale-test --no-headers | wc -l
+            echo "Number of services in scale test namespace"
+            kubectl get svc -owide -n scale-test --no-headers | wc -l
+
+      - task: PublishBuildArtifacts@1
+        name: throughput_artifacts
+        displayName: "Publish Artifacts"
+        inputs:
+          artifactName: ${{ parameters.clusterName }}-throughput-${{ parameters.name }}
+          pathtoPublish: "${{ parameters.artifactDir }}"
+        condition: always()

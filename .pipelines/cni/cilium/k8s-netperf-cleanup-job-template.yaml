@@ -1,0 +1,31 @@
+parameters:
+  - name: resourceGroup
+    type: string
+    default: ''
+  - name: clusterName
+    type: string
+    default: ''
+  - name: dependsOn
+    type: string
+    default: ''
+
+jobs:
+  - job: CleanupNetperf
+    displayName: "Cleanup Netperf Resources"
+    dependsOn: ${{ parameters.dependsOn }}
+    steps:
+      - task: AzureCLI@2
+        name: throughput_cleanup
+        displayName: "Cleanup Netperf Resources"
+        inputs:
+          azureSubscription: $(TEST_SUB_SERVICE_CONNECTION)
+          scriptLocation: "inlineScript"
+          scriptType: "bash"
+          addSpnToEnvironment: true
+          inlineScript: |                
+            az aks get-credentials --resource-group ${{ parameters.resourceGroup }} --name ${{ parameters.clusterName }}
+            kubectl delete deployment netperf-pod
+            kubectl delete ds netperf-pod
+            kubectl delete ds netperf-host
+            kubectl delete svc netperf-server
+        condition: always()

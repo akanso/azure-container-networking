@@ -512,7 +512,9 @@ add_shared_labels() {
 echo "sleeping for 60"
 sleep 60
 
+set +e
 $KUBECTL $KUBECONFIG_ARG wait --for=condition=Available deployments --all -n scale-test --timeout=1200s
+set -e
 
 # to better evaluate time to apply ACLs, wait for pods to come up first (takes a variable amount of time) before applying the NetPols
 wait_for_pods
