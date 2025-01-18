@@ -154,10 +154,6 @@ stages:
   - stage: scale_cluster_deployments_throughput
     displayName: "Scale deployments for throughput"
     jobs:
-      - template: k8s-netperf-setup-job-template.yaml
-        parameters:
-          resourceGroup: "$(RESOURCE_GROUP)"
-          clusterName: "$(CLUSTER)"
       - template: k8s-netperf-test-job-template.yaml
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
@@ -168,7 +164,6 @@ stages:
           numPolicies: 0
           numUnappliedPolicies: 0
           numServices: 0
-          dependsOn: "SetupNetperf"
       - template: k8s-netperf-test-job-template.yaml
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"

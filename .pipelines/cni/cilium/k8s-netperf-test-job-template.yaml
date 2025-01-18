@@ -53,6 +53,8 @@ jobs:
             
             az aks get-credentials --resource-group ${{ parameters.resourceGroup }} --name ${{ parameters.clusterName }}
 
+            kubectl apply -f hack/manifests/k8s-netperf.yaml
+
             cd test/scale
             chmod +x test-scale.sh
             echo "numDeployments: ${{ parameters.numDeployments }}"
