@@ -158,7 +158,7 @@ stages:
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
           clusterName: "$(CLUSTER)"
-          name: "scale_cluster_deployments_throughput_none"
+          name: "none"
           numDeployments: 0
           numReplicasPerDeployment: 0
           numPolicies: 0
@@ -168,51 +168,51 @@ stages:
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
           clusterName: "$(CLUSTER)"
-          name: "scale_cluster_deployments_throughput_pods"
+          name: "pods"
           numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
           numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
           numPolicies: 0
           numUnappliedPolicies: 0
           numServices: 0
-          dependsOn: "scale_cluster_deployments_throughput_none"
+          dependsOn: "none"
       - template: k8s-netperf-test-job-template.yaml
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
           clusterName: "$(CLUSTER)"
-          name: "scale_cluster_deployments_throughput_policies"
+          name: "policies"
           numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
           numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
           numPolicies: "$(APPLIED_NETPOL)" # 20
           numUnappliedPolicies: "$(UNAPPLIED_NETPOL)" # 40
           numServices: 0
-          dependsOn: "scale_cluster_deployments_throughput_pods"
+          dependsOn: "pods"
       - template: k8s-netperf-test-job-template.yaml
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
           clusterName: "$(CLUSTER)"
-          name: "scale_cluster_deployments_throughput_services"
+          name: "services"
           numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
           numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
           numPolicies: 0
           numUnappliedPolicies: 0
           numServices: "$(NUM_REAL_SVC_NETPOL)" # 30
-          dependsOn: "scale_cluster_deployments_throughput_policies"
+          dependsOn: "policies"
       - template: k8s-netperf-test-job-template.yaml
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
           clusterName: "$(CLUSTER)"
-          name: "scale_cluster_deployments_throughput_policies_and_services"
+          name: "policies_and_services"
           numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
           numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
           numPolicies: "$(APPLIED_NETPOL)" # 20
           numUnappliedPolicies: "$(UNAPPLIED_NETPOL)" # 40
           numServices: "$(NUM_REAL_SVC_NETPOL)" # 30
-          dependsOn: "scale_cluster_deployments_throughput_services"
+          dependsOn: "services"
       - template: k8s-netperf-cleanup-job-template.yaml
         parameters:
           resourceGroup: "$(RESOURCE_GROUP)"
           clusterName: "$(CLUSTER)"
-          dependsOn: "scale_cluster_deployments_throughput_policies_and_services"
+          dependsOn: "policies_and_services"
   - stage: scale_cluster_deployments
     displayName: "Scale deploments for Network Policies Check"
     jobs:

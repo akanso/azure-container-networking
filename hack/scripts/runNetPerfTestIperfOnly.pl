@@ -131,8 +131,14 @@ foreach my $podName (keys %randHash) {
 	my $targetIP = $pods{$randHash{$podName}}->{'IPaddress'};
 	
 	my $iperf = &runIperf($podName, $targetIP, $iperfTime);
-	print `kubectl get pod $podName -n default -o wide`; # added so we know what node it comes from
-	print "Localhost Iperf throughput test between POD $podName and POD $randHash{$podName}: $iperf\n"; 
+	# added so we know what node the test comes from
+	my $kubectl_output = `kubectl get pod $podName -n default -o custom-columns=NODE:.spec.nodeName,NAME:.metadata.name,IP:.status.podIP,STATUS:.status.phase,READY:.status.containerStatuses[0].ready --no-headers`;
+	chomp($kubectl_output);
+	my $node_name = `kubectl get pod $podName -n default -o custom-columns=NODE:.spec.nodeName --no-headers`
+	chomp($node_name);
+	my $zone_num = `kubectl get node $node_name -o jsonpath='{.metadata.labels.topology\.kubernetes\.io/zone}'`
+	chomp($zone_num)
+	print "$kubectl_output Localhost Iperf throughput test between POD $podName and POD $randHash{$podName}: $iperf zone: $zone_num \n";
 
 	my $netperfRR = &runNetperf($podName, $targetIP, $iperfTime, 'TCP_RR', 'P50_LATENCY,P90_LATENCY,P99_LATENCY,THROUGHPUT,THROUGHPUT_UNITS');
 	print "Localhost NetPerf TCP_RR test between POD $podName and POD $randHash{$podName} (lantency 50,90 and 99 percentiles in us and DB like transaction rate): $netperfRR\n"; 

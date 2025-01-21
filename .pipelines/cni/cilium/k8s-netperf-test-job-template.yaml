@@ -128,6 +128,6 @@ jobs:
         name: throughput_artifacts
         displayName: "Publish Artifacts"
         inputs:
-          artifactName: ${{ parameters.clusterName }}-throughput-${{ parameters.name }}
+          artifactName: ${{ parameters.clusterName }}-${{ parameters.name }}
           pathtoPublish: "${{ parameters.artifactDir }}"
         condition: always()
