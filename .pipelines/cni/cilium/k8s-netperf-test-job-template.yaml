@@ -95,7 +95,7 @@ jobs:
             bash k8s-netperf.sh
 
             # Copy test results into staging directory
-            ARTIFACT_DIR="$(Build.ArtifactStagingDirectory)/${CLUSTER}/${{ parameters.name }}"
+            ARTIFACT_DIR="${{ parameters.artifactDir }}"
             echo "Saving results to ${ARTIFACT_DIR}"
             mkdir -p $ARTIFACT_DIR
             sudo cp ./*.log $ARTIFACT_DIR
