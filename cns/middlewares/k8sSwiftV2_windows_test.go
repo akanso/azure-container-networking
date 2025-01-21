@@ -13,7 +13,6 @@ import (
 
 func TestSetRoutesSuccess(t *testing.T) {
 	middleware := K8sSWIFTv2Middleware{Cli: mock.NewClient()}
-	t.Setenv(configuration.EnvPodCIDRs, "10.0.1.10/24")
 	t.Setenv(configuration.EnvServiceCIDRs, "10.0.0.0/16")
 	t.Setenv(configuration.EnvInfraVNETCIDRs, "10.240.0.10/16")
 
@@ -42,10 +41,6 @@ func TestSetRoutesSuccess(t *testing.T) {
 			},
 			NICType: cns.InfraNIC,
 			Routes: []cns.Route{
-				{
-					IPAddress:        "10.0.1.10/24",
-					GatewayIPAddress: "10.0.1.1",
-				},
 				{
 					IPAddress:        "10.0.0.0/16",
 					GatewayIPAddress: "10.0.0.1",

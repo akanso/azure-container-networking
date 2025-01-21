@@ -25,7 +25,7 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 
 		// set routes(pod/node/service cidrs) for infraNIC interface
 		// Swiftv2 Windows does not support IPv6
-		infraRoutes, err := k.setInfraRoutes(podIPInfo)
+		infraRoutes, err := k.getInfraRoutes(podIPInfo)
 		if err != nil {
 			return errors.Wrap(err, "failed to set routes for infraNIC interface")
 		}
@@ -94,7 +94,7 @@ func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	return routes
 }
 
-func (k *K8sSWIFTv2Middleware) setInfraRoutes(podIPInfo *cns.PodIpInfo) ([]cns.Route, error) {
+func (k *K8sSWIFTv2Middleware) getInfraRoutes(podIPInfo *cns.PodIpInfo) ([]cns.Route, error) {
 	var routes []cns.Route
 
 	ip, err := netip.ParseAddr(podIPInfo.PodIPConfig.IPAddress)

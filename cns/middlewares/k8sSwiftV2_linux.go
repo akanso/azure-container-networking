@@ -29,7 +29,7 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 
 	case cns.InfraNIC:
 		// Linux uses 169.254.1.1 as the default ipv4 gateway and fe80::1234:5678:9abc as the default ipv6 gateway
-		infraRoutes, err := k.setInfraRoutes(podIPInfo)
+		infraRoutes, err := k.getInfraRoutes(podIPInfo)
 		if err != nil {
 			return errors.Wrap(err, "failed to set routes for infraNIC interface")
 		}
@@ -64,7 +64,7 @@ func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string, gatewayIP string) []cns
 	return routes
 }
 
-func (k *K8sSWIFTv2Middleware) setInfraRoutes(podIPInfo *cns.PodIpInfo) ([]cns.Route, error) {
+func (k *K8sSWIFTv2Middleware) getInfraRoutes(podIPInfo *cns.PodIpInfo) ([]cns.Route, error) {
 	var routes []cns.Route
 
 	ip, err := netip.ParseAddr(podIPInfo.PodIPConfig.IPAddress)
@@ -74,8 +74,16 @@ func (k *K8sSWIFTv2Middleware) setInfraRoutes(podIPInfo *cns.PodIpInfo) ([]cns.R
 
 	v4IPs, v6IPs, err := k.GetCidrs()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get CIDRs")
+		return nil, errors.Wrap(err, "failed to get node and service CIDRs")
 	}
+
+	v4PodIPs, v6PodIPs, err := k.GetPodCidrs()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get pod CIDRs")
+	}
+
+	v4IPs = append(v4IPs, v4PodIPs...)
+	v6IPs = append(v6IPs, v6PodIPs...)
 
 	if ip.Is4() {
 		routes = append(routes, k.addRoutes(v4IPs, overlayGatewayv4)...)
