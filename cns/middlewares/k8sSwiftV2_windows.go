@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"net"
 	"net/netip"
 
 	"github.com/Azure/azure-container-networking/cns"
@@ -74,7 +73,7 @@ func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	for i, cidr := range cidrs {
 		routes[i] = cns.Route{
 			IPAddress:        cidr,
-			GatewayIPAddress: "", // gateway IP is not required for infraNIC for containerd to program the pod
+			GatewayIPAddress: "", // gateway IP is not required for infraNIC routes
 		}
 	}
 	return routes
