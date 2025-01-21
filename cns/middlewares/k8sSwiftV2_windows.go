@@ -85,10 +85,8 @@ func (k *K8sSWIFTv2Middleware) getIPv4Gateway(cidr string) (string, error) {
 func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	routes := make([]cns.Route, len(cidrs))
 	for i, cidr := range cidrs {
-		gatewayIP, _ := k.getIPv4Gateway(cidr)
 		routes[i] = cns.Route{
-			IPAddress:        cidr,
-			GatewayIPAddress: gatewayIP,
+			IPAddress: cidr,
 		}
 	}
 	return routes
