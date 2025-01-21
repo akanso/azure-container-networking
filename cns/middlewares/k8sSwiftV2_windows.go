@@ -69,24 +69,12 @@ func (k *K8sSWIFTv2Middleware) addDefaultRoute(podIPInfo *cns.PodIpInfo, gateway
 	podIPInfo.Routes = append(podIPInfo.Routes, route)
 }
 
-// always pick up .1 as the default ipv4 gateway for each IP address
-func (k *K8sSWIFTv2Middleware) getIPv4Gateway(cidr string) (string, error) {
-	ip, _, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to parse cidr")
-	}
-	ip = ip.To4()
-	ip[3] = 1
-
-	return ip.String(), nil
-}
-
-// Windows uses .1 as the gateway IP for each CIDR
 func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	routes := make([]cns.Route, len(cidrs))
 	for i, cidr := range cidrs {
 		routes[i] = cns.Route{
-			IPAddress: cidr,
+			IPAddress:        cidr,
+			GatewayIPAddress: "", // gateway IP is not required for infraNIC for containerd to program the pod
 		}
 	}
 	return routes
