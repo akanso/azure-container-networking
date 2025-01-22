@@ -10,6 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	defaultGateway = "0.0.0.0"
+)
+
 // for AKS L1VH, do not set default route on infraNIC to avoid customer pod reaching all infra vnet services
 // default route is set for secondary interface NIC(i.e,delegatedNIC)
 func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
@@ -19,7 +23,7 @@ func (k *K8sSWIFTv2Middleware) setRoutes(podIPInfo *cns.PodIpInfo) error {
 		// TODO: Remove this once HNS fix is ready
 		route := cns.Route{
 			IPAddress:        "0.0.0.0/0",
-			GatewayIPAddress: "0.0.0.0",
+			GatewayIPAddress: defaultGateway,
 		}
 		podIPInfo.Routes = append(podIPInfo.Routes, route)
 
@@ -69,16 +73,15 @@ func (k *K8sSWIFTv2Middleware) addDefaultRoute(podIPInfo *cns.PodIpInfo, gateway
 	podIPInfo.Routes = append(podIPInfo.Routes, route)
 }
 
+// add routes to podIPInfo for the given CIDRs and gateway IP
+// always use default gateway IP for containerd to configure routes;
+// containerd will set route with default gateway ip like 10.0.0.0/16 via 0.0.0.0 dev eth0
 func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	routes := make([]cns.Route, len(cidrs))
 	for i, cidr := range cidrs {
-		ip, _, err := net.ParseCIDR(cidr)
-		if err != nil {
-			return nil
-		}
 		routes[i] = cns.Route{
 			IPAddress:        cidr,
-			GatewayIPAddress: ip.String(),
+			GatewayIPAddress: defaultGateway,
 		}
 	}
 	return routes
