@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"net"
 	"net/netip"
 
 	"github.com/Azure/azure-container-networking/cns"
