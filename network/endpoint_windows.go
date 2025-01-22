@@ -337,6 +337,7 @@ func (nw *network) configureHcnEndpoint(epInfo *EndpointInfo) (*hcn.HostComputeE
 			NextHop:           route.Gw.String(),
 			DestinationPrefix: route.Dst.String(),
 		}
+
 		hcnEndpoint.Routes = append(hcnEndpoint.Routes, hcnRoute)
 	}
 
