@@ -136,7 +136,7 @@ foreach my $podName (keys %randHash) {
 	chomp($kubectl_output);
 	my $node_name = `kubectl get pod $podName -n default -o custom-columns=NODE:.spec.nodeName --no-headers`;
 	chomp($node_name);
-	my $zone_num = `kubectl get node $node_name -o jsonpath='{.metadata.labels.topology\.kubernetes\.io/zone}'`;
+	my $zone_num = `kubectl get node $node_name -o jsonpath='{.metadata.labels.topology\\.kubernetes\\.io/zone}'`;
 	chomp($zone_num);
 	print "$kubectl_output Localhost Iperf throughput test between POD $podName and POD $randHash{$podName}: $iperf zone: $zone_num \n";
 
