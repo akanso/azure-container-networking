@@ -362,9 +362,9 @@ func getRoutes(cnsRoutes []cns.Route, skipDefaultRoutes bool) ([]network.RouteIn
 		}
 
 		gw := net.ParseIP(route.GatewayIPAddress)
-		if skipDefaultRoutes {
-			return nil, errors.Wrap(errInvalidGatewayIP, route.GatewayIPAddress)
-		}
+		// if gw == nil && skipDefaultRoutes {
+		// 	return nil, errors.Wrap(errInvalidGatewayIP, route.GatewayIPAddress)
+		// }
 
 		routes = append(routes,
 			network.RouteInfo{
