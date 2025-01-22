@@ -71,9 +71,13 @@ func (k *K8sSWIFTv2Middleware) addDefaultRoute(podIPInfo *cns.PodIpInfo, gateway
 func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	routes := make([]cns.Route, len(cidrs))
 	for i, cidr := range cidrs {
+		ip, _, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to parse cidr")
+		}
 		routes[i] = cns.Route{
 			IPAddress:        cidr,
-			GatewayIPAddress: "", // gateway IP is not required for infraNIC routes
+			GatewayIPAddress: ip.String(),
 		}
 	}
 	return routes
