@@ -43,11 +43,11 @@ func TestSetRoutesSuccess(t *testing.T) {
 			Routes: []cns.Route{
 				{
 					IPAddress:        "10.0.0.0/16",
-					GatewayIPAddress: "",
+					GatewayIPAddress: "0.0.0.0",
 				},
 				{
 					IPAddress:        "10.240.0.10/16",
-					GatewayIPAddress: "",
+					GatewayIPAddress: "0.0.0.0",
 				},
 				{
 					IPAddress:        "0.0.0.0/0",
