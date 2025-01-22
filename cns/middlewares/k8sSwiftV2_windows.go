@@ -74,7 +74,7 @@ func (k *K8sSWIFTv2Middleware) addRoutes(cidrs []string) []cns.Route {
 	for i, cidr := range cidrs {
 		ip, _, err := net.ParseCIDR(cidr)
 		if err != nil {
-			return "", errors.Wrap(err, "failed to parse cidr")
+			return nil
 		}
 		routes[i] = cns.Route{
 			IPAddress:        cidr,
