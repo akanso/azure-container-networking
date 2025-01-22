@@ -333,8 +333,15 @@ func (nw *network) configureHcnEndpoint(epInfo *EndpointInfo) (*hcn.HostComputeE
 	}
 
 	for _, route := range epInfo.Routes {
+		nextHop := route.Gw.String()
+		// If the route is for the frontend NIC, the next hop should be empty.
+		// This is because the containerd does not require next hop to configure route and the expected route entry on lcow should be like:
+		// 10.224.0.0/12 dev eth0
+		if epInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC {
+			nextHop = ""
+		}
 		hcnRoute := hcn.Route{
-			NextHop:           route.Gw.String(),
+			NextHop:           nextHop,
 			DestinationPrefix: route.Dst.String(),
 		}
 
