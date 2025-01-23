@@ -33,7 +33,7 @@ parameters:
 jobs:
   - job: "${{ parameters.name }}"
     displayName: "${{ parameters.name }} pod throughput"
-    timeoutInMinutes: 180
+    timeoutInMinutes: 360
     dependsOn: ${{ parameters.dependsOn }}
     steps:
       - task: AzureCLI@2
@@ -103,6 +103,12 @@ jobs:
             # Get node info 
             kubectl describe nodes > ./nodestatus.txt
             sudo cp ./nodestatus.txt $ARTIFACT_DIR
+
+            # Get proof of policies
+            kubectl describe networkpolicies -n scale-test --ignore-not-found > ./policies.txt
+            sudo cp ./policies.txt $ARTIFACT_DIR
+            kubectl get pods -owide --chunk-size=100 --show-labels -n scale-test --ignore-not-found | tail -n 40 > ./pods.txt
+            sudo cp ./pods.txt $ARTIFACT_DIR
 
       - task: AzureCLI@2
         name: "throughput_cleanup_${{ parameters.name }}"
