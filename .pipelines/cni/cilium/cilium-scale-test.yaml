@@ -204,15 +204,15 @@ stages:
           name: "policies_and_services"
           numDeployments: "$(NUM_REAL_DEPLOYMENTS_NETPOL)" # 2
           numReplicasPerDeployment: "$(NUM_REAL_REPLICAS_NETPOL)" # 30
-          numPolicies: 1000 # 20
+          numPolicies: "$(APPLIED_NETPOL)" # 20
           numUnappliedPolicies: "$(UNAPPLIED_NETPOL)" # 40
           numServices: "$(NUM_REAL_SVC_NETPOL)" # 30
           # dependsOn: "services"
-      - template: k8s-netperf-cleanup-job-template.yaml
-        parameters:
-          resourceGroup: "$(RESOURCE_GROUP)"
-          clusterName: "$(CLUSTER)"
-          dependsOn: "policies_and_services"
+      # - template: k8s-netperf-cleanup-job-template.yaml
+      #   parameters:
+      #     resourceGroup: "$(RESOURCE_GROUP)"
+      #     clusterName: "$(CLUSTER)"
+      #     dependsOn: "policies_and_services"
   - stage: scale_cluster_deployments
     displayName: "Scale deploments for Network Policies Check"
     jobs:
