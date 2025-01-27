@@ -300,7 +300,8 @@ stages:
       - job: failedE2ELogs
         displayName: "Failure Logs"
         dependsOn:
-          - deploy_cilium_components
+          - ${{ if eq(parameters.upgradeDualStack, false) }}:
+              - deploy_cilium_components
           - deploy_pods
           - restart_nodes
           - restart_cns
