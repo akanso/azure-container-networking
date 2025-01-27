@@ -307,7 +307,7 @@ stages:
           - cni_tests
           - cni_${{ parameters.os }}
           ${{ if eq(parameters.upgradeDualStack, true) }}:
-          - upgrade_single_to_dual_stack
+            - upgrade_single_to_dual_stack
         condition: failed()
         steps:
           - template: ../../templates/log-template.yaml
