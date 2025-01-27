@@ -301,13 +301,13 @@ stages:
         displayName: "Failure Logs"
         dependsOn:
           - deploy_cilium_components
-          ${{ if eq(parameters.upgradeDualStack, true) }}:
-            - upgrade_single_to_dual_stack
           - deploy_pods
           - restart_nodes
           - restart_cns
           - cni_tests
           - cni_${{ parameters.os }}
+          ${{ if eq(parameters.upgradeDualStack, true) }}:
+          - upgrade_single_to_dual_stack
         condition: failed()
         steps:
           - template: ../../templates/log-template.yaml
