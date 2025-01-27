@@ -306,7 +306,7 @@ stages:
           - restart_cns
           - cni_tests
           - cni_${{ parameters.os }}
-          ${{ if eq(parameters.upgradeDualStack, true) }}:
+          - ${{ if eq(parameters.upgradeDualStack, true) }}:
             - upgrade_single_to_dual_stack
         condition: failed()
         steps:
