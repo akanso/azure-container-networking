@@ -206,7 +206,11 @@ stages:
       - job: deploy_pods
         condition: and( and( not(canceled()), not(failed()) ), or( contains(variables.CONTROL_SCENARIO, 'scaleTest') , contains(variables.CONTROL_SCENARIO, 'all') ) )
         displayName: "Scale Test"
-        dependsOn: deploy_cilium_components
+        dependsOn: 
+          - ${{ if eq(parameters.upgradeDualStack, true) }}:
+              - upgrade_single_to_dual_stack
+          - ${{ if eq(parameters.upgradeDualStack, false) }}:
+              - deploy_cilium_components
         steps:
           - template: ../load-test-templates/pod-deployment-template.yaml
             parameters:
@@ -297,6 +301,7 @@ stages:
         displayName: "Failure Logs"
         dependsOn:
           - deploy_cilium_components
+          - upgrade_single_to_dual_stack
           - deploy_pods
           - restart_nodes
           - restart_cns
