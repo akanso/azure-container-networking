@@ -346,6 +346,18 @@ stages:
       vmSize: Standard_HC44-16rs
       arch: amd64
       cni: "cilium"
+  
+  - template: cilium/cilium-overlay-load-test-template.yaml
+    parameters:
+      name: cilium_overlay_upgrade
+      clusterType: overlay-cilium-up
+      clusterName: "cil-upgrade"
+      nodeCount: ${NODE_COUNT_CILIUM}
+      vmSize: ${VM_SIZE_CILIUM}
+      arch: amd64
+      dualstackVersion: ${CILIUM_DUALSTACK_VERSION}
+      cni: "cilium_dualstack"
+      upgradeDualStack: true
 
   - template: cilium/cilium-overlay-load-test-template.yaml
     parameters:
