@@ -179,7 +179,7 @@ stages:
                   kubectl get po -owide -A
                   kubectl describe nodes
                   echo "Upgrade Single Stack to Dual Stack"
-                  az aks update --resource-group $(RESOURCE_GROUP) --name ${{ parameters.clusterName }}-$(commitID) --ip-families ipv4,ipv6 --load-balancer-managed-outbound-ipv6-count 1
+                  az aks update --resource-group ${{ parameters.clusterName }}-$(commitID) --name ${{ parameters.clusterName }}-$(commitID) --ip-families ipv4,ipv6 --load-balancer-managed-outbound-ipv6-count 1
             - task: AzureCLI@2
               displayName: "Check Dual Stack Upgrade"
               inputs:
