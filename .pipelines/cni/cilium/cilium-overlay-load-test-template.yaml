@@ -301,7 +301,8 @@ stages:
         displayName: "Failure Logs"
         dependsOn:
           - deploy_cilium_components
-          - upgrade_single_to_dual_stack
+          ${{ if eq(parameters.upgradeDualStack, true) }}:
+            - upgrade_single_to_dual_stack
           - deploy_pods
           - restart_nodes
           - restart_cns
