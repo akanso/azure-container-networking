@@ -161,7 +161,6 @@ stages:
       - ${{if eq(parameters.upgradeDualStack, true)}}:
         - job: upgrade_single_to_dual_stack
           displayName: Upgrade Single Stack to Dual Stack
-          dependsOn: create_${{ parameters.name }}
           steps:
             - task: AzureCLI@2
               displayName: "Upgrade Single Stack to Dual Stack"
