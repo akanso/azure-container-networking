@@ -158,7 +158,7 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku standard \
+		--load-balancer-sku basic \
 		--network-plugin azure \
 		--network-dataplane cilium \
 		--network-plugin-mode overlay \
@@ -167,6 +167,21 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 		--no-ssh-key \
 		--yes
 	@$(MAKE) set-kubeconf
+
+overlay-cilium-novnet-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster without vnet subnet
+	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--auto-upgrade-channel $(AUTOUPGRADE) \
+		--node-os-upgrade-channel $(NODEUPGRADE) \
+		--kubernetes-version $(K8S_VER) \
+		--node-count $(NODE_COUNT) \
+		--node-vm-size $(VM_SIZE) \
+		--load-balancer-sku standard \
+		--network-plugin azure \
+		--network-dataplane cilium \
+		--network-plugin-mode overlay \
+		--pod-cidr 192.168.0.0/16 \
+		--no-ssh-key \
+		--yes
 
 overlay-up: rg-up overlay-net-up ## Brings up an Overlay AzCNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \

@@ -350,7 +350,7 @@ stages:
   - template: cilium/cilium-overlay-load-test-template.yaml
     parameters:
       name: cilium_overlay_upgrade
-      clusterType: overlay-cilium-up
+      clusterType: overlay-cilium-novnet-up
       clusterName: "cil-upgrade"
       nodeCount: ${NODE_COUNT_CILIUM}
       vmSize: ${VM_SIZE_CILIUM}
