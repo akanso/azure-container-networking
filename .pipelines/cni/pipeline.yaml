@@ -423,6 +423,7 @@ stages:
       - linux_cniv1
       - linux_podsubnet
       - linux_overlay
+      - cilium_overlay_upgrade
       - mariner_linux_overlay
       - arm_linux_overlay
       - rdma_linux_overlay
@@ -454,6 +455,9 @@ stages:
             cilium_overlay_rdma:
               name: cilium_overlay_rdma
               clusterName: "cil-over-rdma"
+            cilium_overlay_upgrade:
+              name: cilium_overlay_upgrade
+              clusterName: "cil-upgrade"
             cilium_overlay_ds:
               name: cilium_overlay_ds
               clusterName: "cil-ds-ov"
