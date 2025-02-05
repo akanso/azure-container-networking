@@ -1,0 +1,161 @@
+# Backend pods
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toy-backend-deployment
+  labels:
+    app: toy-backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server-pod
+  template:
+    metadata:
+      labels:
+        app: server-pod
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: aks-nodepool1-10021184-vmss000036 # keep consistent
+      containers:
+      - name: server-pod
+        image: networkstatic/iperf3
+        command: ["iperf3", "-s"]
+        ports:
+        - containerPort: 5001
+        - containerPort: 8079
+        - containerPort: 8080
+        - containerPort: 8081
+        - containerPort: 12865
+        - containerPort: 5201
+        #imagePullPolicy: Never
+
+---
+# One service
+apiVersion: v1
+kind: Service
+metadata:
+  name: toy-netperf-server
+  labels:
+    name: toy-netperf-server
+    app: netperf
+spec:
+  ports:
+    # the port that this service should serve on
+  - name: iperf-tcp
+    protocol: TCP
+    port: 5001
+    targetPort: 5001
+  - name: iperf-udp
+    protocol: UDP
+    port: 5001
+    targetPort: 5001
+  - name: iperf3-tcp
+    protocol: TCP
+    port: 5201
+    targetPort: 5201
+  - name: iperf3-udp
+    protocol: UDP
+    port: 5201
+    targetPort: 5201
+  - name: fortio-http
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  - name: fortio-proxy
+    protocol: TCP
+    port: 8081
+    targetPort: 8081
+  - name: fortio-grpc
+    protocol: TCP
+    port: 8079
+    targetPort: 8079
+  selector:
+    app: server-pod
+
+---
+# this is how you guarantee every pod has at least one pod, but also optionally a second pod
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: toy-netperf-pod
+  labels:
+    app: toy-netperf-pod
+spec:
+  selector:
+    matchLabels:
+      app: client-pod
+  template:
+    metadata:
+      labels:
+        app: client-pod
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: client-pod
+        image: networkstatic/iperf3
+        command: ["sleep", "1000000"]
+        ports:
+        - containerPort: 5001
+        - containerPort: 5201
+        - containerPort: 8079
+        - containerPort: 8080
+        - containerPort: 8081
+        - containerPort: 12865
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: toy-allow-client-to-server
+spec:
+  podSelector:
+    matchLabels:
+      app: server-pod
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: client-pod
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: client-pod
+  policyTypes:
+  - Ingress
+  - Egress
+# ---
+# # this is running on the host machine itself!
+
+# apiVersion: apps/v1
+# kind: DaemonSet
+# metadata:
+#   name: toy-netperf-host
+#   labels:
+#     app: toy-netperf-host
+# spec:
+#   selector:
+#     matchLabels:
+#       app: toy-netperf-host
+#   template:
+#     metadata:
+#       labels:
+#         app: toy-netperf-host
+#     spec:
+#       hostNetwork: true
+#       tolerations:
+#       - key: node-role.kubernetes.io/master
+#         operator: Exists
+#         effect: NoSchedule
+#       containers:
+#       - name: toy-netperf-host
+#         image: leannet/k8s-netperf:latest
+#         ports:
+#         - containerPort: 5001
+#         - containerPort: 8079
+#         - containerPort: 8080
+#         - containerPort: 8081
+#         - containerPort: 12865
