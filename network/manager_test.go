@@ -12,16 +12,40 @@ import (
 	"github.com/Azure/azure-container-networking/testutils"
 )
 
+var errStore = errors.New("store error")
+
+const ifName = "eth0"
+
 func TestManager(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Manager Suite")
 }
 
 var _ = Describe("Test Manager", func() {
+	Describe("Test AddExternalInterface", func() {
+		Context("When adding the external interface", func() {
+			It("Should not write to the store", func() {
+				// accessing the store should result in an error
+				dataStore := &testutils.KeyValueStoreMock{
+					WriteError: errStore,
+					ReadError:  errStore,
+				}
+				nm := &networkManager{
+					ExternalInterfaces: map[string]*externalInterface{},
+					store:              dataStore,
+				}
+				nm.ExternalInterfaces[ifName] = &externalInterface{
+					Name: ifName,
+				}
+				err := nm.AddExternalInterface(ifName, "10.10.10.0/24")
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+	})
+
 	Describe("Test deleteExternalInterface", func() {
 		Context("When external interface not found", func() {
 			It("Should return nil", func() {
-				ifName := "eth0"
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
 				}
@@ -32,7 +56,6 @@ var _ = Describe("Test Manager", func() {
 
 		Context("When external interface found", func() {
 			It("Should delete external interface", func() {
-				ifName := "eth0"
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
 				}
@@ -78,7 +101,7 @@ var _ = Describe("Test Manager", func() {
 
 		Context("When GetModificationTime error and not rebooted", func() {
 			It("Should populate pointers", func() {
-				extIfName := "eth0"
+				extIfName := ifName
 				nwId := "nwId"
 				nm := &networkManager{
 					store: &testutils.KeyValueStoreMock{
@@ -135,14 +158,13 @@ var _ = Describe("Test Manager", func() {
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
 				}
-				num := nm.GetNumberOfEndpoints("eth0", "")
+				num := nm.GetNumberOfEndpoints(ifName, "")
 				Expect(num).To(Equal(0))
 			})
 		})
 
 		Context("When Networks is nil", func() {
 			It("Should return 0", func() {
-				ifName := "eth0"
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
 				}
@@ -154,7 +176,6 @@ var _ = Describe("Test Manager", func() {
 
 		Context("When network not found", func() {
 			It("Should return 0", func() {
-				ifName := "eth0"
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
 				}
@@ -168,7 +189,6 @@ var _ = Describe("Test Manager", func() {
 
 		Context("When endpoints is nil", func() {
 			It("Should return 0", func() {
-				ifName := "eth0"
 				nwId := "nwId"
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
@@ -184,7 +204,6 @@ var _ = Describe("Test Manager", func() {
 
 		Context("When endpoints is found", func() {
 			It("Should return the length of endpoints", func() {
-				ifName := "eth0"
 				nwId := "nwId"
 				nm := &networkManager{
 					ExternalInterfaces: map[string]*externalInterface{},
