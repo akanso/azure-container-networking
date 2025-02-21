@@ -67,6 +67,7 @@ import (
 	"github.com/Azure/azure-container-networking/store"
 	"github.com/Azure/azure-container-networking/telemetry"
 	"github.com/avast/retry-go/v4"
+	"github.com/go-logr/zapr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -84,7 +85,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	ctrlzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	ctrlmgr "sigs.k8s.io/controller-runtime/pkg/manager"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
@@ -629,7 +629,7 @@ func main() {
 	}
 
 	// build the zap logger
-	z, c, err := loggerv2.New(&loggerv2.Config{})
+	z, c, err := loggerv2.New(&cnsconfig.Logger)
 	defer c()
 	if err != nil {
 		fmt.Printf("failed to create logger: %v", err)
@@ -1515,7 +1515,7 @@ func InitializeCRDState(ctx context.Context, z *zap.Logger, httpRestService cns.
 		Scheme:  scheme,
 		Metrics: ctrlmetrics.Options{BindAddress: "0"},
 		Cache:   cacheOpts,
-		Logger:  ctrlzap.New(),
+		Logger:  zapr.NewLogger(z),
 	}
 
 	manager, err := ctrl.NewManager(kubeConfig, managerOpts)
