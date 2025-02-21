@@ -1,3 +1,5 @@
+// Package logger provides an opinionated logger for CNS which knows how to
+// log to Application Insights, file, stdout and ETW (based on platform).
 package logger
 
 import (

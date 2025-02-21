@@ -41,6 +41,7 @@ import (
 	nncctrl "github.com/Azure/azure-container-networking/cns/kubecontroller/nodenetworkconfig"
 	podctrl "github.com/Azure/azure-container-networking/cns/kubecontroller/pod"
 	"github.com/Azure/azure-container-networking/cns/logger"
+	loggerv2 "github.com/Azure/azure-container-networking/cns/logger/v2"
 	"github.com/Azure/azure-container-networking/cns/metric"
 	"github.com/Azure/azure-container-networking/cns/middlewares"
 	"github.com/Azure/azure-container-networking/cns/multitenantcontroller"
@@ -69,7 +70,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -130,7 +130,6 @@ const (
 var (
 	rootCtx   context.Context
 	rootErrCh chan error
-	z         *zap.Logger
 )
 
 // Version is populated by make during build.
@@ -629,12 +628,17 @@ func main() {
 		}
 	}
 
-	// configure zap logger
-	zconfig := zap.NewProductionConfig()
-	zconfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	if z, err = zconfig.Build(); err != nil {
+	// build the zap logger
+	z, c, err := loggerv2.New(&loggerv2.Config{})
+	defer c()
+	if err != nil {
 		fmt.Printf("failed to create logger: %v", err)
 		os.Exit(1)
+	}
+	// set the logger to the global logger if configured
+	if cnsconfig.EnableLoggerV2 {
+		logger.Printf("hotswapping logger v2")
+		logger.Log = loggerv2.AsV1(z, c)
 	}
 
 	// start the healthz/readyz/metrics server
@@ -866,7 +870,7 @@ func main() {
 
 		logger.Printf("Set GlobalPodInfoScheme %v (InitializeFromCNI=%t)", cns.GlobalPodInfoScheme, cnsconfig.InitializeFromCNI)
 
-		err = InitializeCRDState(rootCtx, httpRemoteRestService, cnsconfig)
+		err = InitializeCRDState(rootCtx, z, httpRemoteRestService, cnsconfig)
 		if err != nil {
 			logger.Errorf("Failed to start CRD Controller, err:%v.\n", err)
 			return
@@ -1369,7 +1373,7 @@ func reconcileInitialCNSState(ctx context.Context, cli nodeNetworkConfigGetter, 
 }
 
 // InitializeCRDState builds and starts the CRD controllers.
-func InitializeCRDState(ctx context.Context, httpRestService cns.HTTPService, cnsconfig *configuration.CNSConfig) error {
+func InitializeCRDState(ctx context.Context, z *zap.Logger, httpRestService cns.HTTPService, cnsconfig *configuration.CNSConfig) error {
 	// convert interface type to implementation type
 	httpRestServiceImplementation, ok := httpRestService.(*restserver.HTTPRestService)
 	if !ok {

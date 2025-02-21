@@ -30,6 +30,7 @@ type CNSConfig struct {
 	EnableCNIConflistGeneration bool
 	EnableIPAMv2                bool
 	EnableK8sDevicePlugin       bool
+	EnableLoggerV2              bool
 	EnablePprof                 bool
 	EnableStateMigration        bool
 	EnableSubnetScarcity        bool
