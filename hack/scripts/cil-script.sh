@@ -22,9 +22,13 @@ for unique in $sufixes; do
         cilium install -n kube-system cilium cilium/cilium --version v1.16.1 \
         --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
         --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
-        --set hubble.enabled=true \
+        --set hubble.enabled=false \
+        --set cluster.name=${clusterPrefix}-${unique} \
+        --set debug.enabled=true \
+        --set debug.verbose="datapath" \
+        --set endpointRoutes.enabled=true \
+        --set bpf.hostLegacyRouting=true \
         --set envoy.enabled=false
-
     else # Ignore this block for now, was testing internal resources.
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
@@ -44,7 +48,10 @@ for unique in $sufixes; do
     fi
 done
 
-cd hack/scripts
+cd ../cilium 
+./deploy_image.sh krunaljaincustom "${clusterPrefix}-${sufix1}"
+./deploy_image.sh krunaljaincustom "${clusterPrefix}-${sufix2}"
+cd ../azure-container-networking/hack/scripts
 
 VNET_ID1=$(az network vnet show \
     --resource-group "${clusterPrefix}-${sufix1}-rg" \
