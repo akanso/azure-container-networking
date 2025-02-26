@@ -10,42 +10,77 @@ sufixes="${sufix1} ${sufix2}"
 install=helm
 echo "sufixes ${sufixes}"
 
+TAG=krunaljainhybridtest
+REGISTRY="acnpublic.azurecr.io"
+CILIUM_IMAGE="$REGISTRY/cilium/cilium:$TAG"
+# Step 1: Login to Azure Container Registry
+echo "Logging in to Azure Container Registry..."
+az acr login -n acnpublic
+if [[ $? -ne 0 ]]; then
+  echo "Failed to log in to Azure Container Registry. Exiting."
+  exit 1
+fi
+
+# Step 2: Build the Cilium Docker image
+echo "Building the Cilium Docker image..."
+unset ARCH
+DOCKER_FLAGS="--platform linux/amd64"
+make docker-cilium-image
+
+# Step 3: Tag and push the Cilium Docker image
+echo "Tagging and pushing the Cilium Docker image..."
+docker tag quay.io/cilium/cilium:latest "$CILIUM_IMAGE"
+docker push "$CILIUM_IMAGE"
+if [[ $? -ne 0 ]]; then
+  echo "Failed to push the Cilium Docker image. Exiting."
+  exit 1
+fi
+
+
+
+# Step 6: Retrieve the image digest for the newly pushed Cilium image
+CILIUM_IMAGE_SHA=$(az acr repository show-manifests --name acnpublic --repository cilium/cilium --query "[?tags[?contains(@, '$TAG')]].digest" -o tsv)
+if [[ -z "$CILIUM_IMAGE_SHA" ]]; then
+  echo "Failed to retrieve the Cilium image digest. Exiting."
+  exit 1
+fi
+
 cd ../..
 for unique in $sufixes; do
-    make -C ./hack/aks $clusterType \
-        AZCLI=az REGION=westus2 SUB=$SUB \
-        CLUSTER=${clusterPrefix}-${unique} \
-        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
-
-    if [ $install == "helm" ]; then
-        cilium install -n kube-system cilium cilium/cilium --version v1.16.1 \
-        --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
-        --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
-        --set hubble.enabled=false \
-        --set cluster.name=${clusterPrefix}-${unique} \
-        --set debug.enabled=true \
-        --set debug.verbose="datapath" \
-        --set endpointRoutes.enabled=true \
-        --set bpf.hostLegacyRouting=true \
-        --set envoy.enabled=false
-    else # Ignore this block for now, was testing internal resources.
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-operator/files
-        export CILIUM_VERSION_TAG=v1.16-240904
-        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
-
-        export CILIUM_VERSION_TAG=v1.16-240904
-        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
-        DIR=1.16
-        kubectl apply -f test/manifests/v${DIR}/cilium-agent/files
-        kubectl apply -f test/manifests/v${DIR}/cilium-operator/files
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY},${IPV6_HP_BPF_VERSION}' < test/manifests/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/manifests/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
-    fi
+    # make -C ./hack/aks $clusterType \
+    #     AZCLI=az REGION=westus2 SUB=$SUB \
+    #     CLUSTER=${clusterPrefix}-${unique} \
+    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+    #     VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
+        echo "Cluster Prefix: ${clusterPrefix}"
+        echo "Unique ID: ${unique}"
+        echo "Resource Group: ${clusterPrefix}-${unique}-rg"
+        echo "Cluster Name: ${clusterPrefix}-${unique}"
+        cilium upgrade install -n kube-system cilium cilium/cilium --version v1.16.1 \
+                --set image.repository=$REGISTRY/cilium/cilium \
+                --set image.tag=$TAG \
+                --set image.digest=$CILIUM_IMAGE_SHA \
+                --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
+                --set aksbyocni.enabled=false \
+                --set nodeinit.enabled=false \
+                --set hubble.enabled=false \
+                --set envoy.enabled=false \
+                --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
+                --set cluster.id=${unique} \
+                --set cluster.name=${clusterPrefix}-${unique} \
+                --set ipam.mode=delegated-plugin \
+                --set endpointRoutes.enabled=true \
+                --set enable-ipv4=true \
+                --set enableIPv4Masquerade=false \
+                --set kubeProxyReplacement=true \
+                --set kubeProxyReplacementHealthzBindAddr='0.0.0.0:10256' \
+                --set extraArgs="{--local-router-ipv4=169.254.23.0} {--install-iptables-rules=true}" \
+                --set endpointHealthChecking.enabled=false \
+                --set cni.exclusive=false \
+                --set bpf.enableTCX=false \
+                --set bpf.hostLegacyRouting=true \
+                --set l7Proxy=false \
+                --set sessionAffinity=true
 done
 
 cd ../cilium 
