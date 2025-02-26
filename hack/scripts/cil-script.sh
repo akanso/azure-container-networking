@@ -6,26 +6,57 @@
 # clusterType - overlay-byocni-nokubeproxy-up-mesh is primary atm, but leaving for testing later.
 # Example command: clusterPrefix=<alais> sufix1=1 sufix2=2 SUB=<GUID> clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
 
-sufixes="${sufix1} ${sufix2}"
-install=acn
+sufixes="${sufix1}"
+install=helm
 echo "sufixes ${sufixes}"
+TAG=krunaljainhybridtest
+REGISTRY="acnpublic.azurecr.io"
+CILIUM_IMAGE="$REGISTRY/cilium/cilium:$TAG"
+OPERATOR_IMAGE="$REGISTRY/cilium/operator-generic:$TAG"
+kubectl config use-context $K8S_CONTEXT
+# Step 1: Login to Azure Container Registry
+echo "Logging in to Azure Container Registry..."
+az acr login -n acnpublic
+if [[ $? -ne 0 ]]; then
+  echo "Failed to log in to Azure Container Registry. Exiting."
+  exit 1
+fi
 
+# Step 2: Build the Cilium Docker image
+echo "Building the Cilium Docker image..."
+unset ARCH
+DOCKER_FLAGS="--platform linux/amd64"
+make docker-cilium-image
+
+# Step 3: Tag and push the Cilium Docker image
+echo "Tagging and pushing the Cilium Docker image..."
+docker tag quay.io/cilium/cilium:latest "$CILIUM_IMAGE"
+docker push "$CILIUM_IMAGE"
+if [[ $? -ne 0 ]]; then
+  echo "Failed to push the Cilium Docker image. Exiting."
+  exit 1
+fi
+
+# Step 6: Retrieve the image digest for the newly pushed Cilium image
+CILIUM_IMAGE_SHA=$(az acr repository show-manifests --name acnpublic --repository cilium/cilium --query "[?tags[?contains(@, '$TAG')]].digest" -o tsv)
+if [[ -z "$CILIUM_IMAGE_SHA" ]]; then
+  echo "Failed to retrieve the Cilium image digest. Exiting."
+  exit 1
+fi
 cd ../..
 for unique in $sufixes; do
-    make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
-        AZCLI=az REGION=westus2 SUB=$SUB \
-        CLUSTER=${clusterPrefix}-${unique} \
-        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
+    # make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
+    #     AZCLI=az REGION=westus2 SUB=$SUB \
+    #     CLUSTER=${clusterPrefix}-${unique} \
+    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+    #     VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
 
     if [ $install == "helm" ]; then
-        # cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
-        # --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
-        # --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
-        # --set hubble.enabled=false \
-        # --set envoy.enabled=false
-
-        cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
+        helm upgrade --install -n kube-system cilium cilium/cilium  \
+            --set image.repository=$REGISTRY/cilium/cilium \
+            --set cluster.name=${clusterPrefix}-${unique} \
+            --set image.tag=$TAG \
+            --set image.digest=$CILIUM_IMAGE_SHA \
             --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
             --set aksbyocni.enabled=false \
             --set nodeinit.enabled=false \
@@ -34,10 +65,8 @@ for unique in $sufixes; do
             --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
             --set cluster.id=${unique} \
             --set ipam.mode=delegated-plugin \
-            --set routingMode=native \
             --set endpointRoutes.enabled=true \
             --set enable-ipv4=true \
-            --set enableIPv4Masquerade=false \
             --set kubeProxyReplacement=true \
             --set kubeProxyReplacementHealthzBindAddr='0.0.0.0:10256' \
             --set extraArgs="{--local-router-ipv4=169.254.23.0} {--install-iptables-rules=true}" \
