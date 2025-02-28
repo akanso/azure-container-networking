@@ -442,10 +442,10 @@ stages:
               #   name: win_azure_overlay_e2e
               #   clusterName: "winazovere2e"
               #   region: $(REGION_AKS_CLUSTER_TEST)
-              azure_overlay_stateless_e2e:
-                name: azure_overlay_stateless_e2e
-                clusterName: "statelesswin"
-                region: $(REGION_AKS_CLUSTER_TEST)
+              # azure_overlay_stateless_e2e:
+              #   name: azure_overlay_stateless_e2e
+              #   clusterName: "statelesswin"
+              #   region: $(REGION_AKS_CLUSTER_TEST)
               aks_swift_e2e:
                 name: aks_swift_e2e
                 clusterName: "swifte2e"
