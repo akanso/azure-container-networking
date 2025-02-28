@@ -101,7 +101,7 @@ jobs:
             sudo cp ./nodestatus.txt $ARTIFACT_DIR
 
             # Get proof of policies
-            kubectl describe networkpolicies -n scale-test --ignore-not-found > ./policies.txt
+            kubectl describe networkpolicies -n scale-test > ./policies.txt
             sudo cp ./policies.txt $ARTIFACT_DIR
             kubectl get pods -owide --chunk-size=100 --show-labels -n scale-test --ignore-not-found | tail -n 40 > ./pods.txt
             sudo cp ./pods.txt $ARTIFACT_DIR
