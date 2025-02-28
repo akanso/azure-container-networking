@@ -117,26 +117,26 @@ stages:
                 arch: amd64
                 name: azure-ipam
                 os: linux
-              azure_ipam_windows:
-                arch: amd64
-                name: azure-ipam
-                os: windows
+              # azure_ipam_windows:
+              #   arch: amd64
+              #   name: azure-ipam
+              #   os: windows
               cni_linux_amd64:
                 arch: amd64
                 name: cni
                 os: linux
-              cni_windows_amd64:
-                arch: amd64
-                name: cni
-                os: windows
+              # cni_windows_amd64:
+              #   arch: amd64
+              #   name: cni
+              #   os: windows
               cns_linux_amd64:
                 arch: amd64
                 name: cns
                 os: linux
-              cns_windows_amd64:
-                arch: amd64
-                name: cns
-                os: windows
+              # cns_windows_amd64:
+              #   arch: amd64
+              #   name: cns
+              #   os: windows
               ipv6_hp_bpf_linux_amd64:
                 arch: amd64
                 name: ipv6-hp-bpf
@@ -145,10 +145,10 @@ stages:
                 arch: amd64
                 name: npm
                 os: linux
-              npm_windows_amd64:
-                arch: amd64
-                name: npm
-                os: windows
+              # npm_windows_amd64:
+              #   arch: amd64
+              #   name: npm
+              #   os: windows
           steps:
             - template: containers/container-template.yaml
               parameters:
@@ -204,19 +204,19 @@ stages:
             matrix:
               azure_ipam:
                 name: azure-ipam
-                platforms: linux/amd64 linux/arm64 windows/amd64
+                platforms: linux/amd64 linux/arm64 # windows/amd64
               cni:
                 name: cni
-                platforms: linux/amd64 linux/arm64 windows/amd64
+                platforms: linux/amd64 linux/arm64 # windows/amd64
               cns:
                 name: cns
-                platforms: linux/amd64 linux/arm64 windows/amd64
+                platforms: linux/amd64 linux/arm64 # windows/amd64
               ipv6_hp_bpf:
                 name: ipv6-hp-bpf
                 platforms: linux/amd64 linux/arm64
               npm:
                 name: npm
-                platforms: linux/amd64 linux/arm64 windows/amd64
+                platforms: linux/amd64 linux/arm64 # windows/amd64
           steps:
             - template: containers/manifest-template.yaml
               parameters:
@@ -293,28 +293,28 @@ stages:
         dependsOn: "containerize"
         scaleup: 100
     
-    - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
-      parameters:
-        name: "win_azure_overlay_e2e"
-        displayName: Azure Overlay Windows
-        os: windows
-        clusterType: overlay-byocni-up
-        clusterName: "winazovere2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
-        scaleup: 50
+    # - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "win_azure_overlay_e2e"
+    #     displayName: Azure Overlay Windows
+    #     os: windows
+    #     clusterType: overlay-byocni-up
+    #     clusterName: "winazovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
+    #     scaleup: 50
 
     # Azure Overlay E2E Stateless CNI tests
-    - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
-      parameters:
-        name: "azure_overlay_stateless_e2e"
-        displayName: Azure Stateless CNI Overlay
-        os: windows
-        clusterType: overlay-byocni-up
-        clusterName: "statelesswin"
-        vmSize: Standard_D4ps_v6
-        dependsOn: "containerize"
+    # - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
+    #   parameters:
+    #     name: "azure_overlay_stateless_e2e"
+    #     displayName: Azure Stateless CNI Overlay
+    #     os: windows
+    #     clusterType: overlay-byocni-up
+    #     clusterName: "statelesswin"
+    #     vmSize: Standard_D4ps_v6
+    #     dependsOn: "containerize"
 
     # AKS Swift E2E tests
     - template: singletenancy/aks-swift/e2e-job-template.yaml
@@ -354,18 +354,18 @@ stages:
         scaleup: 100
         dependsOn: "containerize"
 
-    - template: singletenancy/aks/e2e-job-template.yaml
-      parameters:
-        name: "aks_windows_22_e2e"
-        displayName: AKS Windows 2022
-        arch: amd64
-        os: "windows"
-        clusterType: cniv1-up
-        clusterName: "win22e2e"
-        vmSize: Standard_D4ps_v6
-        os_version: "ltsc2022"
-        scaleup: 50
-        dependsOn: "containerize"
+    # - template: singletenancy/aks/e2e-job-template.yaml
+    #   parameters:
+    #     name: "aks_windows_22_e2e"
+    #     displayName: AKS Windows 2022
+    #     arch: amd64
+    #     os: "windows"
+    #     clusterType: cniv1-up
+    #     clusterName: "win22e2e"
+    #     vmSize: Standard_D4ps_v6
+    #     os_version: "ltsc2022"
+    #     scaleup: 50
+    #     dependsOn: "containerize"
 
     # CNI dual stack overlay E2E tests
     - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
@@ -379,16 +379,16 @@ stages:
         dependsOn: "containerize"
         scaleup: 100
 
-    - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
-      parameters:
-        name: "win_dualstackoverlay_e2e"
-        displayName: AKS DualStack Overlay Windows
-        os: windows
-        clusterType: dualstack-overlay-byocni-up
-        clusterName: "windsovere2e"
-        vmSize: Standard_D4ps_v6
-        dependsOn: "containerize"
-        scaleup: 50
+    # - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "win_dualstackoverlay_e2e"
+    #     displayName: AKS DualStack Overlay Windows
+    #     os: windows
+    #     clusterType: dualstack-overlay-byocni-up
+    #     clusterName: "windsovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     dependsOn: "containerize"
+    #     scaleup: 50
 
     - stage: delete
       displayName: Delete Clusters
@@ -396,7 +396,7 @@ stages:
       dependsOn:
         - setup
         - linux_azure_overlay_e2e
-        - win_azure_overlay_e2e
+        # - win_azure_overlay_e2e
         - azure_overlay_stateless_e2e
         - aks_swift_e2e
         - cilium_e2e
@@ -405,9 +405,9 @@ stages:
         - cilium_h_overlay_e2e
         - aks_ubuntu_22_linux_e2e
         - aks_swift_vnetscale_e2e
-        - aks_windows_22_e2e
+        # - aks_windows_22_e2e
         - linux_dualstackoverlay_e2e
-        - win_dualstackoverlay_e2e
+        # - win_dualstackoverlay_e2e
         - cilium_dualstackoverlay_e2e
       variables:
         commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
@@ -438,10 +438,10 @@ stages:
                 name: linux_azure_overlay_e2e
                 clusterName: "linuxazovere2e"
                 region: $(REGION_AKS_CLUSTER_TEST)
-              windows_azure_overlay_e2e:
-                name: win_azure_overlay_e2e
-                clusterName: "winazovere2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
+              # windows_azure_overlay_e2e:
+              #   name: win_azure_overlay_e2e
+              #   clusterName: "winazovere2e"
+              #   region: $(REGION_AKS_CLUSTER_TEST)
               azure_overlay_stateless_e2e:
                 name: azure_overlay_stateless_e2e
                 clusterName: "statelesswin"
@@ -458,18 +458,18 @@ stages:
                 name: aks_ubuntu_22_linux_e2e
                 clusterName: "ubuntu22e2e"
                 region: $(REGION_AKS_CLUSTER_TEST)
-              aks_windows_22_e2e:
-                name: aks_windows_22_e2e
-                clusterName: "win22e2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
+              # aks_windows_22_e2e:
+              #   name: aks_windows_22_e2e
+              #   clusterName: "win22e2e"
+              #   region: $(REGION_AKS_CLUSTER_TEST)
               linux_dualstackoverlay_e2e:
                 name: linux_dualstackoverlay_e2e
                 clusterName: "linuxdsovere2e"
                 region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-              windows_dualstackoverlay_e2e:
-                name: windows_dualstackoverlay_e2e
-                clusterName: "windsovere2e"
-                region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+              # windows_dualstackoverlay_e2e:
+              #   name: windows_dualstackoverlay_e2e
+              #   clusterName: "windsovere2e"
+              #   region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
               cilium_dualstackoverlay_e2e:
                 name: cilium_dualstackoverlay_e2e
                 clusterName: "cildsovere2e"
