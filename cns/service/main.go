@@ -628,6 +628,14 @@ func main() {
 		}
 	}
 
+	// Get host metadata and attach it to logger(v2) appinsights config.
+	// If this errors, we will not have metadata in the AI logs. Should we exit?
+	metadata, _ := acn.GetHostMetadata(aitelemetry.MetadataFile)
+	aifields := loggerv2.MetadataToFields(metadata)
+	if cnsconfig.Logger.AppInsights != nil {
+		cnsconfig.Logger.AppInsights.Fields = append(cnsconfig.Logger.AppInsights.Fields, aifields...)
+	}
+
 	// build the zap logger
 	z, c, err := loggerv2.New(&cnsconfig.Logger)
 	defer c()
@@ -635,9 +643,11 @@ func main() {
 		fmt.Printf("failed to create logger: %v", err)
 		os.Exit(1)
 	}
-	// set the logger to the global logger if configured
+	host, _ := os.Hostname()
+	z = z.With(zap.String("hostname", host), zap.String("version", version), zap.String("kubernetes_apiserver", os.Getenv("KUBERNETES_SERVICE_HOST")))
+	// Set the v2 logger to the global logger if v2 logger enabled.
 	if cnsconfig.EnableLoggerV2 {
-		logger.Printf("hotswapping logger v2")
+		logger.Printf("hotswapping logger v2") //nolint:staticcheck // ignore new deprecation
 		logger.Log = loggerv2.AsV1(z, c)
 	}
 
@@ -1373,6 +1383,8 @@ func reconcileInitialCNSState(ctx context.Context, cli nodeNetworkConfigGetter, 
 }
 
 // InitializeCRDState builds and starts the CRD controllers.
+//
+//nolint:gocyclo // legacy
 func InitializeCRDState(ctx context.Context, z *zap.Logger, httpRestService cns.HTTPService, cnsconfig *configuration.CNSConfig) error {
 	// convert interface type to implementation type
 	httpRestServiceImplementation, ok := httpRestService.(*restserver.HTTPRestService)

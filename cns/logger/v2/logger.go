@@ -16,6 +16,7 @@ func (c compoundCloser) Close() {
 	}
 }
 
+// New creates a v2 CNS logger built with Zap.
 func New(cfg *Config) (*zap.Logger, func(), error) {
 	cfg.Normalize()
 	core := cores.StdoutCore(cfg.level)
