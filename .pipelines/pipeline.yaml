@@ -223,75 +223,75 @@ stages:
                 name: $(name)
                 platforms: $(platforms)
 
-    # Cilium Podsubnet E2E tests
-    - template: singletenancy/cilium/cilium-e2e-job-template.yaml
-      parameters:
-        name: "cilium_e2e"
-        displayName: Cilium
-        clusterType: swift-byocni-nokubeproxy-up
-        clusterName: "ciliume2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
+    # # Cilium Podsubnet E2E tests
+    # - template: singletenancy/cilium/cilium-e2e-job-template.yaml
+    #   parameters:
+    #     name: "cilium_e2e"
+    #     displayName: Cilium
+    #     clusterType: swift-byocni-nokubeproxy-up
+    #     clusterName: "ciliume2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
 
-    # Cilium Nodesubnet E2E tests
-    - template: singletenancy/cilium-nodesubnet/cilium-nodesubnet-e2e-job-template.yaml
-      parameters:
-        name: "cilium_nodesubnet_e2e"
-        displayName: Cilium NodeSubnet
-        clusterType: nodesubnet-byocni-nokubeproxy-up
-        clusterName: "cilndsubnete2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
+    # # Cilium Nodesubnet E2E tests
+    # - template: singletenancy/cilium-nodesubnet/cilium-nodesubnet-e2e-job-template.yaml
+    #   parameters:
+    #     name: "cilium_nodesubnet_e2e"
+    #     displayName: Cilium NodeSubnet
+    #     clusterType: nodesubnet-byocni-nokubeproxy-up
+    #     clusterName: "cilndsubnete2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
 
-    # Cilium Overlay E2E tests
-    - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml
-      parameters:
-        name: "cilium_overlay_e2e"
-        displayName: Cilium on AKS Overlay
-        clusterType: overlay-byocni-nokubeproxy-up
-        clusterName: "cilovere2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
+    # # Cilium Overlay E2E tests
+    # - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "cilium_overlay_e2e"
+    #     displayName: Cilium on AKS Overlay
+    #     clusterType: overlay-byocni-nokubeproxy-up
+    #     clusterName: "cilovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
 
-    # Cilium Dualstack Overlay E2E tests
-    - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
-      parameters:
-        name: "cilium_dualstackoverlay_e2e"
-        displayName: Cilium on AKS DualStack Overlay
-        os: linux
-        clusterType: dualstack-byocni-nokubeproxy-up
-        clusterName: "cildsovere2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
+    # # Cilium Dualstack Overlay E2E tests
+    # - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "cilium_dualstackoverlay_e2e"
+    #     displayName: Cilium on AKS DualStack Overlay
+    #     os: linux
+    #     clusterType: dualstack-byocni-nokubeproxy-up
+    #     clusterName: "cildsovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
 
-        # Cilium Overlay with hubble E2E tests
-    - template: singletenancy/cilium-overlay-withhubble/cilium-overlay-e2e-job-template.yaml
-      parameters:
-        name: "cilium_h_overlay_e2e"
-        displayName: Cilium on AKS Overlay with Hubble
-        clusterType: overlay-byocni-nokubeproxy-up
-        clusterName: "cilwhleovere2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
-        testHubble: true
+    #     # Cilium Overlay with hubble E2E tests
+    # - template: singletenancy/cilium-overlay-withhubble/cilium-overlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "cilium_h_overlay_e2e"
+    #     displayName: Cilium on AKS Overlay with Hubble
+    #     clusterType: overlay-byocni-nokubeproxy-up
+    #     clusterName: "cilwhleovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
+    #     testHubble: true
 
-    # Azure Overlay E2E tests
-    - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
-      parameters:
-        name: "linux_azure_overlay_e2e"
-        displayName: Azure Overlay Linux
-        os: linux
-        clusterType: overlay-byocni-up
-        clusterName: "linuxazovere2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
-        scaleup: 100
+    # # Azure Overlay E2E tests
+    # - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "linux_azure_overlay_e2e"
+    #     displayName: Azure Overlay Linux
+    #     os: linux
+    #     clusterType: overlay-byocni-up
+    #     clusterName: "linuxazovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
+    #     scaleup: 100
     
     # - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
     #   parameters:
@@ -316,29 +316,29 @@ stages:
     #     vmSize: Standard_D4ps_v6
     #     dependsOn: "containerize"
 
-    # AKS Swift E2E tests
-    - template: singletenancy/aks-swift/e2e-job-template.yaml
-      parameters:
-        name: "aks_swift_e2e"
-        displayName: AKS Swift Ubuntu
-        os: linux
-        clusterType: swift-byocni-up
-        clusterName: "swifte2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: ""
-        dependsOn: "containerize"
+    # # AKS Swift E2E tests
+    # - template: singletenancy/aks-swift/e2e-job-template.yaml
+    #   parameters:
+    #     name: "aks_swift_e2e"
+    #     displayName: AKS Swift Ubuntu
+    #     os: linux
+    #     clusterType: swift-byocni-up
+    #     clusterName: "swifte2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: ""
+    #     dependsOn: "containerize"
 
-    # AKS Swift Vnet Scale E2E tests
-    - template: singletenancy/aks-swift/e2e-job-template.yaml
-      parameters:
-        name: "aks_swift_vnetscale_e2e"
-        displayName: AKS Swift Vnet Scale Ubuntu
-        os: linux
-        clusterType: vnetscale-swift-byocni-up
-        clusterName: "vscaleswifte2e"
-        vmSize: Standard_D4ps_v6
-        k8sVersion: "1.30"
-        dependsOn: "containerize"
+    # # AKS Swift Vnet Scale E2E tests
+    # - template: singletenancy/aks-swift/e2e-job-template.yaml
+    #   parameters:
+    #     name: "aks_swift_vnetscale_e2e"
+    #     displayName: AKS Swift Vnet Scale Ubuntu
+    #     os: linux
+    #     clusterType: vnetscale-swift-byocni-up
+    #     clusterName: "vscaleswifte2e"
+    #     vmSize: Standard_D4ps_v6
+    #     k8sVersion: "1.30"
+    #     dependsOn: "containerize"
 
     # CNIv1 E2E tests
     - template: singletenancy/aks/e2e-job-template.yaml
@@ -368,16 +368,16 @@ stages:
     #     dependsOn: "containerize"
 
     # CNI dual stack overlay E2E tests
-    - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
-      parameters:
-        name: "linux_dualstackoverlay_e2e"
-        displayName: AKS DualStack Overlay Linux
-        os: linux
-        clusterType: dualstack-overlay-byocni-up
-        clusterName: "linuxdsovere2e"
-        vmSize: Standard_D4ps_v6
-        dependsOn: "containerize"
-        scaleup: 100
+    # - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
+    #   parameters:
+    #     name: "linux_dualstackoverlay_e2e"
+    #     displayName: AKS DualStack Overlay Linux
+    #     os: linux
+    #     clusterType: dualstack-overlay-byocni-up
+    #     clusterName: "linuxdsovere2e"
+    #     vmSize: Standard_D4ps_v6
+    #     dependsOn: "containerize"
+    #     scaleup: 100
 
     # - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
     #   parameters:
@@ -390,95 +390,95 @@ stages:
     #     dependsOn: "containerize"
     #     scaleup: 50
 
-    - stage: delete
-      displayName: Delete Clusters
-      condition: always()
-      dependsOn:
-        - setup
-        - linux_azure_overlay_e2e
-        # - win_azure_overlay_e2e
-        # - azure_overlay_stateless_e2e
-        - aks_swift_e2e
-        - cilium_e2e
-        - cilium_nodesubnet_e2e
-        - cilium_overlay_e2e
-        - cilium_h_overlay_e2e
-        - aks_ubuntu_22_linux_e2e
-        - aks_swift_vnetscale_e2e
-        # - aks_windows_22_e2e
-        - linux_dualstackoverlay_e2e
-        # - win_dualstackoverlay_e2e
-        - cilium_dualstackoverlay_e2e
-      variables:
-        commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
-      jobs:
-        - job: delete_build
-          displayName: Delete Cluster
-          pool:
-            name: "$(BUILD_POOL_NAME_DEFAULT)"
-          strategy:
-            matrix:
-              cilium_e2e:
-                name: cilium_e2e
-                clusterName: "ciliume2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              cilium_nodesubnet_e2e:
-                name: cilium_nodesubnet_e2e
-                clusterName: "cilndsubnete2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              cilium_overlay_e2e:
-                name: cilium_overlay_e2e
-                clusterName: "cilovere2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              cilium_h_overlay_e2e:
-                name: cilium_h_overlay_e2e
-                clusterName: "cilwhleovere2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              linux_azure_overlay_e2e:
-                name: linux_azure_overlay_e2e
-                clusterName: "linuxazovere2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              # windows_azure_overlay_e2e:
-              #   name: win_azure_overlay_e2e
-              #   clusterName: "winazovere2e"
-              #   region: $(REGION_AKS_CLUSTER_TEST)
-              # azure_overlay_stateless_e2e:
-              #   name: azure_overlay_stateless_e2e
-              #   clusterName: "statelesswin"
-              #   region: $(REGION_AKS_CLUSTER_TEST)
-              aks_swift_e2e:
-                name: aks_swift_e2e
-                clusterName: "swifte2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              aks_swift_vnetscale_e2e:
-                name: aks_swift_vnetscale_e2e
-                clusterName: "vscaleswifte2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              aks_ubuntu_22_linux_e2e:
-                name: aks_ubuntu_22_linux_e2e
-                clusterName: "ubuntu22e2e"
-                region: $(REGION_AKS_CLUSTER_TEST)
-              # aks_windows_22_e2e:
-              #   name: aks_windows_22_e2e
-              #   clusterName: "win22e2e"
-              #   region: $(REGION_AKS_CLUSTER_TEST)
-              linux_dualstackoverlay_e2e:
-                name: linux_dualstackoverlay_e2e
-                clusterName: "linuxdsovere2e"
-                region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-              # windows_dualstackoverlay_e2e:
-              #   name: windows_dualstackoverlay_e2e
-              #   clusterName: "windsovere2e"
-              #   region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-              cilium_dualstackoverlay_e2e:
-                name: cilium_dualstackoverlay_e2e
-                clusterName: "cildsovere2e"
-                region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-          steps:
-            - template: templates/delete-cluster.yaml
-              parameters:
-                name: $(name)
-                clusterName: $(clusterName)-$(commitID)
-                region: $(region)
-                sub: $(SUB_AZURE_NETWORK_AGENT_BUILD_VALIDATIONS)
-                svcConn: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
+    # - stage: delete
+    #   displayName: Delete Clusters
+    #   condition: always()
+    #   dependsOn:
+    #     - setup
+    #     - linux_azure_overlay_e2e
+    #     # - win_azure_overlay_e2e
+    #     # - azure_overlay_stateless_e2e
+    #     - aks_swift_e2e
+    #     - cilium_e2e
+    #     - cilium_nodesubnet_e2e
+    #     - cilium_overlay_e2e
+    #     - cilium_h_overlay_e2e
+    #     - aks_ubuntu_22_linux_e2e
+    #     - aks_swift_vnetscale_e2e
+    #     # - aks_windows_22_e2e
+    #     - linux_dualstackoverlay_e2e
+    #     # - win_dualstackoverlay_e2e
+    #     - cilium_dualstackoverlay_e2e
+    #   variables:
+    #     commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
+    #   jobs:
+    #     - job: delete_build
+    #       displayName: Delete Cluster
+    #       pool:
+    #         name: "$(BUILD_POOL_NAME_DEFAULT)"
+    #       strategy:
+    #         matrix:
+    #           cilium_e2e:
+    #             name: cilium_e2e
+    #             clusterName: "ciliume2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           cilium_nodesubnet_e2e:
+    #             name: cilium_nodesubnet_e2e
+    #             clusterName: "cilndsubnete2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           cilium_overlay_e2e:
+    #             name: cilium_overlay_e2e
+    #             clusterName: "cilovere2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           cilium_h_overlay_e2e:
+    #             name: cilium_h_overlay_e2e
+    #             clusterName: "cilwhleovere2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           linux_azure_overlay_e2e:
+    #             name: linux_azure_overlay_e2e
+    #             clusterName: "linuxazovere2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           # windows_azure_overlay_e2e:
+    #           #   name: win_azure_overlay_e2e
+    #           #   clusterName: "winazovere2e"
+    #           #   region: $(REGION_AKS_CLUSTER_TEST)
+    #           # azure_overlay_stateless_e2e:
+    #           #   name: azure_overlay_stateless_e2e
+    #           #   clusterName: "statelesswin"
+    #           #   region: $(REGION_AKS_CLUSTER_TEST)
+    #           aks_swift_e2e:
+    #             name: aks_swift_e2e
+    #             clusterName: "swifte2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           aks_swift_vnetscale_e2e:
+    #             name: aks_swift_vnetscale_e2e
+    #             clusterName: "vscaleswifte2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           aks_ubuntu_22_linux_e2e:
+    #             name: aks_ubuntu_22_linux_e2e
+    #             clusterName: "ubuntu22e2e"
+    #             region: $(REGION_AKS_CLUSTER_TEST)
+    #           # aks_windows_22_e2e:
+    #           #   name: aks_windows_22_e2e
+    #           #   clusterName: "win22e2e"
+    #           #   region: $(REGION_AKS_CLUSTER_TEST)
+    #           linux_dualstackoverlay_e2e:
+    #             name: linux_dualstackoverlay_e2e
+    #             clusterName: "linuxdsovere2e"
+    #             region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+    #           # windows_dualstackoverlay_e2e:
+    #           #   name: windows_dualstackoverlay_e2e
+    #           #   clusterName: "windsovere2e"
+    #           #   region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+    #           cilium_dualstackoverlay_e2e:
+    #             name: cilium_dualstackoverlay_e2e
+    #             clusterName: "cildsovere2e"
+    #             region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+    #       steps:
+    #         - template: templates/delete-cluster.yaml
+    #           parameters:
+    #             name: $(name)
+    #             clusterName: $(clusterName)-$(commitID)
+    #             region: $(region)
+    #             sub: $(SUB_AZURE_NETWORK_AGENT_BUILD_VALIDATIONS)
+    #             svcConn: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
