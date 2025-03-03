@@ -32,9 +32,9 @@ for unique in $sufixes; do
                 --set endpointRoutes.enabled=true \
                 --set bpf.hostLegacyRouting=true \
                 --set envoy.enabled=false
-    cd ../cilium
-    ./deploy_image.sh krunaljainhybridtest ${clusterPrefix}-${unique}
-    cd ../azure-container-networking
+    # cd ../cilium
+    # ./deploy_image.sh krunaljainhybridtest ${clusterPrefix}-${unique}
+    # cd ../azure-container-networking
 done
 
 VNET_ID1=$(az network vnet show \
