@@ -345,7 +345,7 @@ stages:
       parameters:
         name: "aks_ubuntu_22_linux_e2e"
         displayName: AKS Ubuntu 22
-        arch: "amd64"
+        arch: "arm64"
         os: "linux"
         clusterType: cniv1-up
         clusterName: "ubuntu22e2e"
