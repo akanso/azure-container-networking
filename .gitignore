@@ -31,6 +31,7 @@ go.work*
 
 # scale-test
 test/scale/generated/*
+test/scale/node-readiness/generated/*
 
 # test env file
 *.env
