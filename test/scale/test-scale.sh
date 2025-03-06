@@ -304,7 +304,7 @@ wait_for_pods() {
     fi
 
     if [[ $numRealPods -gt 0 ]]; then
-        # wait up to 10 minutes
+        # wait up to 60 minutes
         startDate=`date +%s`
         count=0
         while : ; do
@@ -314,7 +314,7 @@ wait_for_pods() {
             $KUBECTL $KUBECONFIG_ARG wait --for=condition=Ready pods -n scale-test -l is-real=true --all --timeout=0 && set -e +x && break
             set -e +x
             endDate=`date +%s`
-            if [[ $endDate -gt $(( startDate + (10*60) )) ]]; then
+            if [[ $endDate -gt $(( startDate + (60*60) )) ]]; then
                 echo "timed out waiting for all real pods to run"
                 exit 1
             fi
