@@ -10,7 +10,7 @@ jobs:
   pool:
     name: $(BUILD_POOL_NAME_DEFAULT)
     os: linux
-    image: acn-runner-vmss-image-1es-v3.0
+    image: acn-runner-vmss-image-1es-v3.1
     demands:
     - Role -equals $(CUSTOM_E2E_ROLE)
   timeoutInMinutes: 30
