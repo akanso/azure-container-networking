@@ -120,7 +120,11 @@ func start(config npmconfig.Config, flags npmconfig.Flags) error {
 	klog.Infof("Resync period for NPM pod is set to %d.", int(resyncPeriod/time.Minute))
 	factory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
 
-	err = metrics.CreateTelemetryHandle(config.NPMVersion(), version, npm.GetAIMetadata())
+	logLevel := config.LogLevel
+	if logLevel == "" {
+		logLevel = npmconfig.DefaultConfig.LogLevel
+	}
+	err = metrics.CreateTelemetryHandle(config.NPMVersion(), version, npm.GetAIMetadata(), logLevel)
 	if err != nil {
 		klog.Infof("CreateTelemetryHandle failed with error %v. AITelemetry is not initialized.", err)
 	}
