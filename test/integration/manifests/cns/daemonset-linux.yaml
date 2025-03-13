@@ -44,6 +44,24 @@ spec:
           image: acnpublic.azurecr.io/azure-cns:latest
           imagePullPolicy: IfNotPresent
           args: [ "-c", "tcp://$(CNSIpAddress):$(CNSPort)", "-t", "$(CNSLogTarget)"]
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: metrics
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /healthz
+              port: metrics
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
           securityContext:
             capabilities:
               drop:
@@ -72,6 +90,18 @@ spec:
               mountPath: /etc/cni/net.d
           ports:
             - containerPort: 10090
+              name: api
+              protocol: TCP
+            - containerPort: 10092
+              name: metrics
+              protocol: TCP
+          resources:
+          limits:
+            cpu: 40m
+            memory: 250Mi
+          requests:
+            cpu: 40m
+            memory: 250Mi
           env:
             - name: CNSIpAddress
               value: "127.0.0.1"
@@ -124,6 +154,7 @@ spec:
             - name: cni-conflist
               mountPath: /etc/cni/net.d
       hostNetwork: true
+      dnsPolicy: ClusterFirst
       volumes:
         - name: cni-conflist
           hostPath:
