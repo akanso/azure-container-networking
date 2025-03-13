@@ -123,9 +123,3 @@ kubectl rollout status daemonset/fluentd-cilium-logs -n kube-system
 echo "Deployment complete! To view logs, run:"
 echo "kubectl logs -f -n kube-system -l k8s-app=fluentd-cilium-logs"
 
-# Optional: Show logs immediately
-read -p "Do you want to view the logs now? (y/n): " view_logs
-if [[ "$view_logs" == "y" || "$view_logs" == "Y" ]]; then
-  echo "Displaying logs from the first pod (Ctrl+C to exit):"
-  kubectl logs -f -n kube-system -l k8s-app=fluentd-cilium-logs
-fi
