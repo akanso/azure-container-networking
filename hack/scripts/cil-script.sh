@@ -6,7 +6,7 @@
 # clusterType - overlay-byocni-nokubeproxy-up-mesh is primary atm, but leaving for testing later.
 # Example command: clusterPrefix=<alais> sufix1=1 sufix2=2 SUB=<GUID> clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
 
-sufixes="${sufix1} ${sufix2}"
+sufixes="${sufix1}"
 install=acn
 echo "sufixes ${sufixes}"
 
@@ -89,45 +89,3 @@ for unique in $sufixes; do
         kubectl get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,HOSTNETWORK:.spec.hostNetwork --no-headers=true | grep '<none>' | awk '{print "-n "$1" "$2}' | xargs -L 1 -r kubectl delete pod
     fi
 done
-
-cd hack/scripts
-
-VNET_ID1=$(az network vnet show \
-    --resource-group "${clusterPrefix}-${sufix1}-rg" \
-    --name "${clusterPrefix}-${sufix1}-vnet" \
-    --query id -o tsv)
-
-VNET_ID2=$(az network vnet show \
-    --resource-group "${clusterPrefix}-${sufix2}-rg" \
-    --name "${clusterPrefix}-${sufix2}-vnet" \
-    --query id -o tsv)
-
-az network vnet peering create \
-    -g "${clusterPrefix}-${sufix1}-rg" \
-    --name "peering-${clusterPrefix}-${sufix1}-to-${clusterPrefix}-${sufix2}" \
-    --vnet-name "${clusterPrefix}-${sufix1}-vnet" \
-    --remote-vnet "${VNET_ID2}" \
-    --allow-vnet-access
-
-az network vnet peering create \
-    -g "${clusterPrefix}-${sufix2}-rg" \
-    --name "peering-${clusterPrefix}-${sufix2}-to-${clusterPrefix}-${sufix1}" \
-    --vnet-name "${clusterPrefix}-${sufix2}-vnet" \
-    --remote-vnet "${VNET_ID1}" \
-    --allow-vnet-access
-
-if [ $install == "helm" ]; then
-    cilium clustermesh enable --context ${clusterPrefix}-${sufix1} --enable-kvstoremesh=true
-    cilium clustermesh enable --context ${clusterPrefix}-${sufix2} --enable-kvstoremesh=true
-    # cilium clustermesh enable --enable-kvstoremesh=true
-
-    cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
-    cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
-
-    # # # CA is passed between clusters in this step
-    cilium clustermesh connect --context ${clusterPrefix}-${sufix2} --destination-context ${clusterPrefix}-${sufix1}
-    # # These can be run in parallel in different bash shells
-
-    cilium clustermesh status --context ${clusterPrefix}-${sufix1} --wait
-    cilium clustermesh status --context ${clusterPrefix}-${sufix2} --wait
-fi
