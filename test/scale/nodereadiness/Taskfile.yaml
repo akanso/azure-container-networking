@@ -15,7 +15,7 @@ tasks:
   skale-*:
     desc: Scale the Kwok nodes.
     vars:
-      SUBNETGUID: "cf649a07-6690-41ff-b9ef-a5be9582de4f"
+      SUBNETGUID: "b696ad03-c56e-4437-906d-1ec7e5012d87"
       NODES: '{{index .MATCH 0}}'
     cmds:
       # - ./scripts/test-and-result.sh {{.NODES}} {{.SUBNETGUID}}
@@ -41,4 +41,5 @@ tasks:
       - kubectl delete -f ./files/nncscale_pod.yaml
       - kubectl delete -f ./files/prom-deployment.yaml
       - kubectl delete nodes -l type=kwok
-      # TODO: Delete kwok nodes with skale?
+      - kubectl delete cm node-config
+        # TODO: Delete kwok nodes with skale?

@@ -16,6 +16,14 @@ spec:
     imagePullPolicy: Always
     ports:
     - containerPort: 2112
+    env:
+    - name: NODES_VAL
+      valueFrom:
+        configMapKeyRef:
+          name: node-config
+          key: NODES_KEY
+    args: 
+    - "$(NODES_VAL)"
   serviceAccountName: nncscale
   tolerations:
         - key: "node-role.kubernetes.io/control-plane"

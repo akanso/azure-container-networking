@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,7 +38,7 @@ var (
 		Name: "nnc_creation_latency_seconds",
 		Help: "Latency between NNC added and created",
 		Buckets: []float64{0.05, 0.1, 0.5, 1.0, 1.5, 2, 3,
-			4, 5, 6, 8, 10, 15, 20, 30, 45, 60, 120, 180, 240, 300, 450, 600, 900, 1200}, // WIP
+			4, 5, 6, 8, 10, 15, 20, 30, 45, 60, 120, 180, 240, 300, 450, 600, 900, 1200},
 	}, []string{"stage"})
 
 	nncReadyCount = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -65,13 +67,20 @@ type NNCController struct {
 	rcCreateNNC  map[string]time.Time
 	dncRcStatus  map[string]time.Time
 
+	goalNodes      int
+	firstNNCCreate time.Time
+	lastNNCReady   time.Time
+	sumNNCCreate   float64
+	totalNNCCreate int
+
 	sync.RWMutex
 }
 
 func NewNNCController(
 	ctx context.Context,
 	dynamicClient dynamic.Interface,
-	clientset *kubernetes.Clientset) *NNCController {
+	clientset *kubernetes.Clientset,
+	goalNodes int) *NNCController {
 	workqueue := workqueue.NewTypedRateLimitingQueue(
 		workqueue.DefaultTypedControllerRateLimiter[interface{}]())
 
@@ -86,23 +95,26 @@ func NewNNCController(
 	}
 
 	controller := &NNCController{
-		dynamicClient: dynamicClient,
-		workqueue:     workqueue,
-		nodeCreation:  make(map[string]time.Time),
-		nncCreation:   make(map[string]time.Time),
-		nncReady:      make(map[string]time.Time),
-		nodeReady:     make(map[string]struct{}),
-		rcCreateNNC:   make(map[string]time.Time),
-		dncRcStatus:   make(map[string]time.Time),
-		clientset:     clientset,
-		informer:      informer,
-		nodeWatcher:   nodeWatcher,
+		dynamicClient:  dynamicClient,
+		workqueue:      workqueue,
+		nodeCreation:   make(map[string]time.Time),
+		nncCreation:    make(map[string]time.Time),
+		nncReady:       make(map[string]time.Time),
+		nodeReady:      make(map[string]struct{}),
+		rcCreateNNC:    make(map[string]time.Time),
+		dncRcStatus:    make(map[string]time.Time),
+		sumNNCCreate:   0,
+		totalNNCCreate: 0,
+		clientset:      clientset,
+		informer:       informer,
+		nodeWatcher:    nodeWatcher,
+		goalNodes:      goalNodes,
 	}
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    controller.addNNC,
 		UpdateFunc: controller.updateNNC,
-		DeleteFunc: func(obj interface{}) {},
+		DeleteFunc: controller.deleteNNC,
 	})
 
 	go func() { // TODO: Move to separate controller?
@@ -110,8 +122,14 @@ func NewNNCController(
 			switch event.Type {
 			case watch.Added:
 				name := event.Object.(*corev1.Node).Name
-				log.Printf("Node %v\n", name)
+				//log.Printf("Node %v\n", name)
 				timestamp := event.Object.(*corev1.Node).CreationTimestamp.Time
+				// First Node create
+				if len(controller.nodeCreation) == 0 {
+					log.Printf("First Node created: %v\n", name)
+					controller.firstNNCCreate = timestamp
+				}
+
 				if _, ok := controller.nodeCreation[name]; !ok {
 					controller.nodeCreation[name] = timestamp
 					log.Printf("Node added: %v at %v \n", name, timestamp)
@@ -131,6 +149,13 @@ func NewNNCController(
 					}
 				}
 			case watch.Deleted:
+				name := event.Object.(*corev1.Node).Name
+				if _, ok := controller.nodeReady[name]; ok {
+					delete(controller.nodeReady, name)
+					delete(controller.nodeCreation, name)
+					nodeReadyCount.Dec()
+					log.Printf("Node deleted: %v\n", name)
+				}
 			case watch.Error:
 			case watch.Bookmark:
 			}
@@ -182,7 +207,7 @@ func (c *NNCController) processNextWorkItem(ctx context.Context) bool {
 }
 
 func (c *NNCController) addNNC(obj interface{}) {
-	log.Printf("NNC added: %v\n", obj.(*unstructured.Unstructured).GetName())
+	//log.Printf("NNC added: %v\n", obj.(*unstructured.Unstructured).GetName())
 	name := obj.(*unstructured.Unstructured).GetName()
 	timestamp := obj.(*unstructured.Unstructured).GetCreationTimestamp().Time
 	if !isKwok(name) {
@@ -190,7 +215,7 @@ func (c *NNCController) addNNC(obj interface{}) {
 	}
 	if _, ok := c.nncCreation[name]; !ok {
 		c.nncCreation[name] = timestamp
-		log.Printf("NNC created: %v at %v \n", name, timestamp)
+		//log.Printf("NNC created: %v at %v \n", name, timestamp)
 		if _, ok := c.nodeCreation[name]; ok {
 			latency := c.nncCreation[name].Sub(c.nodeCreation[name])
 			nncLatency.WithLabelValues("nodetonnc").Observe(latency.Seconds())
@@ -199,7 +224,7 @@ func (c *NNCController) addNNC(obj interface{}) {
 }
 
 func (c *NNCController) updateNNC(oldObj, newObj interface{}) {
-	log.Printf("NNC updated: %v\n", newObj.(*unstructured.Unstructured).GetName())
+	//log.Printf("NNC updated: %v\n", newObj.(*unstructured.Unstructured).GetName())
 	// NNC Status written, as observed (less accurate)
 	if newObj.(*unstructured.Unstructured).Object != nil && newObj.(*unstructured.Unstructured).Object["status"] != nil {
 		timestamp := time.Now() // probs not super accurate
@@ -209,18 +234,17 @@ func (c *NNCController) updateNNC(oldObj, newObj interface{}) {
 		}
 		if _, ok := c.nncReady[name]; !ok {
 			c.nncReady[name] = timestamp
-			log.Printf("NNC ready: %v at %v \n", name, timestamp)
+			//log.Printf("NNC ready: %v at %v \n", name, timestamp)
 			if _, ok := c.nncCreation[name]; ok {
 				latency := c.nncReady[name].Sub(c.nncCreation[name])
-				log.Printf("NNC %v was created at %v and is ready at %v, with a latency of: %v\n", name, c.nncCreation[name], c.nncReady[name], latency.Seconds())
 				nncLatency.WithLabelValues("nncready").Observe(latency.Seconds())
-				nncReadyCount.Inc()
 			}
 		}
 	}
 	// Parse Managed Field Timestamps
 	managedFields := newObj.(*unstructured.Unstructured).GetManagedFields()
 	if managedFields != nil {
+		log.Printf("NNC Update Managed fields: %v\n", managedFields)
 		for _, field := range managedFields {
 			if field.Manager == "dnc-rc" && field.Operation == "Update" {
 				timestamp := field.Time
@@ -229,10 +253,33 @@ func (c *NNCController) updateNNC(oldObj, newObj interface{}) {
 					if _, ok := c.dncRcStatus[name]; !ok {
 						c.dncRcStatus[name] = timestamp.Time
 						latency := c.dncRcStatus[name].Sub(c.rcCreateNNC[name])
+						log.Printf("NNC %v was created at %v and is ready at %v, with a latency of: %v\n", name, c.rcCreateNNC[name], c.dncRcStatus[name], latency.Seconds())
+						log.Printf("ready: %v of %v", len(c.dncRcStatus), c.goalNodes)
 						nncLatency.WithLabelValues("createToStatus").Observe(latency.Seconds())
+
+						latency2 := c.dncRcStatus[name].Sub(c.nodeCreation[name])
+						nncLatency.WithLabelValues("nodecreatetonncstatus").Observe(latency2.Seconds())
+
+						c.sumNNCCreate += latency.Seconds()
+						c.totalNNCCreate++
+						nncReadyCount.Inc()
+						// All NNCs ready
+						if len(c.dncRcStatus) == c.goalNodes {
+							log.Printf("All NNCs ready\n")
+							c.lastNNCReady = timestamp.Time
+							c.getMetrics()
+							os.Exit(0)
+						}
 					}
 				} else {
 					if _, ok := c.rcCreateNNC[name]; !ok {
+						log.Printf("NNC %v was created at %v\n", name, timestamp.Time)
+						// // First NNC create
+						// if len(c.rcCreateNNC) == 0 {
+						// 	log.Printf("First NNC created: %v\n", name)
+						// 	c.firstNNCCreate = timestamp.Time
+						// }
+
 						c.rcCreateNNC[name] = timestamp.Time
 						latency := c.rcCreateNNC[name].Sub(c.nncCreation[name])
 						nncLatency.WithLabelValues("rcCreate").Observe(latency.Seconds())
@@ -243,11 +290,93 @@ func (c *NNCController) updateNNC(oldObj, newObj interface{}) {
 	}
 }
 
+func (c *NNCController) deleteNNC(obj interface{}) {
+	name := obj.(*unstructured.Unstructured).GetName()
+	if !isKwok(name) {
+		return
+	}
+	if _, ok := c.nncCreation[name]; ok {
+		log.Printf("NNC deleted: %v\n", obj.(*unstructured.Unstructured))
+		// delete(c.nncCreation, name)
+		// delete(c.nncReady, name)
+		// delete(c.rcCreateNNC, name)
+		// delete(c.dncRcStatus, name)
+		// nncReadyCount.Dec()
+	}
+}
+
 func isKwok(name string) bool {
 	return strings.Contains(name, "skale")
 }
 
+// Fix formatting
+func (c *NNCController) getMetrics() {
+	filename := time.Now().String() + "-" + strconv.Itoa(c.goalNodes) + "-" + "metrics.txt"
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	log.Printf("~~~Test Summary~~~")
+	file.WriteString("~~~Test Summary~~~\n")
+	log.Printf("First NNC Create, %v\n", c.firstNNCCreate)
+	file.WriteString("First NNC Create, " + c.firstNNCCreate.String() + "\n")
+	log.Printf("Last NNC Ready: %v\n", c.lastNNCReady)
+	file.WriteString("Last NNC Ready, " + c.lastNNCReady.String() + "\n")
+	testDuration := c.lastNNCReady.Sub(c.firstNNCCreate)
+	log.Printf("Time for all NNCs to be ready: %v\n", testDuration)
+	file.WriteString("Time for all NNCs to be ready, " + testDuration.String() + "\n")
+	log.Printf("Average NNC Creation Latency: %v\n", c.sumNNCCreate/float64(c.totalNNCCreate))
+	file.WriteString("Average NNC Creation Latency, " + strconv.FormatFloat(c.sumNNCCreate/float64(c.totalNNCCreate), 'f', 6, 64) + "\n")
+
+	// client, err := api.NewClient(api.Config{
+	// 	Address: "http://localhost:2112/metrics",
+	// })
+	// if err != nil {
+	// 	log.Fatalf("Error creating client: %v", err)
+	// }
+
+	// v1api := v1.NewAPI(client)
+	// ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	// defer cancel()
+
+	// t1 := c.lastNNCReady.Add(time.Minute)
+	// t2 := t1.Sub(c.firstNNCCreate).Round(1 * time.Minute)
+	// testTime := strings.Split(t2.String(), "m")[0] + "m"
+
+	// queries := []string{
+	// 	"rate(nnc_creation_latency_seconds_sum{stage='createToStatus'[" +
+	// 		testTime + "m])/rate(nnc_creation_latency_seconds_count[" + testTime + "])",
+	// 	"histogram_quantile(0.99, sum by(le) (rate(nnc_creation_latency_seconds_bucket{stage='createToStatus'}[" +
+	// 		testTime + "])))",
+	// 	"histogram_quantile(0.90, sum by(le) (rate(nnc_creation_latency_seconds_bucket{stage='createToStatus'}[" +
+	// 		testTime + "])))",
+	// 	"histogram_quantile(0.50, sum by(le) (rate(nnc_creation_latency_seconds_bucket{stage='createToStatus'}[" +
+	// 		testTime + "])))",
+	// }
+	// queryKeys := []string{"Average", "P99", "P90", "P50"} // deal with this later
+	// sort.Strings(queries)
+
+	// for i, query := range queryKeys {
+	// 	log.Printf("name %v query %v", query, queries[i])
+	// 	result, warnings, err := v1api.Query(ctx, queries[i], time.Now())
+	// 	if err != nil {
+	// 		log.Printf("Error querying: %v", err)
+	// 	}
+	// 	if len(warnings) > 0 {
+	// 		log.Printf("Warnings: %v", warnings)
+	// 	}
+	// 	log.Printf("%v: %v", query, result)
+	// 	file.WriteString(query + ", " + result.String() + "\n")
+	// }
+	// file.Sync()
+}
+
 func main() {
+	// args
+	goalNodes := os.Args[1]
+
 	// create in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -266,7 +395,11 @@ func main() {
 	prometheus.MustRegister(nncLatency, nncReadyCount, nodeReadyCount)
 
 	ctx := context.Background()
-	nncController := NewNNCController(ctx, dynamicClient, clientset)
+	nodes, err := strconv.Atoi(goalNodes)
+	if err != nil {
+		log.Fatalf("Error parsing goal nodes: %v", err)
+	}
+	nncController := NewNNCController(ctx, dynamicClient, clientset, nodes)
 	go nncController.Run(ctx, 20)
 
 	http.Handle("/metrics", promhttp.Handler())

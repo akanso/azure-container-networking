@@ -1,0 +1,50 @@
+{"status":"success","data":{"name":"20250306T232909Z-24eaecc7665f3c3b"}}
+
+"managedFields": [
+      {
+        "apiVersion": "acn.azure.com/v1alpha",
+        "fieldsType": "FieldsV1",
+        "fieldsV1": {
+          "f:metadata": {
+            "f:finalizers": {
+              ".": {},
+              "v:\"finalizers.acn.azure.com/dnc-operations\"": {}
+            },
+            "f:labels": {
+              ".": {},
+              "f:kubernetes.azure.com/podnetwork-delegationguid": {},
+              "f:kubernetes.azure.com/podnetwork-subnet": {},
+              "f:kubernetes.azure.com/podnetwork-type": {},
+              "f:managed": {},
+              "f:owner": {}
+            },
+            "f:ownerReferences": {
+              ".": {},
+              "k:{\"uid\":\"4ccb35fb-b493-47b0-a2b1-eff73c7cc03d\"}": {}
+            }
+          },
+          "f:spec": {
+            ".": {},
+            "f:requestedIPCount": {}
+          }
+        },
+        "manager": "dnc-rc",
+        "operation": "Update",
+        "time": "2025-03-06T23:27:58Z"
+      },
+      {
+        "apiVersion": "acn.azure.com/v1alpha",
+        "fieldsType": "FieldsV1",
+        "fieldsV1": {
+          "f:status": {
+            ".": {},
+            "f:assignedIPCount": {},
+            "f:networkContainers": {}
+          }
+        },
+        "manager": "dnc-rc",
+        "operation": "Update",
+        "subresource": "status",
+        "time": "2025-03-06T23:27:59Z"
+      }
+    ],

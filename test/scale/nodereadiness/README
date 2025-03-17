@@ -5,10 +5,19 @@ For skale image build:
 `go build -o ../nodereadiness/skale`
 
 Testing commands:
+`./test-vnetscale.sh <nodes:int> <delandrecreate:bool>`
+where `nodes` is the number of nodes you want to create
+and `delandrecreate` is whether to delete and recreate 50%
+of the nodes. (E.g. `./test-vnetscale.sh 50 true`).
+This command may be combined with `task prom` to view metrics
+and `task teardown` to clean up after the test.
+
+Testing commands:
 `task kwok` in a separate terminal.
 
 `task setup` -> Set up pods on cluster.
 `task prom` -> Prometheus at localhost:9002
+`task graf` -> Set up local Grafana (assuming it is installed) at localhost:3000
 `task skale-1000` -> Scale up to 1000 Kwok nodes.
 
 Cleanup:
