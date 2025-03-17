@@ -223,8 +223,9 @@ func WaitForPodsRunning(ctx context.Context, clientset *kubernetes.Clientset, na
 
 		for index := range podList.Items {
 			pod := podList.Items[index]
-			if pod.Status.Phase == corev1.PodPending {
-				return errors.New("some pods still pending")
+			if pod.Status.Phase != corev1.PodRunning {
+				log.Printf("Pod %s/%s is still in %s with reason %s", pod.Namespace, pod.Name, pod.Status.Phase, pod.Status.Message)
+				return errors.Wrapf(err, "Pod %s/%s is still in %s with reason %s", pod.Namespace, pod.Name, pod.Status.Phase, pod.Status.Message)
 			}
 		}
 

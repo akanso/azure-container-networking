@@ -13,8 +13,14 @@ steps:
       addSpnToEnvironment: true
       inlineScript: |
         make -C ./hack/aks set-kubeconf AZCLI=az CLUSTER=${{ parameters.clusterName }}
-        kubectl get pods -A
+        kubectl get pods -A -o wide
         make test-validate-state OS_TYPE=${{ parameters.os }} RESTART_CASE=${{ parameters.restartCase }} CNI_TYPE=${{ parameters.cni }}
     name: "ValidateState"
     displayName: "Validate State"
+    retryCountOnTaskFailure: 3
+  - script: |
+      set -e
+      kubectl get pods -A -o wide
+    condition: always()
+    displayName: "Print State"
     retryCountOnTaskFailure: 3

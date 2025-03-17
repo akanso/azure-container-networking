@@ -76,3 +76,9 @@ steps:
       kubectl delete ns load-test
     displayName: "Validate State"
     retryCountOnTaskFailure: 3
+  - script: |
+      set -e
+      kubectl get pods -A -o wide
+    condition: always()
+    displayName: "Print State"
+    retryCountOnTaskFailure: 3

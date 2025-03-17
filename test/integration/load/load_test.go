@@ -4,6 +4,7 @@ package load
 
 import (
 	"context"
+	"log"
 	"testing"
 	"time"
 
@@ -170,6 +171,16 @@ func TestValidateState(t *testing.T) {
 		err = kubernetes.WaitForPodDeployment(ctx, clientset, namespace, deployment.Name, podLabelSelector, int(replicas))
 		require.NoError(t, err)
 	}
+
+	childCtx, childCancel := context.WithTimeout(ctx, 8*time.Minute)
+	defer childCancel()
+	log.Printf("Waiting for ALL pods in ALL namespaces to start running")
+	err := kubernetes.WaitForPodsRunning(childCtx, clientset, "", "")
+	require.NoError(t, err)
+	time.Sleep(time.Second * 40)
+	log.Printf("Waiting for ALL pods in ALL namespaces to start running again to ensure not a fluke")
+	err = kubernetes.WaitForPodsRunning(childCtx, clientset, "", "")
+	require.NoError(t, err)
 
 	validator, err := validate.CreateValidator(ctx, clientset, config, namespace, testConfig.CNIType, testConfig.RestartCase, testConfig.OSType)
 	require.NoError(t, err)
