@@ -38,7 +38,7 @@ steps:
         kubectl rollout status deploy -n load-test
 
         echo "Wait for all pods to be in running state"
-        kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=600s
+        kubectl wait --for=condition=Ready pods --all -A --timeout=600s
     name: "RestartNodes"
     displayName: "Restart Nodes"
 
