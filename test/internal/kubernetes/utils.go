@@ -49,6 +49,8 @@ const (
 )
 
 var Kubeconfig = flag.String("test-kubeconfig", filepath.Join(homedir.HomeDir(), ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+var errPodNotReady = errors.New("pod is not ready")
+var errPodNoIP = errors.New("pod missing ip")
 
 func GetKubeconfig() *string {
 	return Kubeconfig
@@ -225,14 +227,14 @@ func WaitForPodsRunning(ctx context.Context, clientset *kubernetes.Clientset, na
 			pod := podList.Items[index]
 			if pod.Status.Phase != corev1.PodRunning {
 				log.Printf("Pod %s/%s is still in %s with reason %s", pod.Namespace, pod.Name, pod.Status.Phase, pod.Status.Message)
-				return errors.Wrapf(err, "Pod %s/%s is still in %s with reason %s", pod.Namespace, pod.Name, pod.Status.Phase, pod.Status.Message)
+				return errors.Wrapf(errPodNotReady, "Pod %s/%s is still in %s with reason %s", pod.Namespace, pod.Name, pod.Status.Phase, pod.Status.Message)
 			}
 		}
 
 		for index := range podList.Items {
 			pod := podList.Items[index]
 			if pod.Status.PodIP == "" {
-				return errors.Wrapf(err, "Pod %s/%s has not been allocated an IP yet with reason %s", pod.Namespace, pod.Name, pod.Status.Message)
+				return errors.Wrapf(errPodNoIP, "Pod %s/%s has not been allocated an IP yet with reason %s", pod.Namespace, pod.Name, pod.Status.Message)
 			}
 		}
 
