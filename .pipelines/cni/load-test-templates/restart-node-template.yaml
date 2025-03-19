@@ -38,7 +38,8 @@ steps:
         kubectl rollout status deploy -n load-test
 
         echo "Wait for all pods to be in running state"
-        kubectl wait --for=condition=Ready pods --all -A --timeout=1200s 2>&1 | grep -v 'Error from server (NotFound): pods' || true
+        # Wait 15m for all pods to be in running state, do not fail if there is pod not found error since the pod might have been restarted during the wait for ready
+        kubectl wait --for=condition=Ready pods --all -A --timeout=900s 2>&1 | grep -v 'Error from server (NotFound): pods' || true
     name: "RestartNodes"
     displayName: "Restart Nodes"
 
