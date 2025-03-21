@@ -57,6 +57,10 @@ spec:
               fieldPath: metadata.namespace
         - name: CILIUM_CLUSTERMESH_CONFIG
           value: /var/lib/cilium/clustermesh/
+        - name: KUBE_CLIENT_BACKOFF_BASE
+          value: "1"
+        - name: KUBE_CLIENT_BACKOFF_DURATION
+          value: "120"
         image: $CILIUM_IMAGE_REGISTRY/cilium/cilium:$CILIUM_VERSION_TAG
         imagePullPolicy: IfNotPresent
         livenessProbe:
