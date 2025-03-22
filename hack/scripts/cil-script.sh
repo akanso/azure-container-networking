@@ -17,13 +17,23 @@ for unique in $sufixes; do
         CLUSTER=${clusterPrefix}-${unique} \
         POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
         VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
-
+    cluster_id=1
+    if (( unique % 2 == 0 )); then
+        echo "overriding cluster id to 2 for $unique"
+        cluster_id=2
+    fi
     if [ $install == "helm" ]; then
         cilium install -n kube-system cilium cilium/cilium --version v1.16.1 \
-        --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${unique} \
+        --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${cluster_id} \
         --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
+        --set cluster.name=${clusterPrefix}-${unique} \
         --set hubble.enabled=false \
+        --set debug.enabled=true \
+        --set debug.verbose="datapath" \
+        --set endpointRoutes.enabled=true \
+        --set bpf.hostLegacyRouting=true \
         --set envoy.enabled=false
+
 
     else # Ignore this block for now, was testing internal resources.
         kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
