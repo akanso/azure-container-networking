@@ -59,14 +59,17 @@ EOF
             --set kubeProxyReplacementHealthzBindAddr='0.0.0.0:10256' \
             --set extraArgs="{--local-router-ipv4=192.${unique}0.0.9} {--install-iptables-rules=true}" \
             --set endpointHealthChecking.enabled=false \
-            --set cni.exclusive=false \
             --set cni.install=true \
+            --set cni.exclusive=false \
             --set cni.customConf=true \
             --set cni.configMap="cni-configuration" \
             --set bpf.enableTCX=false \
             --set bpf.hostLegacyRouting=true \
             --set l7Proxy=false \
-            --set sessionAffinity=true
+            --set sessionAffinity=true \
+            --set image.tag=krunaljainhybridtest \
+            --set image.useDigest=false
+
     fi
 done
 cd ../cilium
