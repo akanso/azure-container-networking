@@ -1,16 +1,16 @@
 stages:
   - stage: setup
     displayName: ACN
-    variables:
-      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     jobs:
     - job: env
       displayName: Setup
       pool:
         type: linux
-        steps:
-          - bash: |
-              echo "all good."
+      variables:
+        ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+      steps:
+        - bash: |
+            echo "all good."
           #isCustom: true
           #name: "$(BUILD_POOL_NAME_DEFAULT)"
 
