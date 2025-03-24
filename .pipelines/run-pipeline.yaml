@@ -6,6 +6,8 @@ stages:
       displayName: Setup
       pool:
         type: linux
+        isCustom: true
+        name: "$(BUILD_POOL_NAME_DEFAULT)"
       variables:
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
       steps:
