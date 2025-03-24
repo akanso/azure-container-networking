@@ -3,16 +3,16 @@ stages:
     displayName: Test ACN
     dependsOn:
       - setup
+    pool:
+      isCustom: true
+      type: linux
+      name: "$(BUILD_POOL_NAME_DEFAULT)"
     jobs:
       - job: test
         displayName: Run Tests
         variables:
           STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
           ob_git_checkout: true
-        pool:
-          isCustom: true
-          type: linux
-          name: "$(BUILD_POOL_NAME_DEFAULT)"
         steps:
           # Test changes under review
           - checkout: ACNReviewChanges
@@ -37,16 +37,16 @@ stages:
     displayName: Test ACN Windows
     dependsOn:
       - setup
+    pool:
+      isCustom: true
+      type: windows
+      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
     jobs:
       - job: test
         displayName: Run Tests
         variables:
           STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
           ob_git_checkout: true
-        pool:
-          isCustom: true
-          type: windows
-          name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
         steps:
           # Test changes under review; only run one go test per script
           - checkout: ACNReviewChanges
