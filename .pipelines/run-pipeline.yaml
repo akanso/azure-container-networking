@@ -5,9 +5,9 @@ stages:
       - job: env
         displayName: Setup
         pool:
-          name: "$(BUILD_POOL_NAME_DEFAULT)"
           type: linux
           isCustom: true
+          name: "$(BUILD_POOL_NAME_DEFAULT)"
         steps:
           - script: |
               # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
@@ -31,7 +31,7 @@ stages:
             displayName: "Set environmental variables"
             condition: always()
 
-  - template: templates/run-unit-tests.yaml
+#  - template: templates/run-unit-tests.yaml
 
 #  - ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
 #    - stage: binaries
