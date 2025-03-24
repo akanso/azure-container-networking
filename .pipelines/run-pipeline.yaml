@@ -1,13 +1,13 @@
 stages:
   - stage: setup
     displayName: ACN
-    pool:
-      name: "$(BUILD_POOL_NAME_DEFAULT)"
-      type: linux
-      isCustom: true
     jobs:
       - job: env
         displayName: Setup
+        pool:
+          name: "$(BUILD_POOL_NAME_DEFAULT)"
+          type: linux
+          isCustom: true
         steps:
           - script: |
               # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
