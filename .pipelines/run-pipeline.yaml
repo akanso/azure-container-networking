@@ -1,10 +1,12 @@
 stages:
   - stage: setup
     displayName: ACN
+    pool:
+      name: "$(BUILD_POOL_NAME_DEFAULT)"
+      type: linux
     jobs:
       - job: env
         displayName: Setup
-
         steps:
           - script: |
               # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
@@ -36,12 +38,14 @@ stages:
       dependsOn:
         - setup
         - test
+      pool:
+        name: "$(BUILD_POOL_NAME_DEFAULT)"
+        type: linux
       jobs:
         - job: build
           displayName: Build Binaries
           variables:
             STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-
           steps:
             - script: |
                 make ipv6-hp-bpf-lib
@@ -76,10 +80,12 @@ stages:
       dependsOn:
         - setup
         - test
+      pool:
+        name: "$(BUILD_POOL_NAME_LINUX_AMD64)"
+        type: linux
       jobs:
         - job: containerize_amd64
           displayName: Build Images
-
           strategy:
             matrix:
               azure_ipam_linux_amd64:
@@ -127,7 +133,9 @@ stages:
                 os_version: $(os_version)
         - job: containerize_linux_arm64
           displayName: Build Images
-
+          pool:
+            name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
+            type: linux
           strategy:
             matrix:
               azure_ipam_linux_arm64:
@@ -161,12 +169,14 @@ stages:
       displayName: Publish Multiarch Manifests
       dependsOn:
         - containerize
+      pool:
+        name: "$(BUILD_POOL_NAME_DEFAULT)"
+        type: linux
       variables:
         Packaging.EnableSBOMSigning: false
       jobs:
         - job: manifest
           displayName: Compile Manifests
-
           strategy:
             matrix:
               azure_ipam:
@@ -376,12 +386,14 @@ stages:
         - linux_dualstackoverlay_e2e
         - win_dualstackoverlay_e2e
         - cilium_dualstackoverlay_e2e
+      pool:
+        name: "$(BUILD_POOL_NAME_DEFAULT)"
+        type: linux
       variables:
         commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
       jobs:
         - job: delete_build
           displayName: Delete Cluster
-
           strategy:
             matrix:
               cilium_e2e:
