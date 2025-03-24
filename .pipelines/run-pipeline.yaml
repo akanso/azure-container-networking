@@ -2,34 +2,44 @@ stages:
   - stage: setup
     displayName: ACN
     jobs:
-      - job: env
-        displayName: Setup
-        pool:
-          type: linux
-          isCustom: true
-          name: "$(BUILD_POOL_NAME_DEFAULT)"
+    - job: env
+      displayName: Setup
+      pool:
+        type: linux
         steps:
-          - script: |
-              # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
-              BUILD_NUMBER=$(Build.BuildNumber)
-              echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_NUMBER//./-})"
-              echo "##vso[task.setvariable variable=commitID;isOutput=true]$(echo $(make revision)-$(date "+%d%H%M"))"
-              echo "##vso[task.setvariable variable=Tag;isOutput=true]$(make version)"
-              echo "##vso[task.setvariable variable=npmVersion;isOutput=true]$(make npm-version)"
-              cat /etc/os-release
-              uname -a
-              sudo chown -R $(whoami):$(whoami) .
-              go version
-              go env
-              which go
-              echo $PATH
-              echo "------"
-              echo $(Build.QueuedBy)
-              echo $(Build.Reason) # manual, PR, IndividualCI
-              echo $(Build.SourceBranch)
-            name: "EnvironmentalVariables"
-            displayName: "Set environmental variables"
-            condition: always()
+          - bash: |
+              echo "all good."
+          #isCustom: true
+          #name: "$(BUILD_POOL_NAME_DEFAULT)"
+
+#      - job: env
+#        displayName: Setup
+#        pool:
+#          type: linux
+#            #isCustom: true
+#            #name: "$(BUILD_POOL_NAME_DEFAULT)"
+#        steps:
+#          - script: |
+#              # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
+#              BUILD_NUMBER=$(Build.BuildNumber)
+#              echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_NUMBER//./-})"
+#              echo "##vso[task.setvariable variable=commitID;isOutput=true]$(echo $(make revision)-$(date "+%d%H%M"))"
+#              echo "##vso[task.setvariable variable=Tag;isOutput=true]$(make version)"
+#              echo "##vso[task.setvariable variable=npmVersion;isOutput=true]$(make npm-version)"
+#              cat /etc/os-release
+#              uname -a
+#              sudo chown -R $(whoami):$(whoami) .
+#              go version
+#              go env
+#              which go
+#              echo $PATH
+#              echo "------"
+#              echo $(Build.QueuedBy)
+#              echo $(Build.Reason) # manual, PR, IndividualCI
+#              echo $(Build.SourceBranch)
+#            name: "EnvironmentalVariables"
+#            displayName: "Set environmental variables"
+#            condition: always()
 
 #  - template: templates/run-unit-tests.yaml
 
