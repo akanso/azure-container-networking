@@ -150,8 +150,12 @@ spec:
                 io.cilium/app: operator
             topologyKey: kubernetes.io/hostname
       tolerations:
-      - key: "CriticalAddonsOnly"
-        operator: "Exists"
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - operator: "Exists"
+        effect: NoExecute
+      - operator: "Exists"
+        effect: NoSchedule
       volumes:
         # To read the configuration from the config map
       - name: cilium-config-path
