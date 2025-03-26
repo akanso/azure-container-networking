@@ -33,7 +33,7 @@ stages:
       displayName: "Set environmental variables"
       condition: always()
 
-  - template: templates/run-unit-tests.yaml
+- template: templates/run-unit-tests.yaml
 
 #  - ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
 #    - stage: binaries
