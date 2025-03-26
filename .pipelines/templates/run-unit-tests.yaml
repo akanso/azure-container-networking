@@ -6,14 +6,13 @@ stages:
     jobs:
       - job: test
         displayName: Run Tests
-        variables:
-          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
         pool:
           type: linux
           isCustom: true
           name: "$(BUILD_POOL_NAME_DEFAULT)"
         variables:
           ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
         steps:
           - checkout: azure-container-networking
 
@@ -38,14 +37,13 @@ stages:
     jobs:
       - job: test
         displayName: Run Tests
-        variables:
-          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
         pool:
           type: windows
           isCustom: true
           name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
         variables:
           ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
         steps:
           - checkout: azure-container-networking
 
