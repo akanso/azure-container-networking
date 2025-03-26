@@ -77,24 +77,26 @@ stages:
           targetFolder: $(Build.ArtifactStagingDirectory)/output
 
 
-#    - stage: containerize
-#      displayName: Build Images
-#      dependsOn:
-#        - setup
-#        - test
-#      pool:
-#        name: "$(BUILD_POOL_NAME_LINUX_AMD64)"
-#        type: linux
-#        isCustom: true
-#      jobs:
-#        - job: containerize_amd64
-#          displayName: Build Images
-#          strategy:
-#            matrix:
-#              azure_ipam_linux_amd64:
-#                arch: amd64
-#                name: azure-ipam
-#                os: linux
+- stage: containerize
+  displayName: Build Images
+  dependsOn:
+    - setup
+    - test
+  jobs:
+  - job: containerize_amd64
+    displayName: Build Images
+    pool:
+      name: "$(BUILD_POOL_NAME_DEFAULT)"
+      type: linux
+      isCustom: true
+    variables:
+      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+    strategy:
+      matrix:
+        azure_ipam_linux_amd64:
+          arch: amd64
+          name: azure-ipam
+          os: linux
 #              azure_ipam_windows:
 #                arch: amd64
 #                name: azure-ipam
@@ -127,13 +129,15 @@ stages:
 #                arch: amd64
 #                name: npm
 #                os: windows
-#          steps:
-#            - template: containers/container-template.yaml
-#              parameters:
-#                arch: $(arch)
-#                name: $(name)
-#                os: $(os)
-#                os_version: $(os_version)
+      steps:
+      - checkout: azure-container-networking
+
+      - template: containers/container-template.steps.yaml
+        parameters:
+          arch: $(arch)
+          name: $(name)
+          os: $(os)
+          os_version: $(os_version)
 #        - job: containerize_linux_arm64
 #          displayName: Build Images
 #          pool:
