@@ -32,20 +32,20 @@ stages:
       env:
         REPORT_DIR: $(REPORT_DIR)
 
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'JUnit' # 'JUnit' | 'NUnit' | 'VSTest' | 'XUnit' | 'CTest'. Alias: testRunner. Required. Test result format. Default: JUnit.
-    testResultsFiles: '**/report.xml' # string. Required. Test results files. Default: **/TEST-*.xml.
-    searchFolder: '$(REPORT_DIR)' # string. Search folder. Default: $(System.DefaultWorkingDirectory).
-    #mergeTestResults: false # boolean. Merge test results. Default: false.
-    failTaskOnFailedTests: true # boolean. Fail if there are test failures. Default: false.
-    #failTaskOnFailureToPublishResults: false # boolean. Fail if there is failure in publishing test results. Default: false.
-    #failTaskOnMissingResultsFile: false # boolean. Fail if no result files are found. Default: false.
-    #testRunTitle: # string. Test run title.
-  # Advanced
-    #buildPlatform: # string. Alias: platform. Build Platform.
-    #buildConfiguration: # string. Alias: configuration. Build Configuration.
-    #publishRunAttachments: true # boolean. Upload test results files. Default: true.
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit' # 'JUnit' | 'NUnit' | 'VSTest' | 'XUnit' | 'CTest'. Alias: testRunner. Required. Test result format. Default: JUnit.
+        testResultsFiles: '**/report.xml' # string. Required. Test results files. Default: **/TEST-*.xml.
+        searchFolder: '$(REPORT_DIR)' # string. Search folder. Default: $(System.DefaultWorkingDirectory).
+        #mergeTestResults: false # boolean. Merge test results. Default: false.
+        failTaskOnFailedTests: true # boolean. Fail if there are test failures. Default: false.
+        #failTaskOnFailureToPublishResults: false # boolean. Fail if there is failure in publishing test results. Default: false.
+        #failTaskOnMissingResultsFile: false # boolean. Fail if no result files are found. Default: false.
+        #testRunTitle: # string. Test run title.
+      # Advanced
+        #buildPlatform: # string. Alias: platform. Build Platform.
+        #buildConfiguration: # string. Alias: configuration. Build Configuration.
+        #publishRunAttachments: true # boolean. Upload test results files. Default: true.
 
 - stage: test_windows
   displayName: Test ACN Windows
