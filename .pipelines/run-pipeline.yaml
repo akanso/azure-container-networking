@@ -172,7 +172,7 @@ stages:
             name: npm
             platforms: linux/amd64 linux/arm64 windows/amd64
       steps:
-      - template: containers/manifest-template.jobs.yaml
+      - template: containers/manifest-template.steps.yaml
         parameters:
           name: $(name)
           platforms: $(platforms)
