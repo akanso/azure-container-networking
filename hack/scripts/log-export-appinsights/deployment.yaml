@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cilium-log-exporter
+  namespace: kube-system
+  labels:
+    app: cilium-log-exporter
+spec:
+  selector:
+    matchLabels:
+      app: cilium-log-exporter
+  template:
+    metadata:
+      labels:
+        app: cilium-log-exporter
+    spec:
+      hostNetwork: true
+      containers:
+      - name: log-exporter
+        image: acnpublic.azurecr.io/krunaljainfluentdappinsights:latest
+        securityContext:
+          privileged: true
+        env:
+        - name: APPINSIGHTS_INSTRUMENTATIONKEY
+          value: "<<YOUR_INSTRUMENTATION_KEY>>"
+
+        volumeMounts:
+        - name: host-logs
+          mountPath: /host/var/log/cilium
+          readOnly: true
+
+      volumes:
+      - name: host-logs
+        hostPath:
+          path: /var/log/cilium
+
+      restartPolicy: Always
+
