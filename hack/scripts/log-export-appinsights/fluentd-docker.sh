@@ -11,7 +11,7 @@ FROM python:3.9-slim
 WORKDIR /app
 COPY appinsights.py /appinsights.py
 RUN pip install opencensus-ext-azure
-CMD ["python3", "/appinsights.py"]
+CMD ["sh", "-c", "while true; do python3 /appinsights.py; sleep 50; done"]
 EOF
 
 # Build and Push Docker Image
