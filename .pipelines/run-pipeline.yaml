@@ -35,50 +35,51 @@ stages:
 
 - template: templates/run-unit-tests.yaml
 
-#  - ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
-#    - stage: binaries
-#      displayName: Build Binaries
-#      dependsOn:
-#        - setup
-#        - test
-#      pool:
-#        name: "$(BUILD_POOL_NAME_DEFAULT)"
-#        type: linux
-#        isCustom: true
-#      jobs:
-#        - job: build
-#          displayName: Build Binaries
-#          variables:
-#            STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-#          steps:
-#            - script: |
-#                make ipv6-hp-bpf-lib
-#                make all-binaries-platforms
-#              name: "BuildAllPlatformBinaries"
-#              displayName: "Build all platform binaries"
-#
-#            - script: |
-#                mkdir -p ./output/bins
-#                cd ./output
-#                find . -name '*.tgz' -print -exec mv -t ./bins/ {} +
-#                find . -name '*.zip' -print -exec mv -t ./bins/ {} +
-#                shopt -s extglob
-#                rm -rf !("bins")
-#              name: "PrepareArtifacts"
-#              displayName: "Prepare Artifacts"
-#
-#            - task: CopyFiles@2
-#              inputs:
-#                sourceFolder: "output"
-#                targetFolder: $(Build.ArtifactStagingDirectory)
-#              condition: succeeded()
-#
-#            - task: PublishBuildArtifacts@1
-#              inputs:
-#                artifactName: "output"
-#                pathtoPublish: "$(Build.ArtifactStagingDirectory)"
-#              condition: succeeded()
-#
+- ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
+  - stage: binaries
+    displayName: Build Binaries
+    dependsOn:
+      - setup
+      - test
+    jobs:
+    - job: build
+      displayName: Build Binaries
+      pool:
+        type: linux
+        isCustom: true
+        name: "$(BUILD_POOL_NAME_DEFAULT)"
+      variables:
+        ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
+        STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+      steps:
+      - checkout: azure-container-networking
+
+      - script: |
+          make ipv6-hp-bpf-lib
+          make all-binaries-platforms
+        name: "BuildAllPlatformBinaries"
+        displayName: "Build all platform binaries"
+
+      - script: |
+          mkdir -p ./output/bins
+          cd ./output
+          find . -name '*.tgz' -print -exec mv -t ./bins/ {} +
+          find . -name '*.zip' -print -exec mv -t ./bins/ {} +
+          shopt -s extglob
+          rm -rf !("bins")
+        name: "PrepareArtifacts"
+        displayName: "Prepare Artifacts"
+
+      - task: CopyFiles@2
+        inputs:
+          sourceFolder: "output"
+          targetFolder: $(Build.ArtifactStagingDirectory)
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          artifactName: "output"
+          pathtoPublish: "$(Build.ArtifactStagingDirectory)"
+
 #    - stage: containerize
 #      displayName: Build Images
 #      dependsOn:
