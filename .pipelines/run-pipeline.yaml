@@ -74,7 +74,7 @@ stages:
       - task: CopyFiles@2
         inputs:
           sourceFolder: "output"
-          targetFolder: $(Build.ArtifactStagingDirectory)
+          targetFolder: $(Build.ArtifactStagingDirectory)/output
 
 
 #    - stage: containerize

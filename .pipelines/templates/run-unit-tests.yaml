@@ -14,16 +14,19 @@ stages:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
       STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
       REPORT_DIR: $(Build.ArtifactStagingDirectory)/linux-unittest
+      REPORT_FILEPATH: $(REPORT_DIR)/report.xml
     steps:
     - checkout: azure-container-networking
 
     - script: |
+        mkdir -p "$REPORT_DIR"
+        touch "$REPOT_FILEPATH"
         make tools
         # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml), stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code. Read all output from fd 4 (output from tee) and write to top stdout
         { { { {
               sudo -E env "PATH=$PATH" make test-all;
               echo $? >&3;
-              } | tee >(build/tools/bin/go-junit-report > "$REPORT_DIR"/report.xml) >&4;
+              } | tee >(build/tools/bin/go-junit-report > "$REPORT_FILEPATH") >&4;
             } 3>&1;
           } | { read xs; exit $xs; }
         } 4>&1
@@ -31,12 +34,13 @@ stages:
       displayName: "Run Tests"
       env:
         REPORT_DIR: $(REPORT_DIR)
+        REPORT_FILEPATH: $(REPORT_FILEPATH)
 
     - task: PublishTestResults@2
       inputs:
         testResultsFormat: 'JUnit' # 'JUnit' | 'NUnit' | 'VSTest' | 'XUnit' | 'CTest'. Alias: testRunner. Required. Test result format. Default: JUnit.
-        testResultsFiles: '**/report.xml' # string. Required. Test results files. Default: **/TEST-*.xml.
-        searchFolder: '$(REPORT_DIR)' # string. Search folder. Default: $(System.DefaultWorkingDirectory).
+        testResultsFiles: '$(REPORT_FILEPATH)' # string. Required. Test results files. Default: **/TEST-*.xml.
+        #searchFolder: '$(REPORT_DIR)' # string. Search folder. Default: $(System.DefaultWorkingDirectory).
         #mergeTestResults: false # boolean. Merge test results. Default: false.
         failTaskOnFailedTests: true # boolean. Fail if there are test failures. Default: false.
         #failTaskOnFailureToPublishResults: false # boolean. Fail if there is failure in publishing test results. Default: false.
