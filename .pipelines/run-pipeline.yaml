@@ -94,84 +94,73 @@ stages:
     strategy:
       matrix:
         azure_ipam_linux_amd64:
-          arch: amd64
           name: azure-ipam
           os: linux
-#              azure_ipam_windows:
-#                arch: amd64
-#                name: azure-ipam
-#                os: windows
-#              cni_linux_amd64:
-#                arch: amd64
-#                name: cni
-#                os: linux
-#              cni_windows_amd64:
-#                arch: amd64
-#                name: cni
-#                os: windows
-#              cns_linux_amd64:
-#                arch: amd64
-#                name: cns
-#                os: linux
-#              cns_windows_amd64:
-#                arch: amd64
-#                name: cns
-#                os: windows
-#              ipv6_hp_bpf_linux_amd64:
-#                arch: amd64
-#                name: ipv6-hp-bpf
-#                os: linux
-#              npm_linux_amd64:
-#                arch: amd64
-#                name: npm
-#                os: linux
-#              npm_windows_amd64:
-#                arch: amd64
-#                name: npm
-#                os: windows
+        azure_ipam_windows:
+          name: azure-ipam
+          os: windows
+        cni_linux_amd64:
+          name: cni
+          os: linux
+        cni_windows_amd64:
+          name: cni
+          os: windows
+        cns_linux_amd64:
+          name: cns
+          os: linux
+        cns_windows_amd64:
+          name: cns
+          os: windows
+        ipv6_hp_bpf_linux_amd64:
+          name: ipv6-hp-bpf
+          os: linux
+        npm_linux_amd64:
+          name: npm
+          os: linux
+        npm_windows_amd64:
+          name: npm
+          os: windows
     steps:
     - checkout: azure-container-networking
 
     - template: containers/container-template.steps.yaml
       parameters:
-        arch: $(arch)
+        arch: amd64
         name: $(name)
         os: $(os)
         os_version: $(os_version)
-#        - job: containerize_linux_arm64
-#          displayName: Build Images
-#          pool:
-#            name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
-#            type: linux
-#            isCustom: true
-#          strategy:
-#            matrix:
-#              azure_ipam_linux_arm64:
-#                arch: arm64
-#                name: azure-ipam
-#                os: linux
-#              cni_linux_arm64:
-#                arch: arm64
-#                name: cni
-#                os: linux
-#              cns_linux_arm64:
-#                arch: arm64
-#                name: cns
-#                os: linux
-#              ipv6_hp_bpf_linux_arm64:
-#                arch: arm64
-#                name: ipv6-hp-bpf
-#                os: linux
-#              npm_linux_arm64:
-#                arch: arm64
-#                name: npm
-#                os: linux
-#          steps:
-#            - template: containers/container-template.yaml
-#              parameters:
-#                arch: $(arch)
-#                name: $(name)
-#                os: $(os)
+
+  - job: containerize_linux_arm64
+    displayName: Build arm64 Images
+    pool:
+      name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
+      type: linux
+      isCustom: true
+    strategy:
+      matrix:
+        azure_ipam_linux_arm64:
+          name: azure-ipam
+          os: linux
+        cni_linux_arm64:
+          name: cni
+          os: linux
+        cns_linux_arm64:
+          name: cns
+          os: linux
+        ipv6_hp_bpf_linux_arm64:
+          name: ipv6-hp-bpf
+          os: linux
+        npm_linux_arm64:
+          name: npm
+          os: linux
+    steps:
+    - checkout: azure-container-networking
+
+    - template: containers/container-template.steps.yaml
+      parameters:
+        arch: arm64
+        name: $(name)
+        os: $(os)
 #
 #    - stage: publish
 #      displayName: Publish Multiarch Manifests
