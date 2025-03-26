@@ -1,12 +1,13 @@
 jobs:
 - job: build
   displayName: Build Binaries
-  target: linux_build_container2
   pool:
-    type: docker:
-      os: linux
+    type: docker
+    os: linux
   variables:
     ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
+    ob_git_checkout: true
+    LinuxBuildContainer: $(LinuxBuildContainer2)
   steps:
   - checkout: azure-container-networking
 
