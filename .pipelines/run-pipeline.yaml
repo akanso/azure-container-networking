@@ -35,6 +35,7 @@ stages:
 
 - template: templates/run-unit-tests.yaml
 
+  # We can remove this and make sure it is only part of the official template
 - ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
   - stage: binaries
     displayName: Build Binaries
@@ -75,10 +76,6 @@ stages:
           sourceFolder: "output"
           targetFolder: $(Build.ArtifactStagingDirectory)
 
-      - task: PublishBuildArtifacts@1
-        inputs:
-          artifactName: "output"
-          pathtoPublish: "$(Build.ArtifactStagingDirectory)"
 
 #    - stage: containerize
 #      displayName: Build Images

@@ -1,56 +1,72 @@
 stages:
-  - stage: test
-    displayName: Test ACN
-    dependsOn:
-      - setup
-    jobs:
-      - job: test
-        displayName: Run Tests
-        pool:
-          type: linux
-          isCustom: true
-          name: "$(BUILD_POOL_NAME_DEFAULT)"
-        variables:
-          ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-        steps:
-          - checkout: azure-container-networking
+- stage: test
+  displayName: Test ACN
+  dependsOn:
+    - setup
+  jobs:
+  - job: 
+    displayName: Run Tests
+    pool:
+      type: linux
+      isCustom: true
+      name: "$(BUILD_POOL_NAME_DEFAULT)"
+    variables:
+      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+      STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+      REPORT_DIR: $(Build.ArtifactStagingDirectory)/linux-unittest
+    steps:
+    - checkout: azure-container-networking
 
-          - script: |
-              make tools
-              # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml), stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code. Read all output from fd 4 (output from tee) and write to top stdout
-              { { { {
-                    sudo -E env "PATH=$PATH" make test-all;
-                    echo $? >&3;
-                    } | tee >(build/tools/bin/go-junit-report > report.xml) >&4;
-                  } 3>&1;
-                } | { read xs; exit $xs; }
-              } 4>&1
-            retryCountOnTaskFailure: 3
-            name: "Test"
-            displayName: "Run Tests"
+    - script: |
+        make tools
+        # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml), stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code. Read all output from fd 4 (output from tee) and write to top stdout
+        { { { {
+              sudo -E env "PATH=$PATH" make test-all;
+              echo $? >&3;
+              } | tee >(build/tools/bin/go-junit-report > "$REPORT_DIR"/report.xml) >&4;
+            } 3>&1;
+          } | { read xs; exit $xs; }
+        } 4>&1
+      retryCountOnTaskFailure: 3
+      displayName: "Run Tests"
+      env:
+        REPORT_DIR: $(REPORT_DIR)
 
-  - stage: test_windows
-    displayName: Test ACN Windows
-    dependsOn:
-      - setup
-    jobs:
-      - job: test
-        displayName: Run Tests
-        pool:
-          type: windows
-          isCustom: true
-          name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
-        variables:
-          ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-        steps:
-          - checkout: azure-container-networking
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit' # 'JUnit' | 'NUnit' | 'VSTest' | 'XUnit' | 'CTest'. Alias: testRunner. Required. Test result format. Default: JUnit.
+    testResultsFiles: '**/report.xml' # string. Required. Test results files. Default: **/TEST-*.xml.
+    searchFolder: '$(REPORT_DIR)' # string. Search folder. Default: $(System.DefaultWorkingDirectory).
+    #mergeTestResults: false # boolean. Merge test results. Default: false.
+    failTaskOnFailedTests: true # boolean. Fail if there are test failures. Default: false.
+    #failTaskOnFailureToPublishResults: false # boolean. Fail if there is failure in publishing test results. Default: false.
+    #failTaskOnMissingResultsFile: false # boolean. Fail if no result files are found. Default: false.
+    #testRunTitle: # string. Test run title.
+  # Advanced
+    #buildPlatform: # string. Alias: platform. Build Platform.
+    #buildConfiguration: # string. Alias: configuration. Build Configuration.
+    #publishRunAttachments: true # boolean. Upload test results files. Default: true.
 
-          # Only run one go test per script
-          - script: |
-              cd azure-container-networking/
-              go test -timeout 30m ./npm/... ./cni/... ./platform/...
-            retryCountOnTaskFailure: 3
-            name: "TestWindows"
-            displayName: "Run Windows Tests"
+- stage: test_windows
+  displayName: Test ACN Windows
+  dependsOn:
+    - setup
+  jobs:
+  - job:
+    displayName: Run Tests
+    pool:
+      type: windows
+      isCustom: true
+      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
+    variables:
+      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+      STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+    steps:
+    - checkout: azure-container-networking
+
+    # Only run one go test per script
+    - script: |
+        cd azure-container-networking/
+        go test -timeout 30m ./npm/... ./cni/... ./platform/...
+      retryCountOnTaskFailure: 3
+      displayName: "Run Windows Tests"
