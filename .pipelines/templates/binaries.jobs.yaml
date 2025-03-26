@@ -2,16 +2,16 @@ jobs:
 - job: build
   displayName: Build Binaries
   pool:
-    type: docker
-    os: linux
+    type: linux
   variables:
+    LinuxBuildContainer: $(LinuxBuildContainer2)
+
     ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
     ob_git_checkout: true
-    LinuxBuildContainer: $(LinuxBuildContainer2)
   steps:
   - checkout: azure-container-networking
 
-  - script: |
+  - bash: |
       make ipv6-hp-bpf-lib
       make all-binaries-platforms
     displayName: "Build all platform binaries"

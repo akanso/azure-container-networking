@@ -3,51 +3,54 @@ parameters:
   platforms: ""
 
 steps:
+- task: onebranch.pipeline.containercontrol@1
+  displayName: "Login to ACR"
+  inputs:
+    command: login
+    endpoint: $(ACR_ARM_SERVICE_CONNECTION)
 
-  - task: AzureCLI@2
-    displayName: "Login"
-    inputs:
-      azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      inlineScript: |
-        az acr login -n $(ACR)
+- script: |
+    set -e
+    make "$IMAGE_NAME"-manifest-build PLATFORMS="$PLATFORMS"
+  name: manifest_build
+  displayName: Manifest Build
+  retryCountOnTaskFailure: 3
+  env:
+    IMAGE_NAME: '${{ parameters.name }}'
+    PLATFORMS: '${{ parameters.platforms }}'
 
-  - script: |
-      set -e
-      make ${{ parameters.name }}-manifest-build PLATFORMS="${{ parameters.platforms }}"
-    workingDirectory: $(ACN_DIR)
-    name: manifest_build
-    displayName: Manifest Build
-    retryCountOnTaskFailure: 3
+- script: |
+    set -ex
+    echo "checking XDG_RUNTIME_DIR"
+    echo $XDG_RUNTIME_DIR
 
-  - script: |
-      set -ex
-      echo "checking XDG_RUNTIME_DIR"
-      echo $XDG_RUNTIME_DIR
-      make ${{ parameters.name }}-manifest-push
-      mkdir -p $(Build.ArtifactStagingDirectory)/images
+    make "$IMAGE_NAME"-manifest-push
+    mkdir -p "$ARTIFACT_DIR"
 
-      echo "setting XDG_RUNTIME_DIR"
-      export XDG_RUNTIME_DIR=/run/user/$(id -u)
-      echo $XDG_RUNTIME_DIR
+    echo "setting XDG_RUNTIME_DIR"
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    echo $XDG_RUNTIME_DIR
 
-      make ${{ parameters.name }}-skopeo-archive IMAGE_ARCHIVE_DIR=$(Build.ArtifactStagingDirectory)/images
-    name: manifest_push
-    displayName: Manifest Push
-    workingDirectory: $(ACN_DIR)
-    retryCountOnTaskFailure: 3
+    make "$IMAGE_NAME"-skopeo-archive IMAGE_PUBLISH_DIR="$ARTIFACT_DIR"
+  name: manifest_push
+  displayName: Manifest Push
+  workingDirectory: $(ACN_DIR)
+  retryCountOnTaskFailure: 3
+  env:
+    IMAGE_NAME: '${{ parameters.name }}'
+    PLATFORMS: '${{ parameters.platforms }}'
+    ARTIFACT_DIR: $(IMAGE_PUBLISH_DIR)
 
-  - task: AzureCLI@2
-    displayName: "Logout"
-    inputs:
-      azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
-      scriptLocation: "inlineScript"
-      scriptType: "bash"
-      inlineScript: |
-        docker logout
+- task: AzureCLI@2
+  displayName: "Logout"
+  inputs:
+    azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
+    scriptLocation: "inlineScript"
+    scriptType: "bash"
+    inlineScript: |
+      docker logout
 
-  - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
-    displayName: "Add SBOM Generator tool"
-    inputs:
-      BuildDropPath: "$(Build.ArtifactStagingDirectory)"
+- task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+  displayName: "Add SBOM Generator tool"
+  inputs:
+    BuildDropPath: "$(Build.ArtifactStagingDirectory)"

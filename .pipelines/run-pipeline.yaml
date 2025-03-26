@@ -6,8 +6,6 @@ stages:
     displayName: Setup
     pool:
       type: linux
-      isCustom: true
-      name: "$(BUILD_POOL_NAME_DEFAULT)"
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     steps:
@@ -57,11 +55,13 @@ stages:
     - job: containerize_amd64
       displayName: Build Images
       pool:
-        name: "$(BUILD_POOL_NAME_DEFAULT)"
-        type: linux
-        isCustom: true
+        os: linux
+        type: docker
       variables:
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+        ob_git_checkout: true
+
+        ACN_DIR: $(Build.SourcesDirectory)
       strategy:
         matrix:
           azure_ipam_linux_amd64:
@@ -104,9 +104,14 @@ stages:
     - job: containerize_linux_arm64
       displayName: Build arm64 Images
       pool:
-        name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
-        type: linux
-        isCustom: true
+        os: linux
+        type: docker
+      variables:
+        ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+        ob_git_checkout: true
+        ob_enable_qemu: true
+
+        ACN_DIR: $(Build.SourcesDirectory)
       strategy:
         matrix:
           azure_ipam_linux_arm64:
@@ -132,43 +137,47 @@ stages:
           arch: arm64
           name: $(name)
           os: $(os)
-#
-#    - stage: publish
-#      displayName: Publish Multiarch Manifests
-#      dependsOn:
-#        - containerize
-#      pool:
-#        name: "$(BUILD_POOL_NAME_DEFAULT)"
-#        type: linux
-#        isCustom: true
-#      variables:
-#        Packaging.EnableSBOMSigning: false
-#      jobs:
-#        - job: manifest
-#          displayName: Compile Manifests
-#          strategy:
-#            matrix:
-#              azure_ipam:
-#                name: azure-ipam
-#                platforms: linux/amd64 linux/arm64 windows/amd64
-#              cni:
-#                name: cni
-#                platforms: linux/amd64 linux/arm64 windows/amd64
-#              cns:
-#                name: cns
-#                platforms: linux/amd64 linux/arm64 windows/amd64
-#              ipv6_hp_bpf:
-#                name: ipv6-hp-bpf
-#                platforms: linux/amd64 linux/arm64
-#              npm:
-#                name: npm
-#                platforms: linux/amd64 linux/arm64 windows/amd64
-#          steps:
-#            - template: containers/manifest-template.yaml
-#              parameters:
-#                name: $(name)
-#                platforms: $(platforms)
-#
+
+
+  - stage: publish
+    displayName: Publish Multiarch Manifests
+    dependsOn:
+      - containerize
+    variables:
+      Packaging.EnableSBOMSigning: false
+      IMAGE_PUBLISH_DIR: (Build.ArtifactStagingDirectory)/images
+    jobs:
+    - job:
+      displayName: Compile Manifests
+      pool:
+        os: linux
+        type: docker
+      variables:
+        ob_git_checkout: true
+      strategy:
+        matrix:
+          azure_ipam:
+            name: azure-ipam
+            platforms: linux/amd64 linux/arm64 windows/amd64
+          cni:
+            name: cni
+            platforms: linux/amd64 linux/arm64 windows/amd64
+          cns:
+            name: cns
+            platforms: linux/amd64 linux/arm64 windows/amd64
+          ipv6_hp_bpf:
+            name: ipv6-hp-bpf
+            platforms: linux/amd64 linux/arm64
+          npm:
+            name: npm
+            platforms: linux/amd64 linux/arm64 windows/amd64
+      steps:
+      - template: containers/manifest-template.jobs.yaml
+        parameters:
+          name: $(name)
+          platforms: $(platforms)
+
+
 #    # Cilium Podsubnet E2E tests
 #    - template: singletenancy/cilium/cilium-e2e-job-template.yaml
 #      parameters:
