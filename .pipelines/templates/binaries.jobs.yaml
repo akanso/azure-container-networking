@@ -1,10 +1,10 @@
 jobs:
 - job: build
   displayName: Build Binaries
+  target: linux_build_container2
   pool:
-    type: linux
-    isCustom: true
-    name: "$(BUILD_POOL_NAME_DEFAULT)"
+    type: docker:
+      os: linux
   variables:
     ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
   steps:
