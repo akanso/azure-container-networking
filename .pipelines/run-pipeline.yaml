@@ -129,15 +129,15 @@ stages:
 #                arch: amd64
 #                name: npm
 #                os: windows
-      steps:
-      - checkout: azure-container-networking
+    steps:
+    - checkout: azure-container-networking
 
-      - template: containers/container-template.steps.yaml
-        parameters:
-          arch: $(arch)
-          name: $(name)
-          os: $(os)
-          os_version: $(os_version)
+    - template: containers/container-template.steps.yaml
+      parameters:
+        arch: $(arch)
+        name: $(name)
+        os: $(os)
+        os_version: $(os_version)
 #        - job: containerize_linux_arm64
 #          displayName: Build Images
 #          pool:
