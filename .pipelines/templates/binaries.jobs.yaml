@@ -1,0 +1,30 @@
+jobs:
+- job: build
+  displayName: Build Binaries
+  pool:
+    type: linux
+    isCustom: true
+    name: "$(BUILD_POOL_NAME_DEFAULT)"
+  variables:
+    ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
+  steps:
+  - checkout: azure-container-networking
+
+  - script: |
+      make ipv6-hp-bpf-lib
+      make all-binaries-platforms
+    displayName: "Build all platform binaries"
+
+  - script: |
+      mkdir -p ./output/bins
+      cd ./output
+      find . -name '*.tgz' -print -exec mv -t ./bins/ {} +
+      find . -name '*.zip' -print -exec mv -t ./bins/ {} +
+      shopt -s extglob
+      rm -rf !("bins")
+    displayName: "Prepare Artifacts"
+
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: "output"
+      targetFolder: $(Build.ArtifactStagingDirectory)/output

@@ -42,125 +42,96 @@ stages:
     dependsOn:
       - setup
       - test
+    variables:
+      STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
     jobs:
-    - job: build
-      displayName: Build Binaries
+    - template: templates/binaries.jobs.yaml
+
+
+  - stage: containerize
+    displayName: Build Images
+    dependsOn:
+      - setup
+      - test
+    jobs:
+    - job: containerize_amd64
+      displayName: Build Images
       pool:
+        name: "$(BUILD_POOL_NAME_DEFAULT)"
         type: linux
         isCustom: true
-        name: "$(BUILD_POOL_NAME_DEFAULT)"
       variables:
-        ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
-        STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+        ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+      strategy:
+        matrix:
+          azure_ipam_linux_amd64:
+            name: azure-ipam
+            os: linux
+          azure_ipam_windows:
+            name: azure-ipam
+            os: windows
+          cni_linux_amd64:
+            name: cni
+            os: linux
+          cni_windows_amd64:
+            name: cni
+            os: windows
+          cns_linux_amd64:
+            name: cns
+            os: linux
+          cns_windows_amd64:
+            name: cns
+            os: windows
+          ipv6_hp_bpf_linux_amd64:
+            name: ipv6-hp-bpf
+            os: linux
+          npm_linux_amd64:
+            name: npm
+            os: linux
+          npm_windows_amd64:
+            name: npm
+            os: windows
       steps:
       - checkout: azure-container-networking
-
-      - script: |
-          make ipv6-hp-bpf-lib
-          make all-binaries-platforms
-        name: "BuildAllPlatformBinaries"
-        displayName: "Build all platform binaries"
-
-      - script: |
-          mkdir -p ./output/bins
-          cd ./output
-          find . -name '*.tgz' -print -exec mv -t ./bins/ {} +
-          find . -name '*.zip' -print -exec mv -t ./bins/ {} +
-          shopt -s extglob
-          rm -rf !("bins")
-        name: "PrepareArtifacts"
-        displayName: "Prepare Artifacts"
-
-      - task: CopyFiles@2
-        inputs:
-          sourceFolder: "output"
-          targetFolder: $(Build.ArtifactStagingDirectory)/output
-
-
-- stage: containerize
-  displayName: Build Images
-  dependsOn:
-    - setup
-    - test
-  jobs:
-  - job: containerize_amd64
-    displayName: Build Images
-    pool:
-      name: "$(BUILD_POOL_NAME_DEFAULT)"
-      type: linux
-      isCustom: true
-    variables:
-      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-    strategy:
-      matrix:
-        azure_ipam_linux_amd64:
-          name: azure-ipam
-          os: linux
-        azure_ipam_windows:
-          name: azure-ipam
-          os: windows
-        cni_linux_amd64:
-          name: cni
-          os: linux
-        cni_windows_amd64:
-          name: cni
-          os: windows
-        cns_linux_amd64:
-          name: cns
-          os: linux
-        cns_windows_amd64:
-          name: cns
-          os: windows
-        ipv6_hp_bpf_linux_amd64:
-          name: ipv6-hp-bpf
-          os: linux
-        npm_linux_amd64:
-          name: npm
-          os: linux
-        npm_windows_amd64:
-          name: npm
-          os: windows
-    steps:
-    - checkout: azure-container-networking
-
-    - template: containers/container-template.steps.yaml
-      parameters:
-        arch: amd64
-        name: $(name)
-        os: $(os)
-        os_version: $(os_version)
-
-  - job: containerize_linux_arm64
-    displayName: Build arm64 Images
-    pool:
-      name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
-      type: linux
-      isCustom: true
-    strategy:
-      matrix:
-        azure_ipam_linux_arm64:
-          name: azure-ipam
-          os: linux
-        cni_linux_arm64:
-          name: cni
-          os: linux
-        cns_linux_arm64:
-          name: cns
-          os: linux
-        ipv6_hp_bpf_linux_arm64:
-          name: ipv6-hp-bpf
-          os: linux
-        npm_linux_arm64:
-          name: npm
-          os: linux
-    steps:
-    - checkout: azure-container-networking
-
-    - template: containers/container-template.steps.yaml
-      parameters:
-        arch: arm64
-        name: $(name)
-        os: $(os)
+  
+      - template: containers/container-template.steps.yaml
+        parameters:
+          arch: amd64
+          name: $(name)
+          os: $(os)
+          os_version: $(os_version)
+  
+    - job: containerize_linux_arm64
+      displayName: Build arm64 Images
+      pool:
+        name: "$(BUILD_POOL_NAME_LINUX_ARM64)"
+        type: linux
+        isCustom: true
+      strategy:
+        matrix:
+          azure_ipam_linux_arm64:
+            name: azure-ipam
+            os: linux
+          cni_linux_arm64:
+            name: cni
+            os: linux
+          cns_linux_arm64:
+            name: cns
+            os: linux
+          ipv6_hp_bpf_linux_arm64:
+            name: ipv6-hp-bpf
+            os: linux
+          npm_linux_arm64:
+            name: npm
+            os: linux
+      steps:
+      - checkout: azure-container-networking
+  
+      - template: containers/container-template.steps.yaml
+        parameters:
+          arch: arm64
+          name: $(name)
+          os: $(os)
 #
 #    - stage: publish
 #      displayName: Publish Multiarch Manifests
