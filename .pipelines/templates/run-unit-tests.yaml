@@ -29,6 +29,7 @@ stages:
 
     - script: |
         go install github.com/jstemmer/go-junit-report/v2@latest
+        JUNIT_REPORT_BIN=$(which go-junit-report)
         ls -la
         mkdir -p "$REPORT_DIR"
         touch "$REPORT_FILEPATH"
@@ -37,7 +38,7 @@ stages:
         { { { {
               sudo -E env "PATH=$PATH" make test-all;
               echo $? >&3;
-              } | tee >(go-junit-report > "$REPORT_FILEPATH") >&4;
+              } | tee >($JUNIT_REPORT_BIN > "$REPORT_FILEPATH") >&4;
             } 3>&1;
           } | { read xs; exit $xs; }
         } 4>&1
