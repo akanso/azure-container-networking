@@ -9,6 +9,8 @@ stages:
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     steps:
+    - checkout: azure-container-networking
+
     - script: |
         # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
         BUILD_NUMBER=$(Build.BuildNumber)
@@ -61,7 +63,7 @@ stages:
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_git_checkout: true
 
-        ACN_DIR: $(Build.SourcesDirectory)
+        ACN_DIR: azure-container-networking
       strategy:
         matrix:
           azure_ipam_linux_amd64:

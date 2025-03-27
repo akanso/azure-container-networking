@@ -24,10 +24,12 @@ stages:
         version: '$(GOVERSION)'
   
     - bash: |
-        go install github.com/jstemmer/go-junit-report/v2@latest
-        ls -la "$GOBIN"
+        GOBIN="$BIN_INSTALL_DIR" go install github.com/jstemmer/go-junit-report/v2@latest
         echo >&2 "##vso[task.setvariable variable=JUNIT_REPORT_BIN]$GOBIN/go-junit-report"
+        echo >&2 "##vso[task.prependpath]$GOBIN"
       displayName: "Install Dependencies"
+      env:
+        BIN_INSTALL_DIR: $(System.DefaultWorkingDirectory)/bin
 
     - script: |
         ls -la
