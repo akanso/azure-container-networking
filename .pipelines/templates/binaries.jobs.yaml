@@ -7,7 +7,7 @@ jobs:
     LinuxBuildContainer: $(LinuxBuildContainer2)
 
     ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
-    ob_git_checkout: true
+      #ob_git_checkout: true
   steps:
   - checkout: azure-container-networking
 

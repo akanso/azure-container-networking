@@ -3,16 +3,17 @@ stages:
   displayName: Test ACN
   dependsOn:
     - setup
+  variables:
+    STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+
   jobs:
   - job: 
     displayName: Run Tests
     pool:
       type: linux
-      isCustom: true
-      name: "$(BUILD_POOL_NAME_DEFAULT)"
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-      STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+
       REPORT_DIR: $(Build.ArtifactStagingDirectory)/linux-unittest
       REPORT_FILEPATH: $(REPORT_DIR)/report.xml
     steps:
@@ -20,7 +21,7 @@ stages:
 
     - script: |
         mkdir -p "$REPORT_DIR"
-        touch "$REPOT_FILEPATH"
+        touch "$REPORT_FILEPATH"
         make tools
         # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml), stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code. Read all output from fd 4 (output from tee) and write to top stdout
         { { { {
@@ -55,16 +56,15 @@ stages:
   displayName: Test ACN Windows
   dependsOn:
     - setup
+  variables:
+    STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
   jobs:
   - job:
     displayName: Run Tests
     pool:
       type: windows
-      isCustom: true
-      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-      STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
     steps:
     - checkout: azure-container-networking
 
