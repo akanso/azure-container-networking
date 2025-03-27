@@ -11,14 +11,6 @@ jobs:
   steps:
   - checkout: azure-container-networking
 
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-
-  - bash: |
-      go install github.com/jstemmer/go-junit-report/v2@latest
-    displayName: "Install Dependencies"
-
   - bash: |
       make ipv6-hp-bpf-lib
       make all-binaries-platforms

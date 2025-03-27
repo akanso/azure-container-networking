@@ -19,6 +19,14 @@ stages:
     steps:
     - checkout: azure-container-networking
 
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
+  
+    - bash: |
+        go install github.com/jstemmer/go-junit-report/v2@latest
+      displayName: "Install Dependencies"
+
     - script: |
         mkdir -p "$REPORT_DIR"
         touch "$REPORT_FILEPATH"
@@ -27,7 +35,7 @@ stages:
         { { { {
               sudo -E env "PATH=$PATH" make test-all;
               echo $? >&3;
-              } | tee >(build/tools/bin/go-junit-report > "$REPORT_FILEPATH") >&4;
+              } | tee >(go-junit-report > "$REPORT_FILEPATH") >&4;
             } 3>&1;
           } | { read xs; exit $xs; }
         } 4>&1
@@ -68,9 +76,20 @@ stages:
     steps:
     - checkout: azure-container-networking
 
-    # Only run one go test per script
-    - script: |
-        cd azure-container-networking/
-        go test -timeout 30m ./npm/... ./cni/... ./platform/...
-      retryCountOnTaskFailure: 3
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
+
+    - task: Go@0
       displayName: "Run Windows Tests"
+      retryCountOnTaskFailure: 3
+      inputs:
+        command: test
+        arguments: '-timeout 30m ./npm/... ./cni/... ./platform/...'
+
+#    # Only run one go test per script
+#    - script: |
+#        cd azure-container-networking/
+#        go test -timeout 30m ./npm/... ./cni/... ./platform/...
+#      retryCountOnTaskFailure: 3
+#      displayName: "Run Windows Tests"
