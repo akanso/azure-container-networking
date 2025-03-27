@@ -25,11 +25,11 @@ stages:
   
     - bash: |
         go install github.com/jstemmer/go-junit-report/v2@latest
+        JUNIT_REPORT_BIN=$(which go-junit-report)
+        echo >&2 "##vso[task.setvariable variable=JUNIT_REPORT_BIN]$JUNIT_REPORT_BIN"
       displayName: "Install Dependencies"
 
     - script: |
-        go install github.com/jstemmer/go-junit-report/v2@latest
-        JUNIT_REPORT_BIN=$(which go-junit-report)
         ls -la
         mkdir -p "$REPORT_DIR"
         touch "$REPORT_FILEPATH"
