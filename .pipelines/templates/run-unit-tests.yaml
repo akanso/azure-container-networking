@@ -28,6 +28,8 @@ stages:
       displayName: "Install Dependencies"
 
     - script: |
+        go install github.com/jstemmer/go-junit-report/v2@latest
+        ls -la
         mkdir -p "$REPORT_DIR"
         touch "$REPORT_FILEPATH"
         make tools
