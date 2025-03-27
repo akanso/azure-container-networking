@@ -25,8 +25,10 @@ stages:
   
     - bash: |
         go install github.com/jstemmer/go-junit-report/v2@latest
-        ls -la $GOPATH/..
-        find $GOPATH -name go-junit-report
+        ls -la $GOROOT/..
+        ls -la /__t/go/1.23.5/x64/..
+        find $GOROOT -name go-junit-report
+        find /__t/go/1.23.5 -name go-junit-report
         go env
         realpath  $GOPATH/../global/bin
         echo >&2 "##vso[prependpath]$GO_GLOBAL_BIN"
