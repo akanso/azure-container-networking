@@ -68,9 +68,8 @@ steps:
     os: '${{ parameters.os }}'
     buildkit: 1
     dockerFileRelPath: ${{ parameters.dockerfile_path }}
-    dockerFileContextPath: .
-      #$(ACN_DIR)
-    arguments: ${{ join('--build-arg', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
+    dockerFileContextPath: 
+    arguments: --build-arg ${{ join('--build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     compress: true
     build_tag: ${{ parameters.build_tag }}
 
