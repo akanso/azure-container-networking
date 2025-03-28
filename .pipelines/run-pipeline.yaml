@@ -69,6 +69,7 @@ stages:
       CNS_AI_PATH: $(ACN_PACKAGE_PATH)/cns/logger.aiMetadata
       NPM_AI_PATH: $(ACN_PACKAGE_PATH)/npm.aiMetadata
     jobs:
+
     - job: containerize_amd64
       displayName: Build Images
       pool:
@@ -76,7 +77,7 @@ stages:
         type: docker
       variables:
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-        ob_git_checkout: true
+          #ob_git_checkout: true
 
         ARCH: amd64
       strategy:
@@ -84,14 +85,14 @@ stages:
           azure_ipam_linux_amd64:
             name: azure-ipam
             os: linux
-            dockerfilePath: azure-ipam/Dockerfile
+            dockerfilePath: $(ACN_DIR)/azure-ipam/Dockerfile
             archiveName: azure-ipam
             archiveVersion: $(azureIpamVersion)
           azure_ipam_windows:
             name: azure-ipam
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: azure-ipam/Dockerfile
+            dockerfilePath: $(ACN_DIR)/azure-ipam/Dockerfile
             archiveName: azure-ipam
             archiveVersion: $(azureIpamVersion)
           cni_linux_amd64:
@@ -100,19 +101,19 @@ stages:
             dockerfilePath: cni/Dockerfile
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
-            archiveVersion: $(cniVersion)
+            archiveVersion: $(ACN_DIR)/$(cniVersion)
           cni_windows_amd64:
             name: cni
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: cni/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cni/Dockerfile
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(cniVersion)
           cns_linux_amd64:
             name: cns
             os: linux
-            dockerfilePath: cns/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cns/Dockerfile
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(cnsVersion)
@@ -120,21 +121,21 @@ stages:
             name: cns
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: cns/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cns/Dockerfile
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(cnsVersion)
           ipv6_hp_bpf_linux_amd64:
             name: ipv6-hp-bpf
             os: linux
-            dockerfilePath: bpf-prog/ipv6-hp-bpf/Dockerfile
+            dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf/Dockerfile
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(ipv6HpBpfVersion)
           npm_linux_amd64:
             name: npm
             os: linux
-            dockerfilePath: npm/linux.Dockerfile
+            dockerfilePath: $(ACN_DIR)/npm/linux.Dockerfile
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(npmVersion)
@@ -142,7 +143,7 @@ stages:
             name: npm
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: npm/windows.Dockerfile
+            dockerfilePath: $(ACN_DIR)/npm/windows.Dockerfile
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(npmVersion)
@@ -171,14 +172,13 @@ stages:
         ob_git_checkout: true
         ob_enable_qemu: true
 
-        ACN_DIR: $(Build.SourcesDirectory)
         ARCH: arm64
       strategy:
         matrix:
           azure_ipam_linux_arm64:
             name: azure-ipam
             os: linux
-            dockerfilePath: azure-ipam/Dockerfile
+            dockerfilePath: $(ACN_DIR)/azure-ipam/Dockerfile
             archiveName: azure-ipam
             archiveVersion: $(azureIpamVersion)
           cni_linux_arm64:
