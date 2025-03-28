@@ -79,7 +79,7 @@ stages:
         LinuxContainerImage: $(LinuxContainerImage2)
 
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-          #ob_git_checkout: true
+        ob_git_checkout: true
 
         ARCH: amd64
       strategy:
@@ -87,7 +87,7 @@ stages:
           azure_ipam_linux_amd64:
             name: azure-ipam
             os: linux
-            dockerfilePath: $(ACN_DIR)/azure-ipam/Dockerfile
+            dockerfilePath: azure-ipam/Dockerfile
             archiveName: azure-ipam
             archiveVersion: $(azureIpamVersion)
             Suffix: azure-ipam_linux-amd64
@@ -111,7 +111,7 @@ stages:
             name: cni
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cni/Dockerfile
+            dockerfilePath: cni/Dockerfile
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(cniVersion)
@@ -119,7 +119,7 @@ stages:
           cns_linux_amd64:
             name: cns
             os: linux
-            dockerfilePath: $(ACN_DIR)/cns/Dockerfile
+            dockerfilePath: cns/Dockerfile
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(cnsVersion)
@@ -128,7 +128,7 @@ stages:
             name: cns
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cns/Dockerfile
+            dockerfilePath: cns/Dockerfile
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(cnsVersion)
@@ -136,7 +136,7 @@ stages:
           ipv6_hp_bpf_linux_amd64:
             name: ipv6-hp-bpf
             os: linux
-            dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf/Dockerfile
+            dockerfilePath: bpf-prog/ipv6-hp-bpf/Dockerfile
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(ipv6HpBpfVersion)
@@ -144,7 +144,7 @@ stages:
           npm_linux_amd64:
             name: npm
             os: linux
-            dockerfilePath: $(ACN_DIR)/npm/linux.Dockerfile
+            dockerfilePath: npm/linux.Dockerfile
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(npmVersion)
@@ -153,7 +153,7 @@ stages:
             name: npm
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/npm/windows.Dockerfile
+            dockerfilePath: npm/windows.Dockerfile
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(npmVersion)
