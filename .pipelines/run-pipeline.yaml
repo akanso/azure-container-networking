@@ -73,9 +73,12 @@ stages:
     - job: containerize_amd64
       displayName: Build Images
       pool:
-        os: linux
-        type: docker
+        #os: linux
+        #type: docker
+        type: linux
       variables:
+        LinuxContainerImage: $(LinuxContainerImage2)
+
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
           #ob_git_checkout: true
 
