@@ -69,7 +69,7 @@ steps:
     dockerFileContextPath: 
     arguments: --build-arg ${{ join('--build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     compress: true
-    build_tag: ${{ parameters.build_tag }}
+    base_image_tag: ${{ parameters.build_tag }}
 
     ${{ if eq(parameters.os, 'windows') }}:
       enable_acr_push:  true
