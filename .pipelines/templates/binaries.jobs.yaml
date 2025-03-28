@@ -11,6 +11,10 @@ jobs:
   steps:
   - checkout: azure-container-networking
 
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
+
   - bash: |
       make ipv6-hp-bpf-lib
       make all-binaries-platforms

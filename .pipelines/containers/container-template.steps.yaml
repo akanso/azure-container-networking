@@ -1,37 +1,86 @@
 parameters:
-  arch: ""
-  name: ""
-  os: ""
+- name: arch
+  type: string
+  default: ""
+
+- name: name
+  type: string
+  default: ""
+
+- name: os
+  type: string
+  default: ""
+
+- name: os_version
+  type: string
+  default: ""
+
+- name: build_tag
+  type: string
+  default: ""
+
+- name: dockerfile_path
+  type: string
+  default: ""
+
+- name: archive_file
+  type: string
+  default: '$(name)-$(os)-$(platform)-$(Tag)'
+
+- name: extra_args
+  type: object
+  default: []
+
+
+- name: default_args
+  type: object
+  default:
+    - "--target $(os)"
+    - "--platform $(os)/$(arch)"
+    - "--use"
+    - "--driver-opt image=mcr.microsoft.com/oss/v2/moby/buildkit:v0.16.0-2"
+
+- name: common_build_args
+  type: object
+  default:
+    - "PLATFORM=$(PLATFORM)"
+    - "ARCH=$(ARCH)"
+    - "OS=$(OS)"
+    - "VERSION=$(TAG)"
+
+
+variables:
+  IN_ARGS: ${{ join('--build-arg', parameters.common_build_args) }}
+  IN_EXTRA_ARGS: ${{ join(' ', parameters.extra_args) }}
+  IN_PLATFORM_ARGS: ${{ join(' ', parameters.default_args) }}
+
 
 steps:
-- task: AzureCLI@2
-  displayName: "Login"
+- task: onebranch.pipeline.containercontrol@1
+  displayName: "Login to ACR"
   inputs:
-    azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
-    scriptLocation: "inlineScript"
-    scriptType: "bash"
-    inlineScript: |
-      az acr login -n $(ACR)
+    command: login
+    endpoint: $(ACR_ARM_SERVICE_CONNECTION)
 
-- script: |
-    set -e
-    if [ "$IN_OS" = 'windows' ]; then export BUILDX_ACTION='--push'; fi
-    make "$IMGNAME" OS="$IN_OS" ARCH="$IN_ARCH" 
-  name: image_build
+# Build and push the Docker image
+- task: onebranch.pipeline.imagebuildinfo@1
   displayName: Image Build
-  workingDirectory: $(ACN_DIR)
   retryCountOnTaskFailure: 3
-  env:
-    IMGNAME: '${{ parameters.name }}-image'
-    IN_OS: '${{ parameters.os }}'
-    IN_ARCH: '${{ parameters.arch }}'
-
-- task: AzureCLI@2
-  displayName: "Logout"
   inputs:
-    azureSubscription: $(ACR_ARM_SERVICE_CONNECTION)
-    scriptLocation: "inlineScript"
-    scriptType: "bash"
-    inlineScript: |
-      docker logout
+    endpoint: $(ACR_ARM_SERVICE_CONNECTION)
+    registry: $(ACR).azurecr.io
+    repositoryName: '${{ parameters.name }}'
+    os: '${{ parameters.os }}'
+    buildkit: 1
+    dockerFileRelPath: $(ACN_DIR)/${{ parameters.dockerfile_path }}
+    dockerFileContextPath: $(ACN_DIR)
+    arguments: $(IN_ARGS) $(IN_PLATFORM_ARGS) $(IN_EXTRA_ARGS)
+    compress: true
+    build_tag: ${{ parameters.build_tag }}
 
+    ${{ if eq(parameters.os, 'windows') }}:
+      enable_acr_push:  true
+      saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.zip
+    ${{ else }}:
+      enable_acr_push: false
+      saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.tar
