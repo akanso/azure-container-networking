@@ -13,6 +13,7 @@ stages:
     pool:
       type: linux
     variables:
+      LinuxContainerImage: $(LinuxContainerImage2)
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
 
       REPORT_DIR: $(Build.ArtifactStagingDirectory)/linux-unittest
