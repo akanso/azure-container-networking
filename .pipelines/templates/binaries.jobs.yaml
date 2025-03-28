@@ -4,10 +4,10 @@ jobs:
   pool:
     type: linux
   variables:
-    LinuxBuildContainer: $(LinuxBuildContainer2)
+    LinuxContainerImage: $(LinuxContainerImage2)
 
     ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
-      #ob_git_checkout: true
+    ob_git_checkout: true
   steps:
   - checkout: azure-container-networking
 
@@ -15,6 +15,7 @@ jobs:
       make ipv6-hp-bpf-lib
       make all-binaries-platforms
     displayName: "Build all platform binaries"
+    workingDirectory: $(ACN_DIR)
 
   - script: |
       mkdir -p ./output/bins
@@ -24,8 +25,9 @@ jobs:
       shopt -s extglob
       rm -rf !("bins")
     displayName: "Prepare Artifacts"
+    workingDirectory: $(ACN_DIR)
 
   - task: CopyFiles@2
     inputs:
-      sourceFolder: "output"
+      sourceFolder: "$(ACN_DIR)/output"
       targetFolder: $(Build.ArtifactStagingDirectory)/output
