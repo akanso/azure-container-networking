@@ -1,6 +1,8 @@
 stages:
 - stage: setup
   displayName: ACN
+  variables:
+    ACN_DIR: azure-container-networking
   jobs:
   - job: env
     displayName: Setup
@@ -17,7 +19,10 @@ stages:
         echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_NUMBER//./-})"
         echo "##vso[task.setvariable variable=commitID;isOutput=true]$(echo $(make revision)-$(date "+%d%H%M"))"
         echo "##vso[task.setvariable variable=Tag;isOutput=true]$(make version)"
-        echo "##vso[task.setvariable variable=npmVersion;isOutput=true]$(make npm-version)"
+        echo "##vso[task.setvariable variable=azureipamVersion;isOutput=true]$(make npm-version)"
+        echo "##vso[task.setvariable variable=cniVersion;isOutput=true]$(make cni-version)"
+        echo "##vso[task.setvariable variable=cnsVersion;isOutput=true]$(make cns-version)"
+        echo "##vso[task.setvariable variable=ipv6hpbpfVersion;isOutput=true]$(make ipv6-hp-bpf-version)"
         cat /etc/os-release
         uname -a
         sudo chown -R $(whoami):$(whoami) .
@@ -32,6 +37,7 @@ stages:
       name: "EnvironmentalVariables"
       displayName: "Set environmental variables"
       condition: always()
+      workingDirectory: $(ACN_DIR)
 
 - template: templates/run-unit-tests.yaml
 
@@ -44,6 +50,7 @@ stages:
       - test
     variables:
       STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+      ACN_DIR: azure-container-networking
     jobs:
     - template: templates/binaries.jobs.yaml
 
@@ -53,6 +60,8 @@ stages:
     dependsOn:
       - setup
       - test
+    variables:
+        ACN_DIR: azure-container-networking
     jobs:
     - job: containerize_amd64
       displayName: Build Images
@@ -62,8 +71,6 @@ stages:
       variables:
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_git_checkout: true
-
-        ACN_DIR: azure-container-networking
       strategy:
         matrix:
           azure_ipam_linux_amd64:

@@ -5,7 +5,8 @@ stages:
     - setup
   variables:
     STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-
+    ACN_DIR: azure-container-networking
+ 
   jobs:
   - job: 
     displayName: Run Tests
@@ -22,16 +23,11 @@ stages:
     - task: GoTool@0
       inputs:
         version: '$(GOVERSION)'
-  
-    - bash: |
-        GOBIN="$BIN_INSTALL_DIR" go install github.com/jstemmer/go-junit-report/v2@latest
-        echo >&2 "##vso[task.setvariable variable=JUNIT_REPORT_BIN]$GOBIN/go-junit-report"
-        echo >&2 "##vso[task.prependpath]$GOBIN"
-      displayName: "Install Dependencies"
-      env:
-        BIN_INSTALL_DIR: $(System.DefaultWorkingDirectory)/bin
 
     - script: |
+        GOBIN="$BIN_INSTALL_DIR" go install github.com/jstemmer/go-junit-report/v2@latest
+        JUNIT_REPORT_BIN="$BIN_INSTALL_DIR/go-junit-report"
+        echo >&2 "##vso[task.prependpath]$BIN_INSTALL_DIR"
         ls -la
         mkdir -p "$REPORT_DIR"
         touch "$REPORT_FILEPATH"
@@ -48,6 +44,7 @@ stages:
       displayName: "Run Tests"
       workingDirectory: $(ACN_DIR)
       env:
+        BIN_INSTALL_DIR: bin
         REPORT_DIR: $(REPORT_DIR)
         REPORT_FILEPATH: $(REPORT_FILEPATH)
 
