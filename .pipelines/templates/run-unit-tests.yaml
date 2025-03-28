@@ -17,6 +17,7 @@ stages:
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
 
+      ACN_DIR: $(Build.SourcesDirectory)
       REPORT_DIR: $(Build.ArtifactStagingDirectory)/linux-unittest
       REPORT_FILEPATH: $(REPORT_DIR)/report.xml
     steps:
