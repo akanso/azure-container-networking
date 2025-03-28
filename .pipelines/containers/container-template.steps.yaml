@@ -76,7 +76,7 @@ steps:
     repositoryName: '${{ parameters.name }}'
     os: '${{ parameters.os }}'
     buildkit: 1
-    dockerFileRelPath: $(ACN_DIR)/${{ parameters.dockerfile_path }}
+    dockerFileRelPath: ${{ parameters.dockerfile_path }}
     dockerFileContextPath: $(ACN_DIR)
     arguments: $(IN_ARGS) $(IN_PLATFORM_ARGS) $(IN_EXTRA_ARGS)
     compress: true
