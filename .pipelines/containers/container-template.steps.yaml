@@ -51,15 +51,6 @@ parameters:
 
 steps:
 
-- bash: |
-    echo >&2 "##vso[task.setvariable variable=IN_ARGS]$IN_ARGS"
-    echo >&2 "##vso[task.setvariable variable=IN_EXTRA_ARGS]$IN_EXTRA_ARGS"
-    echo >&2 "##vso[task.setvariable variable=IN_PLATFORM_ARGS]$IN_PLATFORM_ARGS"
-  env:
-    IN_ARGS: ${{ join('--build-arg', parameters.common_build_args) }}
-    IN_EXTRA_ARGS: ${{ parameters.extra_args }}
-    IN_PLATFORM_ARGS: ${{ join(' ', parameters.default_args) }}
-
 - task: onebranch.pipeline.containercontrol@1
   displayName: "Login to ACR"
   inputs:
@@ -77,8 +68,9 @@ steps:
     os: '${{ parameters.os }}'
     buildkit: 1
     dockerFileRelPath: ${{ parameters.dockerfile_path }}
-    dockerFileContextPath: $(ACN_DIR)
-    arguments: $(IN_ARGS) $(IN_PLATFORM_ARGS) $(IN_EXTRA_ARGS)
+    dockerFileContextPath: .
+      #$(ACN_DIR)
+    arguments: ${{ join('--build-arg', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     compress: true
     build_tag: ${{ parameters.build_tag }}
 
