@@ -37,7 +37,6 @@ parameters:
   default:
     - "--target $(os)"
     - "--platform $(os)/$(arch)"
-    - "--driver-opt image=mcr.microsoft.com/oss/v2/moby/buildkit:v0.16.0-2"
 
 - name: common_build_args
   type: object
