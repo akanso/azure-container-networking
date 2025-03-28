@@ -28,8 +28,8 @@ parameters:
   default: '$(name)-$(os)-$(platform)-$(Tag)'
 
 - name: extra_args
-  type: object
-  default: []
+  type: string
+  default: ''
 
 
 - name: default_args
@@ -51,7 +51,7 @@ parameters:
 
 variables:
   IN_ARGS: ${{ join('--build-arg', parameters.common_build_args) }}
-  IN_EXTRA_ARGS: ${{ join(' ', parameters.extra_args) }}
+  IN_EXTRA_ARGS: ${{ parameters.extra_args }}
   IN_PLATFORM_ARGS: ${{ join(' ', parameters.default_args) }}
 
 
