@@ -72,7 +72,7 @@ func rootExecute() error {
 			Logger:           logger,
 		},
 	}
-
+	logger.Info("CNI plugin started", zap.String("version", version))
 	cniReport := reportManager.Report.(*telemetry.CNIReport)
 
 	netPlugin, err := network.NewPlugin(
