@@ -443,15 +443,15 @@ func getPolicyNetworkRequestMarshal(setPolicySettings map[string]*hcn.SetPolicyS
 
 func isValidIPSet(set *IPSet) error {
 	if set.Name == "" {
-		return fmt.Errorf("IPSet %s is missing Name", set.Name)
+		return fmt.Errorf("IPSet %s is missing Name", set.Name) //nolint:err113 // static err not required
 	}
 
 	if set.Type == UnknownType {
-		return fmt.Errorf("IPSet %s is missing Type", set.Type.String())
+		return fmt.Errorf("IPSet %s is missing Type", set.Type.String()) //nolint:err113 // static err not required
 	}
 
 	if set.HashedName == "" {
-		return fmt.Errorf("IPSet %s is missing HashedName", set.HashedName)
+		return fmt.Errorf("IPSet %s is missing HashedName", set.HashedName) //nolint:err113 // static err not required
 	}
 
 	return nil
