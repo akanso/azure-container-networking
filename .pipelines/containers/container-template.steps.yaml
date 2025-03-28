@@ -49,13 +49,17 @@ parameters:
     - "VERSION=$(TAG)"
 
 
-variables:
-  IN_ARGS: ${{ join('--build-arg', parameters.common_build_args) }}
-  IN_EXTRA_ARGS: ${{ parameters.extra_args }}
-  IN_PLATFORM_ARGS: ${{ join(' ', parameters.default_args) }}
-
-
 steps:
+
+- bash: |
+    echo >&2 "##vso[task.setvariable variable=IN_ARGS]$IN_ARGS"
+    echo >&2 "##vso[task.setvariable variable=IN_EXTRA_ARGS]$IN_EXTRA_ARGS"
+    echo >&2 "##vso[task.setvariable variable=IN_PLATFORM_ARGS]$IN_PLATFORM_ARGS"
+  env:
+    IN_ARGS: ${{ join('--build-arg', parameters.common_build_args) }}
+    IN_EXTRA_ARGS: ${{ parameters.extra_args }}
+    IN_PLATFORM_ARGS: ${{ join(' ', parameters.default_args) }}
+
 - task: onebranch.pipeline.containercontrol@1
   displayName: "Login to ACR"
   inputs:
