@@ -35,16 +35,16 @@ parameters:
 - name: default_args
   type: object
   default:
-    - "--target $(os)"
-    - "--platform $(os)/$(arch)"
+    - "--target $(os) "
+    - "--platform $(os)/$(arch) "
 
 - name: common_build_args
   type: object
   default:
-    - "PLATFORM=$(PLATFORM)"
-    - "ARCH=$(ARCH)"
-    - "OS=$(OS)"
-    - "VERSION=$(TAG)"
+    - "PLATFORM=$(os) "
+    - "ARCH=$(arch) "
+    - "OS=$(os) "
+    - "VERSION=$(Tag) "
 
 
 steps:
@@ -69,7 +69,7 @@ steps:
     dockerFileContextPath: 
     arguments: --build-arg ${{ join('--build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     compress: true
-    base_image_tag: ${{ parameters.build_tag }}
+    build_tag: ${{ parameters.build_tag }}
 
     ${{ if eq(parameters.os, 'windows') }}:
       enable_acr_push:  true
