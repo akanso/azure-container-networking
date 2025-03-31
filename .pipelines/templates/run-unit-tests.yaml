@@ -13,7 +13,12 @@ stages:
         steps:
           - script: |
               make tools
-              # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml), stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code. Read all output from fd 4 (output from tee) and write to top stdout
+              sudo ln -s $(pwd)/build/tools/bin/gocov /usr/local/bin/gocov
+              sudo ln -s $(pwd)/build/tools/bin/gocov-xml /usr/local/bin/gocov-xml
+
+              # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml),
+              # stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code.
+              # Read all output from fd 4 (output from tee) and write to top stdout
               { { { {
                     sudo -E env "PATH=$PATH" make test-all;
                     echo $? >&3;
@@ -21,9 +26,17 @@ stages:
                   } 3>&1;
                 } | { read xs; exit $xs; }
               } 4>&1
+
+              gocov convert coverage-all.out > total_ut_coverage.json
+              gocov-xml < total_ut_coverage.json > total_ut_coverage.xml
             retryCountOnTaskFailure: 3
             name: "Test"
             displayName: "Run Tests"
+          - task: PublishCodeCoverageResults@2
+            displayName: "Publish Code Coverage Report"
+            condition: always()
+            inputs:
+              summaryFileLocation: total_ut_coverage.xml
 
   - stage: test_windows
     displayName: Test ACN Windows
