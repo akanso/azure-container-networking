@@ -37,6 +37,17 @@ stages:
             condition: always()
             inputs:
               summaryFileLocation: total_ut_coverage.xml
+          - task: BuildQualityChecks@8
+            displayName: "Check Code Coverage Regression"
+            condition: always()
+            inputs:
+              checkCoverage: true
+              coverageFailOption: "build"
+              coverageType: "lines"
+              fallbackOnPRTargetBranch: false
+              baseBranchRef: "master"
+              allowCoverageVariance: true
+              coverageVariance: 0.25
 
   - stage: test_windows
     displayName: Test ACN Windows
