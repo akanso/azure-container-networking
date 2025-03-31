@@ -12,11 +12,12 @@ echo "sufixes ${sufixes}"
 
 cd ../..
 for unique in $sufixes; do
-    make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
-        AZCLI=az REGION=westus2 SUB=$SUB \
-        CLUSTER=${clusterPrefix}-${unique} \
-        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_PREFIX=10.${unique}${unique}.0.0/16 SUBNET_PREFIX=10.${unique}${unique}.10.0/24
+    # make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
+    #     AZCLI=az REGION=westus2 SUB=$SUB \
+    #     CLUSTER=${clusterPrefix}-${unique} \
+    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+    #     VNET_PREFIX=10.${unique}${unique}.0.0/16 SUBNET_PREFIX=10.${unique}${unique}.10.0/24
+    kubectl config use-context ${clusterPrefix}-${unique}
     cat << EOF | kubectl apply -f -
     apiVersion: v1
     kind: ConfigMap
@@ -41,6 +42,10 @@ for unique in $sufixes; do
             }
 EOF
     if [ $install == "helm" ]; then
+
+        LATEST_SECRET=$(kubectl get secrets -o json | jq -r '.items[].metadata.name' | grep -E 'sh.helm.release.v1.cilium.v[0-9]+' | sort -t 'v' -k3,3n | tail -n 1)
+        kubectl delete secret "$LATEST_SECRET"
+
         helm upgrade --install -n kube-system cilium cilium/cilium  \
             --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
             --set aksbyocni.enabled=false \
@@ -61,22 +66,19 @@ EOF
             --set endpointHealthChecking.enabled=false \
             --set cni.install=true \
             --set cni.exclusive=false \
-            --set cni.customConf=true \
             --set cni.configMap="cni-configuration" \
             --set bpf.enableTCX=false \
             --set bpf.hostLegacyRouting=true \
             --set l7Proxy=false \
             --set sessionAffinity=true \
+            --set image.repository=acnpublic.azurecr.io/cilium/cilium \
             --set image.tag=krunaljainhybridtest \
             --set image.useDigest=false
 
     fi
 done
-cd ../cilium
-./deploy_image.sh krunaljainhybridtest "${clusterPrefix}-${sufix1}"
-./deploy_image.sh krunaljainhybridtest "${clusterPrefix}-${sufix2}"
 
-cd ../azure-container-networking/hack/scripts
+cd hack/scripts
 
 VNET_ID1=$(az network vnet show \
     --resource-group "${clusterPrefix}-${sufix1}-rg" \
