@@ -12,11 +12,11 @@ echo "sufixes ${sufixes}"
 
 cd ../..
 for unique in $sufixes; do
-    # make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
-    #     AZCLI=az REGION=westus2 SUB=$SUB \
-    #     CLUSTER=${clusterPrefix}-${unique} \
-    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-    #     VNET_PREFIX=10.${unique}${unique}.0.0/16 SUBNET_PREFIX=10.${unique}${unique}.10.0/24
+    make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
+        AZCLI=az REGION=westus2 SUB=$SUB \
+        CLUSTER=${clusterPrefix}-${unique} \
+        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+        VNET_PREFIX=10.${unique}${unique}.0.0/16 SUBNET_PREFIX=10.${unique}${unique}.10.0/24
     kubectl config use-context ${clusterPrefix}-${unique}
     cat << EOF | kubectl apply -f -
     apiVersion: v1
@@ -57,6 +57,7 @@ EOF
             --set cluster.name=${clusterPrefix}-${unique} \
             --set endpointRoutes.enabled=true \
             --set debug.enabled=true \
+            --set enableIPv4Masquerade=false \
             --set ipam.mode="delegated-plugin" \
             --set debug.verbose="datapath" \
             --set enable-ipv4=true \
@@ -65,6 +66,7 @@ EOF
             --set extraArgs="{--local-router-ipv4=192.${unique}0.0.9} {--install-iptables-rules=true}" \
             --set endpointHealthChecking.enabled=false \
             --set cni.install=true \
+            --set healthChecking=false \
             --set cni.exclusive=false \
             --set cni.configMap="cni-configuration" \
             --set bpf.enableTCX=false \
