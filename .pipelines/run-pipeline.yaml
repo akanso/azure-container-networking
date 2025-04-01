@@ -95,12 +95,12 @@ stages:
       CNS_AI_PATH: $(ACN_PACKAGE_PATH)/cns/logger.aiMetadata
       NPM_AI_PATH: $(ACN_PACKAGE_PATH)/npm.aiMetadata
 
-      TAG: $[ stageDependencies.env.outputs['EnvironmentalVariables.Tag'] ]
-      AZURE_IPAM_VERSION: $[ stageDependencies.env.outputs['EnvironmentalVariables.azureIpamVersion'] ]
-      CNI_VERSION: $[ stageDependencies.env.outputs['EnvironmentalVariables.cniVersion'] ]
-      CNS_VERSION: $[ stageDependencies.env.outputs['EnvironmentalVariables.cnsVersion'] ]
-      IPV6_HP_BPF_VERSION: $[ stageDependencies.env.outputs['EnvironmentalVariables.ipv6HpBpfVersion'] ]
-      NPM_VERSION: $[ stageDependencies.env.outputs['EnvironmentalVariables.npmVersion'] ]
+      TAG: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.Tag'] ]
+      AZURE_IPAM_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.azureIpamVersion'] ]
+      CNI_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.cniVersion'] ]
+      CNS_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.cnsVersion'] ]
+      IPV6_HP_BPF_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.ipv6HpBpfVersion'] ]
+      NPM_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.npmVersion'] ]
     jobs:
 
     - job: containerize_amd64
