@@ -48,7 +48,7 @@ for unique in $sufixes; do
             --set bpf.enableTCX=false \
             --set image.repository=acnpublic.azurecr.io/cilium/cilium \
             --set image.tag=krunaljainhybridtest \
-            --set image.digest=false \
+            --set image.useDigest=false \
             --set bpf.hostLegacyRouting=true \
             --set l7Proxy=false \
             --set sessionAffinity=true
