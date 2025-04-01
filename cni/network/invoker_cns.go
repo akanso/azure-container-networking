@@ -396,7 +396,7 @@ func configureDefaultAddResult(info *IPResultInfo, addConfig *IPAMAddConfig, add
 		}
 
 		maskLen, _ := ncIPNet.Mask.Size()
-		info.ncSubnetPrefix = uint8(maskLen)
+		info.ncSubnetPrefix = uint8(maskLen) //nolint:gosec // length of mask, at most 128
 	}
 
 	ip, ncIPNet, err := net.ParseCIDR(info.podIPAddress + "/" + fmt.Sprint(info.ncSubnetPrefix))

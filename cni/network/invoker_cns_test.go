@@ -2324,11 +2324,11 @@ func Test_configureDefaultAddResult(t *testing.T) {
 		t.Fatalf("configureDefaultAddResult due to error: %v", err)
 	}
 
-	require.Equal(t, 1, len(addResult.interfaceInfo))
-	require.Equal(t, 1, len(addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs))
+	require.Len(t, addResult.interfaceInfo, 1)
+	require.Len(t, addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs, 1)
 	require.Equal(t, "10.240.2.10/16", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs[0].Address.String())
 	require.Equal(t, "10.240.0.1", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs[0].Gateway.String())
-	require.Equal(t, 1, len(addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes))
+	require.Len(t, addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes, 1)
 	require.Equal(t, "0.0.0.0/0", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes[0].Dst.String())
 	require.Equal(t, "10.240.0.1", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes[0].Gw.String())
 	require.Equal(t, cns.InfraNIC, addResult.interfaceInfo["00-15-5D-3D-AD-5D"].NICType)
