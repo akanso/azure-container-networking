@@ -7,16 +7,17 @@
 # Example command: clusterPrefix=<alais> sufix1=1 sufix2=2 SUB=<GUID> clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
 
 sufixes="${sufix1} ${sufix2}"
-install=acn
+install=helm
 echo "sufixes ${sufixes}"
+FILE_PATH="/etc/cni/net.d/05-cilium.conflist"
 
 cd ../..
 for unique in $sufixes; do
-    make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
-        AZCLI=az REGION=westus2 SUB=$SUB \
-        CLUSTER=${clusterPrefix}-${unique} \
-        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
+    # make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
+    #     AZCLI=az REGION=westus2 SUB=$SUB \
+    #     CLUSTER=${clusterPrefix}-${unique} \
+    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+    #     VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
 
     if [ $install == "helm" ]; then
         # cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
@@ -25,7 +26,7 @@ for unique in $sufixes; do
         # --set hubble.enabled=false \
         # --set envoy.enabled=false
 
-        cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
+        helm upgrade --install -n kube-system cilium cilium/cilium --version v1.16.4 \
             --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
             --set aksbyocni.enabled=false \
             --set nodeinit.enabled=false \
@@ -33,6 +34,7 @@ for unique in $sufixes; do
             --set envoy.enabled=false \
             --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
             --set cluster.id=${unique} \
+            --set cluster.name=${clusterPrefix}-${unique} \
             --set ipam.mode=delegated-plugin \
             --set routingMode=native \
             --set endpointRoutes.enabled=true \
@@ -44,25 +46,47 @@ for unique in $sufixes; do
             --set endpointHealthChecking.enabled=false \
             --set cni.exclusive=false \
             --set bpf.enableTCX=false \
+            --set image.repository=acnpublic.azurecr.io/cilium/cilium \
+            --set image.tag=krunaljainhybridtest \
+            --set image.digest=false \
             --set bpf.hostLegacyRouting=true \
             --set l7Proxy=false \
             --set sessionAffinity=true
+            FILE_PATH="/etc/cni/net.d/05-cilium.conflist"
+        # Define the path to the file on AKS nodes
+        FILE_PATH="/etc/cni/net.d/05-cilium.conflist"
 
-    else # Ignore this block for now, was testing internal resources.
-        # Our Cilium image
-        export CILIUM_VERSION_TAG=v1.16.2-241024
-        export CILIUM_IMAGE_REGISTRY=mcr.microsoft.com/containernetworking
+# Get all node names
+        NODES=$(kubectl get nodes -o name | cut -d'/' -f2)
 
-        # Upstream Cilium
-        # export CILIUM_VERSION_TAG=v1.16.4
-        # export CILIUM_IMAGE_REGISTRY=quay.io
+# Iterate over each node and update the file
+        for NODE in $NODES; do
+                echo "Updating CNI config on node: $NODE"
 
-        export DIR=1.16
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-operator/files
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
+                kubectl debug node/$NODE --image=busybox -- bash -c "
+                        mkdir -p $(dirname $FILE_PATH)
+                        cat <<EOF > $FILE_PATH
+                        {
+                            \"cniVersion\": \"0.3.1\",
+                            \"name\": \"cilium\",
+                            \"plugins\": [
+                                {
+                                    \"type\": \"cilium-cni\",
+                                    \"ipam\": {
+                                        \"type\": \"azure-ipam\"
+                                    },
+                                    \"enable-debug\": true,
+                                    \"log-file\": \"/var/log/cilium-cni.log\"
+                                }
+                            ]
+                        }
+EOF
+                        echo 'Updated $FILE_PATH on $NODE'
+                "
+        done
+
+        echo "CNI configuration updated on all nodes."
+
     fi
 
 # cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
@@ -80,14 +104,6 @@ for unique in $sufixes; do
 # cilium config set enable-endpoint-routes true
 # cilium config set enable-endpoint-health-checking false
 
-
-    make test-load CNS_ONLY=true \
-        AZURE_IPAM_VERSION=v0.2.0 CNS_VERSION=v1.5.32 \
-        INSTALL_CNS=true INSTALL_OVERLAY=true \
-        CNS_IMAGE_REPO=MCR IPAM_IMAGE_REPO=MCR
-    if [ $install == "helm" ]; then
-        kubectl get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,HOSTNETWORK:.spec.hostNetwork --no-headers=true | grep '<none>' | awk '{print "-n "$1" "$2}' | xargs -L 1 -r kubectl delete pod
-    fi
 done
 
 cd hack/scripts
