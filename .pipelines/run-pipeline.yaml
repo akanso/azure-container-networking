@@ -15,8 +15,12 @@ stages:
 
     - script: |
         # To use the variables below, you must make the respective stage's dependsOn have - setup or it will not retain context of this stage
-        BUILD_NUMBER=$(Build.BuildNumber)
-        echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_NUMBER//./-})"
+        export CONTAINER_BUILDER=docker
+        export CONTAINER_RUNTIME=docker
+        export CONTAINER_TRANSPORT=docker
+        make azure-ipam-version
+        make azure-ipam-version CONTAINER_BUILDER=$CONTAINER_BUILDER CONTAINER_RUNTIME=$CONTAINER_RUNTIME CONTAINER_TRANSPORT=$CONTAINER_TRANSPORT
+        echo "##vso[task.setvariable variable=StorageID;isOutput=true]$(echo ${BUILD_BUILD_NUMBER//./-})"
         echo "##vso[task.setvariable variable=commitID;isOutput=true]$(echo $(make revision)-$(date "+%d%H%M"))"
         echo "##vso[task.setvariable variable=Tag;isOutput=true]$(make version)"
         echo "##vso[task.setvariable variable=azureIpamVersion;isOutput=true]$(make azure-ipam-version)"
@@ -50,7 +54,7 @@ stages:
       - setup
       - test
     variables:
-      STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+      STORAGE_ID: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
       ACN_DIR: azure-container-networking
     jobs:
     - template: templates/binaries.jobs.yaml
