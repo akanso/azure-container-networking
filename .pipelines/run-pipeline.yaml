@@ -266,7 +266,6 @@ stages:
           name: $(name)
           os: $(os)
           build_tag: $(archiveVersion)
-          extra_args: $[ iff(extraArgs, "$(extraArgs)", "") ]
           extra_args: $[ iff(variables.extraArgs, "$(extraArgs)", "") ]
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
 
