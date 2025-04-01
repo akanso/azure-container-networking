@@ -387,6 +387,7 @@ func configureDefaultAddResult(info *IPResultInfo, addConfig *IPAMAddConfig, add
 	}
 
 	if ipamMode == util.Nodesubnet {
+		logger.Info("IPAM mode is nodesubnet, using host IP configuration info")
 		info.ncGatewayIPAddress = info.hostGateway
 		info.ncPrimaryIP = info.hostPrimaryIP
 		_, ncIPNet, err := net.ParseCIDR(info.hostSubnet)
