@@ -2298,3 +2298,38 @@ func TestMultipleIBNICsToResult(t *testing.T) {
 		})
 	}
 }
+
+func Test_configureDefaultAddResult(t *testing.T) {
+	ipResultInfo := IPResultInfo{
+		podIPAddress:       "10.240.2.10",
+		ncSubnetPrefix:     0,
+		ncPrimaryIP:        "",
+		ncGatewayIPAddress: "",
+		hostSubnet:         "10.240.0.0/16",
+		hostPrimaryIP:      "10.240.1.246",
+		hostGateway:        "10.240.0.1",
+		nicType:            "InfraNIC",
+		macAddress:         "",
+		skipDefaultRoutes:  false,
+		routes:             []cns.Route{},
+	}
+	addResult := IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
+	ipamAddConfig := IPAMAddConfig{nwCfg: &cni.NetworkConfig{IPAM: cni.IPAM{Type: "azure-cns", Mode: string(util.Nodesubnet)}}}
+	err := configureDefaultAddResult(
+		&ipResultInfo,
+		&ipamAddConfig,
+		&addResult,
+		"00-15-5D-3D-AD-5D")
+	if err != nil {
+		t.Fatalf("configureDefaultAddResult due to error: %v", err)
+	}
+
+	require.Equal(t, 1, len(addResult.interfaceInfo))
+	require.Equal(t, 1, len(addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs))
+	require.Equal(t, "10.240.2.10/16", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs[0].Address.String())
+	require.Equal(t, "10.240.0.1", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].IPConfigs[0].Gateway.String())
+	require.Equal(t, 1, len(addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes))
+	require.Equal(t, "0.0.0.0/0", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes[0].Dst.String())
+	require.Equal(t, "10.240.0.1", addResult.interfaceInfo["00-15-5D-3D-AD-5D"].Routes[0].Gw.String())
+	require.Equal(t, cns.InfraNIC, addResult.interfaceInfo["00-15-5D-3D-AD-5D"].NICType)
+}

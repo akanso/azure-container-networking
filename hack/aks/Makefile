@@ -9,12 +9,12 @@ AZCLI   ?= docker run --rm -v $(AZCFG):/root/.azure -v $(KUBECFG):/root/.kube -v
 
 # overrideable defaults
 AUTOUPGRADE          ?= patch
-K8S_VER              ?= 1.30
+K8S_VER              ?= 1.31
 NODE_COUNT           ?= 2
 NODE_COUNT_WIN	     ?= $(NODE_COUNT)
 NODEUPGRADE          ?= NodeImage
 OS				     ?= linux # Used to signify if you want to bring up a windows nodePool on byocni clusters
-OS_SKU               ?= Ubuntu
+OS_SKU               ?= AzureLinux
 OS_SKU_WIN           ?= Windows2022
 REGION               ?= westus2
 VM_SIZE	             ?= Standard_B2s
@@ -136,15 +136,13 @@ endif
 
 overlay-byocni-nokubeproxy-up: rg-up overlay-net-up ## Brings up an Overlay BYO CNI cluster without kube-proxy
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
-		--auto-upgrade-channel $(AUTOUPGRADE) \
-		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
 		--node-count $(NODE_COUNT) \
 		--node-vm-size $(VM_SIZE) \
-		--load-balancer-sku basic \
 		--network-plugin none \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
+		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/UseCustomizedOSImage,OSImageSubscriptionID=109a5e88-712a-48ae-9078-9ca8b3c81345,OSImageResourceGroup=AKS-Ubuntu,OSImageGallery=AKSUbuntu,OSImageName=2404gen2containerd,OSImageVersion=202501.05.0 \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
 		--kube-proxy-config $(KUBE_PROXY_JSON_PATH) \
@@ -163,6 +161,8 @@ overlay-cilium-up: rg-up overlay-net-up ## Brings up an Overlay Cilium cluster
 		--network-dataplane cilium \
 		--network-plugin-mode overlay \
 		--pod-cidr 192.168.0.0/16 \
+		--os-sku $(OS_SKU) \
+		--aks-custom-headers AKSHTTPCustomFeatures=Microsoft.ContainerService/AzureLinuxV3Preview \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--no-ssh-key \
 		--yes
