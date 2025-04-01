@@ -199,10 +199,9 @@ stages:
           arch: amd64
           name: $(name)
           os: $(os)
-          os_version: $(osVersion)
           dockerfile_path: $(dockerfilePath)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
-          extra_args: $(extraArgs)
+          extra_args: $[ iff(extraArgs, "$(extraArgs)", "") ]
           build_tag: $(archiveVersion)
 
   
@@ -266,9 +265,9 @@ stages:
           arch: arm64
           name: $(name)
           os: $(os)
-          archive_file: $(archive_name)-$(os)-$(arch)-$(archive_version)
-          extra_args: $[ variables['extraArgs'] ]
           build_tag: $(archiveVersion)
+          extra_args: $[ iff(extraArgs, "$(extraArgs)", "") ]
+          archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
 
 
 #  - stage: publish
