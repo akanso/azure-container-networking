@@ -201,7 +201,7 @@ stages:
           os: $(os)
           dockerfile_path: $(dockerfilePath)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
-          extra_args: $[ iff(extraArgs, "$(extraArgs)", "") ]
+          extra_args: $[ iff(variables.extraArgs, "$(extraArgs)", "") ]
           build_tag: $(archiveVersion)
 
   
@@ -267,6 +267,7 @@ stages:
           os: $(os)
           build_tag: $(archiveVersion)
           extra_args: $[ iff(extraArgs, "$(extraArgs)", "") ]
+          extra_args: $[ iff(variables.extraArgs, "$(extraArgs)", "") ]
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
 
 
