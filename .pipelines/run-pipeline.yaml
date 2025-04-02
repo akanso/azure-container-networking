@@ -167,14 +167,14 @@ stages:
             name: azure-ipam
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: azure-ipam
+            dockerfilePath: $(ACN_DIR)/azure-ipam
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
           cni_linux_amd64:
             name: cni
             os: linux
-            dockerfilePath: cni
+            dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
@@ -183,7 +183,7 @@ stages:
             name: cni
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: cni
+            dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
@@ -191,7 +191,7 @@ stages:
           cns_linux_amd64:
             name: cns
             os: linux
-            dockerfilePath: cns
+            dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
@@ -200,7 +200,7 @@ stages:
             name: cns
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: cns
+            dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
@@ -216,7 +216,7 @@ stages:
           npm_linux_amd64:
             name: npm
             os: linux
-            dockerfilePath: npm
+            dockerfilePath: $(ACN_DIR)/npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -225,7 +225,7 @@ stages:
             name: npm
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: npm-windows
+            dockerfilePath: $(ACN_DIR)/npm-windows
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -240,7 +240,7 @@ stages:
           os: $(os)
           dockerfile_path: $(dockerfilePath)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
-          extra_args: variables['extraArgs']
+          extra_args: $[ variables['extraArgs'] ]
           build_tag: $(archiveVersion)
 
   
@@ -284,7 +284,7 @@ stages:
           ipv6_hp_bpf_linux_arm64:
             name: ipv6-hp-bpf
             os: linux
-            dockerfilePath: bpf-prog/ipv6-hp-bpf
+            dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(IPV6_HP_BPF_VERSION)
@@ -292,7 +292,7 @@ stages:
           npm_linux_arm64:
             name: npm
             os: linux
-            dockerfilePath: npm
+            dockerfilePath: $(ACN_DIR)/npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -307,7 +307,7 @@ stages:
           os: $(os)
           dockerfile_path: $(dockerfilePath)
           build_tag: $(archiveVersion)
-          extra_args: '$(extraArgs)'
+          extra_args: $[ iff(variables['extraArgs'], '$(extraArgs), '') ]
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
 
 
