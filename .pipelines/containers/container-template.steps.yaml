@@ -75,10 +75,16 @@ steps:
     buildkit: 1
     dockerFileRelPath: ${{ parameters.dockerfile_path }}
     dockerFileContextPath: ${{ parameters.source }}
-    arguments: ${{ iff(parameters.common_build_args, join('--build-arg ', '--build-arg ${{ parameters.common_build_args }}'), '') }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     compress: true
     build_tag: ${{ parameters.build_tag }}
 
+    # Docker Build Arguments
+    ${{ if parameters.common_build_args }}:
+      arguments: --build-arg join(' --build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
+    ${{ else }}:
+      arguments: ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
+
+    # OS Specific Settings
     ${{ if eq(parameters.os, 'windows') }}:
       enable_acr_push:  true
       saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.zip
