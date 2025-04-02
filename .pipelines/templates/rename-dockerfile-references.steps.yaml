@@ -31,9 +31,9 @@
 #   working_directory (string|default) - The directory to perform the 
 #     operations.
 #
-#   replace_references (bool|default) - If this is set to true, this module will
-#     rename references to the moved Dockerfile to the new $target_dockerfile. 
-#     This is a dumb sed replace; set with care.
+#   replace_references (boolean|default) - If this is set to true, this module 
+#     will rename references to the moved Dockerfile to the new 
+#     $target_dockerfile. This is a dumb sed replace; set with care.
 #
 #   replace_path (string|default) - The directory for which to search for 
 #     references to the old dockerfile name. Replce will default to $target_path 
@@ -64,7 +64,7 @@ parameters:
   default: '$(Build.SourcesDirectory)'
 
 - name: replace_references
-  type: bool
+  type: boolean
   default: false
 
 - name: replace_path
