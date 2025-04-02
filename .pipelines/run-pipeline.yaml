@@ -16,13 +16,13 @@ stages:
     steps:
     - checkout: azure-container-networking
 
-    - bash: |
-        mv "$SOURCE" "$TARGET"
-      displayName: "Create OneBranch Docker Workspace for Linux ipv6-hp-bfp"
-      workingDirectory: $(ACR_DIR)
-      env: 
-        SOURCE: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/linux.Dockerfile
-        TARGET: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/Dockerfile
+    - template: templates/rename-dockerfile-references.steps.yaml
+      parameters:
+        topic: "Linux - ipv6-hp-bpf"
+        replace_references: true
+        source_path: bpf-prog/ipv6-hp-bpf
+        target_path: bpf-prog/ipv6-hp-bpf
+        source_dockerfile: linux.Dockerfile
 
     - task: CopyFiles@2
       displayName: "Create OneBranch Docker Workspace for Windows NPM"
@@ -30,21 +30,23 @@ stages:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm
         targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows
 
-    - bash: |
-        mv "$SOURCE" "$TARGET"
-      workingDirectory: $(ACR_DIR)
-      displayName: "Move Dockerfile to Approved Naming Format - Linux"
-      env: 
-        SOURCE: npm/linux.Dockerfile
-        TARGET: npm/Dockerfile
+    - template: templates/rename-dockerfile-references.steps.yaml
+      parameters:
+        topic: "Linux - npm"
+        replace_references: true
+        working_directory: $(ACN_DIR)
+        source_path: npm
+        target_path: npm
+        source_dockerfile: linux.Dockerfile
 
-    - bash: |
-        mv "$SOURCE" "$TARGET"
-      workingDirectory: $(ACR_DIR)
-      displayName: "Move Dockerfile to Approved Naming Format - Windows"
-      env: 
-        SOURCE: npm-windows/windows.Dockerfile
-        TARGET: npm-windows/Dockerfile
+    - template: templates/rename-dockerfile-references.steps.yaml
+      parameters:
+        topic: "Windows - npm"
+        replace_references: true
+        working_directory: $(ACN_DIR)
+        source_path: npm-windows
+        target_path: npm-windows
+        source_dockerfile: windows.Dockerfile
 
     - bash: |
         rm -rf .pipelines .hooks .github
@@ -154,7 +156,6 @@ stages:
         type: docker
       variables:
         #LinuxContainerImage: $(LinuxContainerImage2)
-        ACN_DIR: drop_setup_env_source
 
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
@@ -253,10 +254,10 @@ stages:
       variables:
         ob_outputDirectory: $(Build.SourcesDirectory)/out
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
-        ob_git_checkout: true
+        ob_build_container: true
         ob_enable_qemu: true
+        ob_git_checkout: true
 
-        ACN_DIR: drop_setup_env_source
         ARCH: arm64
       strategy:
         matrix:
@@ -307,7 +308,6 @@ stages:
           build_tag: $(archiveVersion)
           extra_args: $(extraArgs)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
-
 
 #  - stage: publish
 #    displayName: Publish Multiarch Manifests
