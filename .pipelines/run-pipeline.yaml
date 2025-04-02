@@ -118,7 +118,7 @@ stages:
       - setup
       - test
     variables:
-      ACN_DIR: drop_env_setup_source
+      ACN_DIR: drop_setup_env_source
 
       ACN_PACKAGE_PATH: github.com/Azure/azure-container-networking
       CNI_AI_PATH: $(ACN_PACKAGE_PATH)/telemetry.aiMetadata
@@ -140,7 +140,7 @@ stages:
         type: docker
       variables:
         #LinuxContainerImage: $(LinuxContainerImage2)
-        ACN_DIR: drop_env_source
+        ACN_DIR: drop_setup_env_source
 
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_git_checkout: true
@@ -152,22 +152,22 @@ stages:
           azure_ipam_linux_amd64:
             name: azure-ipam
             os: linux
-            dockerfilePath: azure-ipam
-            archiveName: $(ACN_DIR)/azure-ipam
+            dockerfilePath: $(ACN_DIR)/azure-ipam
+            archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
           azure_ipam_windows:
             name: azure-ipam
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/azure-ipam
+            dockerfilePath: azure-ipam
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
           cni_linux_amd64:
             name: cni
             os: linux
-            dockerfilePath: $(ACN_DIR)/cni
+            dockerfilePath: cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
@@ -176,7 +176,7 @@ stages:
             name: cni
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cni
+            dockerfilePath: cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
@@ -184,7 +184,7 @@ stages:
           cns_linux_amd64:
             name: cns
             os: linux
-            dockerfilePath: $(ACN_DIR)/cns
+            dockerfilePath: cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
@@ -193,7 +193,7 @@ stages:
             name: cns
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cns
+            dockerfilePath: cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
@@ -209,7 +209,7 @@ stages:
           npm_linux_amd64:
             name: npm
             os: linux
-            dockerfilePath: $(ACN_DIR)/npm
+            dockerfilePath: npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -218,7 +218,7 @@ stages:
             name: npm
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/npm-windows
+            dockerfilePath: npm-windows
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -247,7 +247,7 @@ stages:
         ob_git_checkout: true
         ob_enable_qemu: true
 
-        ACN_DIR: drop_env_setup_source
+        ACN_DIR: drop_setup_env_source
         ARCH: arm64
       strategy:
         matrix:
@@ -261,9 +261,9 @@ stages:
           cni_linux_arm64:
             name: cni
             os: linux
-            dockerfilePath: $(ACN_DIR)/cni
+            dockerfilePath: cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
-            archiveName: $(ACN_DIR)/azure-cni
+            archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
             Suffix: cni_linux-arm64
           cns_linux_arm64:
@@ -277,7 +277,7 @@ stages:
           ipv6_hp_bpf_linux_arm64:
             name: ipv6-hp-bpf
             os: linux
-            dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf
+            dockerfilePath: bpf-prog/ipv6-hp-bpf
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(IPV6_HP_BPF_VERSION)
@@ -285,7 +285,7 @@ stages:
           npm_linux_arm64:
             name: npm
             os: linux
-            dockerfilePath: $(ACN_DIR)/npm
+            dockerfilePath: npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
