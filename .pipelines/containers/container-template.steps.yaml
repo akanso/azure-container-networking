@@ -27,6 +27,10 @@ parameters:
   type: string
   default: '$(name)-$(os)-$(platform)-$(Tag)'
 
+- name: source
+  type: string
+  default: drop_setup_env_source
+
 - name: extra_args
   type: string
   default: ''
@@ -48,6 +52,10 @@ parameters:
 
 
 steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    targetPath: $(Build.SourcesDirectory)/dst/${{ parameters.source }}
+    artifact: '${{ parameters.source }}'
 
 - task: onebranch.pipeline.containercontrol@1
   displayName: "Login to ACR"
@@ -66,8 +74,8 @@ steps:
     os: '${{ parameters.os }}'
     buildkit: 1
     dockerFileRelPath: ${{ parameters.dockerfile_path }}
-    dockerFileContextPath: 
-    arguments: --build-arg ${{ join('--build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
+    dockerFileContextPath: ${{ parameters.source }}
+    arguments: ${{ iff(parameters.common_build_args, join('--build-arg ', '--build-arg ${{ parameters.common_build_args }}'), '') }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     compress: true
     build_tag: ${{ parameters.build_tag }}
 

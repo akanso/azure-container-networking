@@ -10,15 +10,40 @@ stages:
       type: linux
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+      ob_artifactSuffix: source
     steps:
     - checkout: azure-container-networking
+
+    - task: CopyFiles@2
+      displayName: "Add Repo to Container Artifacts"
+      inputs:
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking
+        targetFolder: $(Build.ArtifactStagingDirectory)
+
+    - task: CopyFiles@2
+      displayName: "Create OneBranch Docker Workspace for Windows NPM"
+      inputs:
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm
+        targetFolder: $(Build.ArtifactStagingDirectory)/azure-container-networking/npm-windows
+
+    - task: CopyFiles@2
+      displayName: "Move Dockerfile to Approved Naming Format - Linux"
+      inputs:
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/linux.Dockerfile
+        targetFolder: $(Build.ArtifactStagingDirectory)/azure-container-networking/npm/Dockerfile
+
+    - task: CopyFiles@2
+      displayName: "Move Dockerfile to Approved Naming Format - Windows"
+      inputs:
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/windows.Dockerfile
+        targetFolder: $(Build.ArtifactStagingDirectory)/azure-container-networking/npm-windows/Dockerfile
 
     - script: |
         export CONTAINER_BUILDER=docker
         export CONTAINER_RUNTIME=docker
         export CONTAINER_TRANSPORT=docker
 
-        STORAGE_ID=$(echo "${BUILD_BUILD_NUMBER//./-}")
+        STORAGE_ID=$(echo "${BUILD_BUILDNUMBER//./-}")
         echo "##vso[task.setvariable variable=StorageID;isOutput=true]$STORAGE_ID"
         echo "STORAGE_ID: $STORAGE_ID"
         
@@ -110,9 +135,11 @@ stages:
         type: docker
       variables:
         #LinuxContainerImage: $(LinuxContainerImage2)
+        ACN_DIR: drop_env_source
 
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_git_checkout: true
+        ob_build_container: true
 
         ARCH: amd64
       strategy:
@@ -120,22 +147,22 @@ stages:
           azure_ipam_linux_amd64:
             name: azure-ipam
             os: linux
-            dockerfilePath: azure-ipam/Dockerfile
-            archiveName: azure-ipam
+            dockerfilePath: azure-ipam
+            archiveName: $(ACN_DIR)/azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
           azure_ipam_windows:
             name: azure-ipam
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/azure-ipam/Dockerfile
+            dockerfilePath: $(ACN_DIR)/azure-ipam
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
           cni_linux_amd64:
             name: cni
             os: linux
-            dockerfilePath: $(ACN_DIR)/cni/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
@@ -144,7 +171,7 @@ stages:
             name: cni
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cni/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
@@ -152,7 +179,7 @@ stages:
           cns_linux_amd64:
             name: cns
             os: linux
-            dockerfilePath: $(ACN_DIR)/cns/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
@@ -161,7 +188,7 @@ stages:
             name: cns
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: cns/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
@@ -169,7 +196,7 @@ stages:
           ipv6_hp_bpf_linux_amd64:
             name: ipv6-hp-bpf
             os: linux
-            dockerfilePath: bpf-prog/ipv6-hp-bpf/Dockerfile
+            dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(IPV6_HP_BPF_VERSION)
@@ -177,7 +204,7 @@ stages:
           npm_linux_amd64:
             name: npm
             os: linux
-            dockerfilePath: npm/linux.Dockerfile
+            dockerfilePath: $(ACN_DIR)/npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -186,7 +213,7 @@ stages:
             name: npm
             os: windows
             osVersion: ltsc2022
-            dockerfilePath: npm/windows.Dockerfile
+            dockerfilePath: $(ACN_DIR)/npm-windows
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -221,22 +248,22 @@ stages:
           azure_ipam_linux_arm64:
             name: azure-ipam
             os: linux
-            dockerfilePath: $(ACN_DIR)/azure-ipam/Dockerfile
+            dockerfilePath: $(ACN_DIR)/azure-ipam
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-arm64
           cni_linux_arm64:
             name: cni
             os: linux
-            dockerfilePath: cni/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
-            archiveName: azure-cni
+            archiveName: $(ACN_DIR)/azure-cni
             archiveVersion: $(CNI_VERSION)
             Suffix: cni_linux-arm64
           cns_linux_arm64:
             name: cns
             os: linux
-            dockerfilePath: cns/Dockerfile
+            dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archive_name: azure-cns
             archive_version: $(CNS_VERSION)
@@ -244,7 +271,7 @@ stages:
           ipv6_hp_bpf_linux_arm64:
             name: ipv6-hp-bpf
             os: linux
-            dockerfilePath: bpf-prog/ipv6-hp-bpf/Dockerfile
+            dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(IPV6_HP_BPF_VERSION)
@@ -252,7 +279,7 @@ stages:
           npm_linux_arm64:
             name: npm
             os: linux
-            dockerfilePath: npm/linux.Dockerfile
+            dockerfilePath: $(ACN_DIR)/npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
@@ -265,6 +292,7 @@ stages:
           arch: arm64
           name: $(name)
           os: $(os)
+          dockerfile_path: $(dockerfilePath)
           build_tag: $(archiveVersion)
           extra_args: $[ iff(variables.extraArgs, "$(extraArgs)", "") ]
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
