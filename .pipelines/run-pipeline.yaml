@@ -10,7 +10,7 @@ stages:
       type: linux
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-      ob_artifactSuffix: source
+      ob_artifactSuffix: _source
     steps:
     - checkout: azure-container-networking
 
@@ -24,19 +24,19 @@ stages:
       displayName: "Create OneBranch Docker Workspace for Windows NPM"
       inputs:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm
-        targetFolder: $(Build.ArtifactStagingDirectory)/azure-container-networking/npm-windows
+        targetFolder: $(Build.ArtifactStagingDirectory)/npm-windows
 
     - task: CopyFiles@2
       displayName: "Move Dockerfile to Approved Naming Format - Linux"
       inputs:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/linux.Dockerfile
-        targetFolder: $(Build.ArtifactStagingDirectory)/azure-container-networking/npm/Dockerfile
+        targetFolder: $(Build.ArtifactStagingDirectory)/npm/Dockerfile
 
     - task: CopyFiles@2
       displayName: "Move Dockerfile to Approved Naming Format - Windows"
       inputs:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/windows.Dockerfile
-        targetFolder: $(Build.ArtifactStagingDirectory)/azure-container-networking/npm-windows/Dockerfile
+        targetFolder: $(Build.ArtifactStagingDirectory)/npm-windows/Dockerfile
 
     - script: |
         export CONTAINER_BUILDER=docker
@@ -90,6 +90,11 @@ stages:
       displayName: "Set environmental variables"
       condition: always()
       workingDirectory: $(ACN_DIR)
+
+    - bash: |
+        rm -rf .pipelines .hooks .github
+      displayName: "Remove Unnecessary Dirs from Source"
+
 
 - template: templates/run-unit-tests.yaml
 
