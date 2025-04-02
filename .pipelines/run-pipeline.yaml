@@ -24,12 +24,6 @@ stages:
         target_path: bpf-prog/ipv6-hp-bpf
         source_dockerfile: linux.Dockerfile
 
-    - task: CopyFiles@2
-      displayName: "Create OneBranch Docker Workspace for Windows NPM"
-      inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm
-        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows
-
     - template: templates/rename-dockerfile-references.steps.yaml
       parameters:
         topic: "Linux - npm"

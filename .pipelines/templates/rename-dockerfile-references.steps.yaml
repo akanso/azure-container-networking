@@ -77,19 +77,37 @@ parameters:
 
 
 steps:
-- bash: |
-    set -e; [[ -n $DEBUG ]] && [[ $DEBUG =~ ^[T|t]rue$ ]] && set -x
 
-    mv "$SOURCE_REL_PATH"/"$SOURCE_DOCKERFILE" "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE"
-    if [[ -n $REFERENCE_REPLACE ]] && [[ $REFERENCE_REPLACE =~ ^[T|t]rue$ ]]; then
-      sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" $(grep -rl "$REPLACE_PATH")
+- bash: |
+    set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
+
+    if ! [[ -d "$TARGET_REL_PATH" ]]; then
+      echo >&2 "##[info]Target path ($TARGET_REL_PATH) does not exist, copying source contents to new folder."
+      cp -r "$SOURCE_REL_PATH" "$TARGET_REL_PATH"
     fi
-    find "$TARGET_REL_PATH" -maxdepth 1 -type f -name '*Dockerfile' ! -wholename "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE" -delete
   workingDirectory: $(ACR_DIR)
+  env: 
+    SOURCE_REL_PATH: ${{ parameters.source_path }}
+    TARGET_REL_PATH: ${{ parameters.target_path }}
   ${{ if parameters.topic }}:
-    displayName: "Move Dockerfile to OneBranch Approved Naming Format - ${{ parameters.topic }}"
+    displayName: "Create OneBranch Docker Workspace"
   ${{ else }}:
-    displayName: "Move Dockerfile to OneBranch Approved Naming Format"
+    displayName: "Create OneBranch Docker Workspace - ${{ parameters.topic }}"
+
+- bash: |
+    set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
+
+    echo >&2 "##[info]Renaming source dockerfile ($TARGET_DOCKERFILE) to desired name ($TARGET_DOCKERFILE)."
+    mv "$SOURCE_REL_PATH"/"$SOURCE_DOCKERFILE" "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE"
+
+    FILE_REFERENCES=( $(grep -rl "$REPLACE_PATH") )
+    echo >&2 "##[debug]Found $(echo ${FILE_REFERENCES[@]} | wc -l) files with references to \'$SOURCE_DOCKERFILE\'."
+    printf "%s\n" "${FILE_REFERENCES[@]}" | sed "s/^/$(printf '%*s' 4)/" >&2
+    if [[ -n $REFERENCE_REPLACE ]] && [[ $REFERENCE_REPLACE =~ ^[T|t]rue$ ]]; then
+      echo >&2 "##[info]Replacing references to old source dockerfile ($SOURCE_DOCKERFILE) to the new target name ($TARGET_DOCKERFILE)."
+      sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" "${FILE_REFERENCES[@]}"
+    fi
+  workingDirectory: $(ACR_DIR)
   env: 
     REFERENCE_REPLACE: ${{ parameters.replace_references }}
     REPLACE_PATH: ${{ coalesce(parameters.replace_path, parameters.target_path) }}
@@ -97,3 +115,45 @@ steps:
     TARGET_REL_PATH: ${{ parameters.target_path }}
     SOURCE_DOCKERFILE: ${{ parameters.source_dockerfile }}
     TARGET_DOCKERFILE: ${{ parameters.target_dockerfile }}
+  ${{ if parameters.topic }}:
+    displayName: "Move Dockerfile to OneBranch Approved Naming Format - ${{ parameters.topic }}"
+  ${{ else }}:
+    displayName: "Move Dockerfile to OneBranch Approved Naming Format"
+
+- bash: |
+    set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
+
+    FILE_REFERENCES=( $(grep -rl "$REPLACE_PATH") )
+    echo >&2 "##[debug]Found $(echo ${FILE_REFERENCES[@]} | wc -l) files with references to \'$SOURCE_DOCKERFILE\'."
+    printf "%s\n" "${FILE_REFERENCES[@]}" | sed "s/^/$(printf '%*s' 4)/" >&2
+
+    echo >&2 "##[info]Replacing references to old source dockerfile ($SOURCE_DOCKERFILE) to the new target name ($TARGET_DOCKERFILE)."
+    sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" "${FILE_REFERENCES[@]}"
+  workingDirectory: $(ACR_DIR)
+  condition: and(succeeded(), '${{ parameters.replace_references }}')
+  env: 
+    REPLACE_PATH: ${{ coalesce(parameters.replace_path, parameters.target_path) }}
+    SOURCE_REL_PATH: ${{ parameters.source_path }}
+    TARGET_REL_PATH: ${{ parameters.target_path }}
+    SOURCE_DOCKERFILE: ${{ parameters.source_dockerfile }}
+    TARGET_DOCKERFILE: ${{ parameters.target_dockerfile }}
+  ${{ if parameters.topic }}:
+    displayName: "Replace References to Updated Dockerfile - ${{ parameters.topic }}"
+  ${{ else }}:
+    displayName: "Replace References to Updated Dockerfile"
+
+- bash: |
+    set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
+
+    echo >&2 "##[info]Deleting top-level dockerfiles that are -not- the target ($TARGET_DOCKERFILE)."
+    find "$TARGET_REL_PATH" -maxdepth 1 -type f -name '*Dockerfile' ! -wholename "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE" -delete
+  workingDirectory: $(ACR_DIR)
+  env: 
+    SOURCE_REL_PATH: ${{ parameters.source_path }}
+    TARGET_REL_PATH: ${{ parameters.target_path }}
+    SOURCE_DOCKERFILE: ${{ parameters.source_dockerfile }}
+    TARGET_DOCKERFILE: ${{ parameters.target_dockerfile }}
+  ${{ if parameters.topic }}:
+    displayName: "Remove Extra Dockerfile References - ${{ parameters.topic }}"
+  ${{ else }}:
+    displayName: "Remove Extra Dockerfile References"
