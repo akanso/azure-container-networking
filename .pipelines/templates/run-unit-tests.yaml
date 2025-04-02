@@ -25,13 +25,73 @@ stages:
                   } 3>&1;
                 } | { read xs; exit $xs; }
               } 4>&1
+
+              mv coverage-all.out linux-coverage.out
             retryCountOnTaskFailure: 3
             name: "Test"
             displayName: "Run Tests"
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'linux-coverage.out'
+              artifactName: 'linux-coverage'
+
+  - stage: test_windows
+    displayName: Test ACN Windows
+    dependsOn:
+      - setup
+    jobs:
+      - job: test
+        displayName: Run Tests
+        variables:
+          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+        pool:
+          name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
+        steps:
+          # Only run one go test per script
+          - script: |
+              cd azure-container-networking/
+              go test -timeout 30m -covermode atomic -coverprofile=windows-coverage.out ./npm/... ./cni/... ./platform/...
+              go tool cover -func=windows-coverage.out
+            retryCountOnTaskFailure: 3
+            name: "TestWindows"
+            displayName: "Run Windows Tests"
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'windows-coverage.out'
+              artifactName: 'windows-coverage'
+
+  - stage: code_coverage
+    displayName: Code Coverage Check
+    dependsOn:
+      - test
+      - test_windows
+    jobs:
+      - job: coverage
+        displayName: Check Coverage
+        pool:
+          name: "$(BUILD_POOL_NAME_DEFAULT)"
+        steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'linux-coverage'
+              path: './'
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'windows-coverage'
+              path: './'
           - bash: |
+              make tools
               sudo ln -s $(pwd)/build/tools/bin/gocov /usr/local/bin/gocov
               sudo ln -s $(pwd)/build/tools/bin/gocov-xml /usr/local/bin/gocov-xml
-              gocov convert coverage-all.out > total_ut_coverage.json
+
+              sed -i "1d" linux-coverage.out
+              sed -i "1d" windows-coverage.out
+
+              echo "mode: atomic" > total_ut_coverage.out
+              cat linux-coverage.out >> total_ut_coverage.out
+              cat windows-coverage.out >> total_ut_coverage.out
+              
+              gocov convert total_ut_coverage.out > total_ut_coverage.json
               gocov-xml < total_ut_coverage.json > total_ut_coverage.xml
             name: "Coverage"
             displayName: "Generate Coverage Report"
@@ -52,23 +112,3 @@ stages:
               baseBranchRef: "master"
               allowCoverageVariance: true
               coverageVariance: 0.25
-
-  - stage: test_windows
-    displayName: Test ACN Windows
-    dependsOn:
-      - setup
-    jobs:
-      - job: test
-        displayName: Run Tests
-        variables:
-          STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-        pool:
-          name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
-        steps:
-          # Only run one go test per script
-          - script: |
-              cd azure-container-networking/
-              go test -timeout 30m ./npm/... ./cni/... ./platform/...
-            retryCountOnTaskFailure: 3
-            name: "TestWindows"
-            displayName: "Run Windows Tests"
