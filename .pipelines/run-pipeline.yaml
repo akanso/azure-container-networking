@@ -118,7 +118,7 @@ stages:
       - setup
       - test
     variables:
-      ACN_DIR: dst
+      ACN_DIR: drop_env_setup_source
 
       ACN_PACKAGE_PATH: github.com/Azure/azure-container-networking
       CNI_AI_PATH: $(ACN_PACKAGE_PATH)/telemetry.aiMetadata
@@ -247,6 +247,7 @@ stages:
         ob_git_checkout: true
         ob_enable_qemu: true
 
+        ACN_DIR: drop_env_setup_source
         ARCH: arm64
       strategy:
         matrix:
