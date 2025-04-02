@@ -73,14 +73,14 @@ steps:
     repositoryName: '${{ parameters.name }}'
     os: '${{ parameters.os }}'
     buildkit: 1
-    dockerFileRelPath: ${{ parameters.dockerfile_path }}
+    dockerFileRelPath: ${{ parameters.dockerfile_path }}/Dockerfile
     dockerFileContextPath: ${{ parameters.source }}
     compress: true
     build_tag: ${{ parameters.build_tag }}
 
     # Docker Build Arguments
     ${{ if parameters.common_build_args }}:
-      arguments: --build-arg join(' --build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
+      arguments: --build-arg ${{ join(' --build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     ${{ else }}:
       arguments: ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
 
