@@ -8,6 +8,7 @@
          "ipsToRouteViaHost":["169.254.20.10"],
          "ipam":{
             "type":"azure-vnet-ipam"
+            "mode":"nodesubnet"
          }
       },
       {

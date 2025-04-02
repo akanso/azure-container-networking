@@ -11,6 +11,7 @@
             },
             "ipam": {
                 "type": "azure-vnet-ipam"
+                "mode": "nodesubnet"
             },
             "dns": {
                 "Nameservers": [
