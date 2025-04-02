@@ -485,6 +485,7 @@ func TestCNSIPAMInvoker_Add_Overlay(t *testing.T) {
 			}
 			if tt.fields.ipamMode != "" {
 				invoker.ipamMode = tt.fields.ipamMode
+				tt.args.nwCfg.IPAM.Mode = string(tt.fields.ipamMode)
 			}
 			ipamAddResult, err := invoker.Add(IPAMAddConfig{nwCfg: tt.args.nwCfg, args: tt.args.args, options: tt.args.options})
 			if tt.wantErr {
