@@ -76,6 +76,7 @@ steps:
     dockerFileRelPath: ${{ parameters.dockerfile_path }}/Dockerfile
     dockerFileContextPath: ${{ parameters.source }}
     compress: true
+    enable_network: true
     build_tag: ${{ parameters.build_tag }}
 
     # Docker Build Arguments
