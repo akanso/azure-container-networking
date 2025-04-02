@@ -84,7 +84,7 @@ steps:
     if [[ -n $REFERENCE_REPLACE ]] && [[ $REFERENCE_REPLACE =~ ^[T|t]rue$ ]]; then
       sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" $(grep -rl "$REPLACE_PATH")
     fi
-    find "$TARGET_REL_PATH" -type f -depth 0 -name '*Dockerfile' ! -wholename "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE" -delete
+    find "$TARGET_REL_PATH" -maxdepth 1 -type f -name '*Dockerfile' ! -wholename "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE" -delete
   workingDirectory: $(ACR_DIR)
   ${{ if parameters.topic }}:
     displayName: "Move Dockerfile to OneBranch Approved Naming Format - ${{ parameters.topic }}"
