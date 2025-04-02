@@ -281,8 +281,8 @@ stages:
             os: linux
             dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
-            archive_name: azure-cns
-            archive_version: $(CNS_VERSION)
+            archiveName: azure-cns
+            archiveVersion: $(CNS_VERSION)
             Suffix: cns_linux-arm64
           ipv6_hp_bpf_linux_arm64:
             name: ipv6-hp-bpf

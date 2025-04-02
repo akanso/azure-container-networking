@@ -75,9 +75,11 @@ steps:
     buildkit: 1
     dockerFileRelPath: ${{ parameters.dockerfile_path }}/Dockerfile
     dockerFileContextPath: ${{ parameters.source }}
-    compress: true
     enable_network: true
     build_tag: ${{ parameters.build_tag }}
+
+    compress: true
+    saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz
 
     # Docker Build Arguments
     ${{ if parameters.common_build_args }}:
@@ -88,7 +90,5 @@ steps:
     # OS Specific Settings
     ${{ if eq(parameters.os, 'windows') }}:
       enable_acr_push:  true
-      saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.zip
     ${{ else }}:
       enable_acr_push: false
-      saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.tar
