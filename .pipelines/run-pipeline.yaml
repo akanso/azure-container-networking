@@ -15,28 +15,39 @@ stages:
     - checkout: azure-container-networking
 
     - task: CopyFiles@2
-      displayName: "Add Repo to Container Artifacts"
+      displayName: "Create OneBranch Docker Workspace for Linux ipv6-hp-bfp"
       inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking
-        targetFolder: $(Build.ArtifactStagingDirectory)
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/linux.Dockerfile
+        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/Dockerfile
 
     - task: CopyFiles@2
       displayName: "Create OneBranch Docker Workspace for Windows NPM"
       inputs:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm
-        targetFolder: $(Build.ArtifactStagingDirectory)/npm-windows
+        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows
 
     - task: CopyFiles@2
       displayName: "Move Dockerfile to Approved Naming Format - Linux"
       inputs:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/linux.Dockerfile
-        targetFolder: $(Build.ArtifactStagingDirectory)/npm/Dockerfile
+        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/Dockerfile
 
     - task: CopyFiles@2
       displayName: "Move Dockerfile to Approved Naming Format - Windows"
       inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/windows.Dockerfile
-        targetFolder: $(Build.ArtifactStagingDirectory)/npm-windows/Dockerfile
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows/windows.Dockerfile
+        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows/Dockerfile
+
+    - bash: |
+        rm -rf .pipelines .hooks .github
+      displayName: "Remove Unnecessary Dirs from Source"
+      workingDirectory: $(Build.SourcesDirectory)/azure-container-networking
+
+    - task: CopyFiles@2
+      displayName: "Add Repo to Container Artifacts"
+      inputs:
+        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking
+        targetFolder: $(Build.ArtifactStagingDirectory)
 
     - script: |
         export CONTAINER_BUILDER=docker
@@ -90,10 +101,6 @@ stages:
       displayName: "Set environmental variables"
       condition: always()
       workingDirectory: $(ACN_DIR)
-
-    - bash: |
-        rm -rf .pipelines .hooks .github
-      displayName: "Remove Unnecessary Dirs from Source"
 
 
 - template: templates/run-unit-tests.yaml
