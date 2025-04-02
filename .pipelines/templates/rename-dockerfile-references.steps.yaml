@@ -1,36 +1,77 @@
+################################################################################
+#################### Rename Dockerfile References Template #####################
+################################################################################
+#
+# Description: 
+#   OneBranch requires that dockerfiles used in their builds are named 
+#   'Dockerfile'. This fascilitates the creation of this template in order to 
+#   easily create new folders for each operating system required for build.
+#
+#   This template also has the ability to conduct simple naming replacements for
+#   the updated Dockerfile name within a specified directory.
+#
+#   For improved clarity, all other top-level dockerfiles are removed from the 
+#   target - or replacement - directory.
+#
+# Parameters:
+#   source_path (string) - The path (absolute or relative to $working_directory) 
+#     to the desired source folder. If the folder does not exist, a new one will
+#     be created. Any matching files will be overwritten.
+#
+#   source_dockerfile (string) - The file name of the source dockerfile. 
+#     Filename only.
+#
+#   target_path (string) - The path (absolute or relative to $working_directory) 
+#     to the desired target folder. If the folder does not exist, a new one will 
+#     be created. Any matching files will be overwritten.
+#
+#   target_dockerfile (string|default) - The new file name of the dockerfile. 
+#     Filename only. Will likely never need to be used.
+#
+#   working_directory (string|default) - The directory to perform the 
+#     operations.
+#
+#   replace_references (bool|default) - If this is set to true, this module will
+#     rename references to the moved Dockerfile to the new $target_dockerfile. 
+#     This is a dumb sed replace; set with care.
+#
+#   replace_path (string|default) - The directory for which to search for 
+#     references to the old dockerfile name. Replce will default to $target_path 
+#     if not provided.
+#
+#   topic (string|default) - Appends a provided topic string to the display 
+#     name. Need not be unique. Defaults to empty string.
+#
+# Outputs: None
+#
+################################################################################
 parameters:
 - name: source_path
-  description: "The path (absolute or relative to $working_directory) to the desired source folder. If the folder does not exist, a new one will be created. Any matching files will be overwritten."
   type: string
+
 - name: source_dockerfile
-  description: "The file name of the source dockerfile. Omit path."
   type: string
 
 - name: target_path
-  description: "The path (absolute or relative to $working_directory) to the desired target folder. If the folder does not exist, a new one will be created. Any matching files will be overwritten."
   type: string
+
 - name: target_dockerfile
-  description: "The new file name of the dockerfile. Omit path."
   type: string
   default: 'Dockerfile'
 
 - name: working_directory
-  description: "The directory to perform the operations."
   type: string
   default: '$(Build.SourcesDirectory)'
 
 - name: replace_references
-  description: "If this is set to true, this module will rename references to the moved Dockerfile to the new $target_dockerfile. This is a dumb sed replace. Set with care."
   type: bool
   default: false
 
 - name: replace_path
-  description: "The directory for which to search for references to the old dockerfile name. Replce will default to $target_path if not provided."
   type: string
   default: ''
 
 - name: topic
-  description: "Appends a provided topic string to the display name. Need not be unique. Defaults to empty string."
   type: string
   default: ''
 
