@@ -88,7 +88,7 @@ stages:
       - setup
       - test
     variables:
-      ACN_DIR: azure-container-networking
+      ACN_DIR: dst
 
       ACN_PACKAGE_PATH: github.com/Azure/azure-container-networking
       CNI_AI_PATH: $(ACN_PACKAGE_PATH)/telemetry.aiMetadata
@@ -109,7 +109,7 @@ stages:
         os: linux
         type: docker
       variables:
-        LinuxContainerImage: $(LinuxContainerImage2)
+        #LinuxContainerImage: $(LinuxContainerImage2)
 
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_git_checkout: true
@@ -201,7 +201,7 @@ stages:
           os: $(os)
           dockerfile_path: $(dockerfilePath)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
-          extra_args: $[ iff(variables.extraArgs, "$(extraArgs)", "") ]
+          extra_args: $[ iff(variables['extraArgs'], variables['extraArgs'], "") ]
           build_tag: $(archiveVersion)
 
   
