@@ -14,8 +14,6 @@ stages:
           - script: |
               set -e
               make tools
-              sudo ln -s $(pwd)/build/tools/bin/gocov /usr/local/bin/gocov
-              sudo ln -s $(pwd)/build/tools/bin/gocov-xml /usr/local/bin/gocov-xml
 
               # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml),
               # stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code.
@@ -31,6 +29,8 @@ stages:
             name: "Test"
             displayName: "Run Tests"
           - bash: |
+              sudo ln -s $(pwd)/build/tools/bin/gocov /usr/local/bin/gocov
+              sudo ln -s $(pwd)/build/tools/bin/gocov-xml /usr/local/bin/gocov-xml
               gocov convert coverage-all.out > total_ut_coverage.json
               gocov-xml < total_ut_coverage.json > total_ut_coverage.xml
             name: "Coverage"
