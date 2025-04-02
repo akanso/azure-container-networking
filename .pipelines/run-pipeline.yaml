@@ -243,7 +243,7 @@ stages:
         os: linux
         type: docker
       variables:
-        ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+        ob_outputDirectory: $(Build.SourcesDirectory)/out
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
         ob_git_checkout: true
         ob_enable_qemu: true

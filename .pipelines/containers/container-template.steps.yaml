@@ -79,7 +79,8 @@ steps:
     build_tag: ${{ parameters.build_tag }}
 
     compress: true
-    saveImageToPath: $(Pipeline.ArtifactStagingDirectory)/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz
+    saveImageToPath: images/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz
+    saveMetadataToPath: images/$(os)-$(arch)/metadata/${{ parameters.archive_file }}.json
 
     # Docker Build Arguments
     ${{ if parameters.common_build_args }}:
