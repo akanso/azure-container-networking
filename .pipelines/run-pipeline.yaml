@@ -11,14 +11,18 @@ stages:
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
       ob_artifactSuffix: _source
+
+      ACR_DIR: $(Build.SourcesDirectory)/azure-container-networking
     steps:
     - checkout: azure-container-networking
 
-    - task: CopyFiles@2
+    - bash: |
+        mv "$SOURCE" "$TARGET"
       displayName: "Create OneBranch Docker Workspace for Linux ipv6-hp-bfp"
-      inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/linux.Dockerfile
-        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/Dockerfile
+      workingDirectory: $(ACR_DIR)
+      env: 
+        SOURCE: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/linux.Dockerfile
+        TARGET: $(Build.SourcesDirectory)/azure-container-networking/bpf-prog/ipv6-hp-bpf/Dockerfile
 
     - task: CopyFiles@2
       displayName: "Create OneBranch Docker Workspace for Windows NPM"
@@ -26,17 +30,21 @@ stages:
         sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm
         targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows
 
-    - task: CopyFiles@2
+    - bash: |
+        mv "$SOURCE" "$TARGET"
+      workingDirectory: $(ACR_DIR)
       displayName: "Move Dockerfile to Approved Naming Format - Linux"
-      inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/linux.Dockerfile
-        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm/Dockerfile
+      env: 
+        SOURCE: npm/linux.Dockerfile
+        TARGET: npm/Dockerfile
 
-    - task: CopyFiles@2
+    - bash: |
+        mv "$SOURCE" "$TARGET"
+      workingDirectory: $(ACR_DIR)
       displayName: "Move Dockerfile to Approved Naming Format - Windows"
-      inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows/windows.Dockerfile
-        targetFolder: $(Build.SourcesDirectory)/azure-container-networking/npm-windows/Dockerfile
+      env: 
+        SOURCE: npm-windows/windows.Dockerfile
+        TARGET: npm-windows/Dockerfile
 
     - bash: |
         rm -rf .pipelines .hooks .github
