@@ -163,6 +163,7 @@ stages:
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
+            extraArgs: ''
           azure_ipam_windows:
             name: azure-ipam
             os: windows
@@ -171,6 +172,7 @@ stages:
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-amd64
+            extraArgs: ''
           cni_linux_amd64:
             name: cni
             os: linux
@@ -240,7 +242,7 @@ stages:
           os: $(os)
           dockerfile_path: $(dockerfilePath)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
-          extra_args: $[ variables['extraArgs'] ]
+          extra_args: $(extraArgs)
           build_tag: $(archiveVersion)
 
   
@@ -265,6 +267,7 @@ stages:
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             Suffix: azure-ipam_linux-arm64
+            extraArgs: ''
           cni_linux_arm64:
             name: cni
             os: linux
@@ -307,7 +310,7 @@ stages:
           os: $(os)
           dockerfile_path: $(dockerfilePath)
           build_tag: $(archiveVersion)
-          extra_args: $[ iff(variables['extraArgs'], '$(extraArgs), '') ]
+          extra_args: $(extraArgs)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
 
 
