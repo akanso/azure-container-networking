@@ -15,99 +15,97 @@ stages:
       ACR_DIR: $(Build.SourcesDirectory)/azure-container-networking
     steps:
     - checkout: azure-container-networking
+    - template: templates/setup.steps.yaml
 
-    - template: templates/rename-dockerfile-references.steps.yaml
-      parameters:
-        topic: "Linux - ipv6-hp-bpf"
-        replace_references: true
-        source_path: bpf-prog/ipv6-hp-bpf
-        target_path: bpf-prog/ipv6-hp-bpf
-        source_dockerfile: linux.Dockerfile
 
-    - template: templates/rename-dockerfile-references.steps.yaml
-      parameters:
-        topic: "Linux - npm"
-        replace_references: true
-        working_directory: $(ACN_DIR)
-        source_path: npm
-        target_path: npm
-        source_dockerfile: linux.Dockerfile
+- stage: test
+  displayName: "Test ACN"
+  dependsOn:
+  - setup
+  variables:
+    STORAGE_ID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
+  jobs:
+  - job: linux
+    displayName: "Run Linux Unit Tests"
+    pool:
+      type: linux
+      isCustom: true
+      name: "$(BUILD_POOL_NAME_DEFAULT)"
+    variables:
+      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+  
+      REPORT_DIR: $(Build.ArtifactStagingDirectory)/linux-unittest
+      REPORT_FILEPATH: $(REPORT_DIR)/report.xml
+      ACN_DIR: $(Build.SourcesDirectory)
 
-    - template: templates/rename-dockerfile-references.steps.yaml
-      parameters:
-        topic: "Windows - npm"
-        replace_references: true
-        working_directory: $(ACN_DIR)
-        source_path: npm-windows
-        target_path: npm-windows
-        source_dockerfile: windows.Dockerfile
-
-    - bash: |
-        rm -rf .pipelines .hooks .github
-      displayName: "Remove Unnecessary Dirs from Source"
-      workingDirectory: $(Build.SourcesDirectory)/azure-container-networking
-
-    - task: CopyFiles@2
-      displayName: "Add Repo to Container Artifacts"
+    steps:
+    - checkout: azure-container-networking
+    - task: GoTool@0
       inputs:
-        sourceFolder: $(Build.SourcesDirectory)/azure-container-networking
-        targetFolder: $(Build.ArtifactStagingDirectory)
-
+        version: '$(GOVERSION)'
+    
     - script: |
-        export CONTAINER_BUILDER=docker
-        export CONTAINER_RUNTIME=docker
-        export CONTAINER_TRANSPORT=docker
-
-        STORAGE_ID=$(echo "${BUILD_BUILDNUMBER//./-}")
-        echo "##vso[task.setvariable variable=StorageID;isOutput=true]$STORAGE_ID"
-        echo "STORAGE_ID: $STORAGE_ID"
-        
-        COMMITID=$(echo $(make revision)-$(date "+%d%H%M"))
-        echo "##vso[task.setvariable variable=commitID;isOutput=true]$COMMITID"
-        echo "COMMITID: $COMMITID"
-
-        TAG=$(make version)
-        echo "##vso[task.setvariable variable=Tag;isOutput=true]$TAG"
-        echo "TAG: $TAG"
-
-        AZUREIPAMVERSION=$(make azure-ipam-version)
-        echo "##vso[task.setvariable variable=azureIpamVersion;isOutput=true]$AZUREIPAMVERSION"
-        echo "AZUREIPAMVERSION: $AZUREIPAMVERSION"
-
-        CNIVERSION=$(make cni-version)
-        echo "##vso[task.setvariable variable=cniVersion;isOutput=true]$CNIVERSION"
-        echo "CNIVERSION: $CNIVERSION"
-
-        CNSVERSION=$(make cns-version)
-        echo "##vso[task.setvariable variable=cnsVersion;isOutput=true]$CNSVERSION"
-        echo "CNSVERSION: $CNSVERSION"
-
-        IPV6HPBPFVERSION=$(make ipv6-hp-bpf-version)
-        echo "##vso[task.setvariable variable=ipv6HpBpfVersion;isOutput=true]$IPV6HPBPFVERSION"
-        echo "IPV6HPBPFVERSION: $IPV6HPBPFVERSION"
-
-        NPMVERSION=$(make npm-version)
-        echo "##vso[task.setvariable variable=npmVersion;isOutput=true]$NPMVERSION"
-        echo "NPMVERSION: $NPMVERSION"
-
-        cat /etc/os-release
-        uname -a
-        sudo chown -R $(whoami):$(whoami) .
-        go version
-        go env
-        which go
-        echo $PATH
-        echo "------"
-        echo $(Build.QueuedBy)
-        echo $(Build.Reason) # manual, PR, IndividualCI
-        echo $(Build.SourceBranch)
-      name: "EnvironmentalVariables"
-      displayName: "Set environmental variables"
-      condition: always()
+        BIN_INSTALL_DIR=$(realpath bin)
+        GOBIN="$BIN_INSTALL_DIR" go install github.com/jstemmer/go-junit-report/v2@latest
+        JUNIT_REPORT_BIN="$BIN_INSTALL_DIR/go-junit-report"
+        echo >&2 "##vso[task.prependpath]$BIN_INSTALL_DIR"
+        ls -la
+        mkdir -p "$REPORT_DIR"
+        touch "$REPORT_FILEPATH"
+        make tools
+        # run test, echo exit status code to fd 3, pipe output from test to tee, which splits output to stdout and go-junit-report (which converts test output to report.xml), stdout from tee is redirected to fd 4. Take output written to fd 3 (which is the exit code of test), redirect to stdout, pipe to read from stdout then exit with that status code. Read all output from fd 4 (output from tee) and write to top stdout
+        { { { {
+              sudo -E env "PATH=$PATH" make test-all;
+              echo $? >&3;
+              } | tee >($JUNIT_REPORT_BIN > "$REPORT_FILEPATH") >&4;
+            } 3>&1;
+          } | { read xs; exit $xs; }
+        } 4>&1
+      retryCountOnTaskFailure: 3
+      displayName: "Run Tests"
       workingDirectory: $(ACN_DIR)
+      env:
+        REPORT_DIR: $(REPORT_DIR)
+        REPORT_FILEPATH: $(REPORT_FILEPATH)
+    
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit' # 'JUnit' | 'NUnit' | 'VSTest' | 'XUnit' | 'CTest'. Alias: testRunner. Required. Test result format. Default: JUnit.
+        testResultsFiles: '$(REPORT_FILEPATH)' # string. Required. Test results files. Default: **/TEST-*.xml.
+        #searchFolder: '$(REPORT_DIR)' # string. Search folder. Default: $(System.DefaultWorkingDirectory).
+        #mergeTestResults: false # boolean. Merge test results. Default: false.
+        failTaskOnFailedTests: true # boolean. Fail if there are test failures. Default: false.
 
+  - job:
+    displayName: "Run Windows Tests"
+    pool:
+      type: windows
+    variables:
+      ob_outputDirectory: $(Build.ArtifactStagingDirectory)
+    steps:
+    - checkout: azure-container-networking
 
-- template: templates/run-unit-tests.yaml
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
+
+    - task: Go@0
+      displayName: "Run Windows Tests"
+      retryCountOnTaskFailure: 3
+      inputs:
+        command: test
+        arguments: '-timeout 30m ./npm/... ./cni/... ./platform/...'
+        workingDirectory: 'azure-container-networking'
+  # We may want to add container structure tests here at a later time.
+  # Schema Reference: https://onebranch.visualstudio.com/1ESPipelineTemplates/_git/1ESPipelineTemplates?path=%2Fschema%2F1espt-base-schema.json&_a=contents&version=GBmain
+  # ContainerStructureTest@0
+#  - template: templates/unit-tests.jobs.yaml
+#    parameters:
+#      publish_report: true
+#      targets:
+#        - linux
+#        - windows
+
 
   # We can remove this and make sure it is only part of the official template
 - ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
