@@ -304,9 +304,9 @@ stages:
 
 
   - stage: publish
-    displayName: Publish Multiarch Manifests
+    displayName: "Publish Multiarch Manifests"
     dependsOn:
-      - containerize
+      - build
     variables:
       Packaging.EnableSBOMSigning: false
       IMAGE_PUBLISH_DIR: (Build.ArtifactStagingDirectory)/images
