@@ -542,7 +542,7 @@ func (nm *networkManager) DeleteEndpointState(networkID string, epInfo *Endpoint
 	logger.Info("Deleting endpoint with", zap.String("Endpoint Info: ", epInfo.PrettyString()), zap.String("HNISID : ", ep.HnsId))
 
 	err := nw.deleteEndpointImpl(netlink.NewNetlink(), platform.NewExecClient(logger), nil, nil, nil, nil, nil, ep)
-	if err == ErrMissingHNSID {
+	if errors.Is(err, ErrMissingHNSID) {
 		logger.Info("HNS ID is missing, skipping endpoint deletion")
 	} else if err != nil {
 		return err
