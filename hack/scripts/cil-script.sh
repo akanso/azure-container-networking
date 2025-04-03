@@ -7,7 +7,7 @@
 # Example command: clusterPrefix=<alais> sufix1=1 sufix2=2 SUB=<GUID> clusterType=overlay-byocni-nokubeproxy-up-mesh ./cil-script.sh
 
 sufixes="${sufix1} ${sufix2}"
-install=acn
+install=helm
 echo "sufixes ${sufixes}"
 
 cd ../..
@@ -25,7 +25,7 @@ for unique in $sufixes; do
         # --set hubble.enabled=false \
         # --set envoy.enabled=false
 
-        cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
+        helm upgrade --install -n kube-system cilium cilium/cilium --version v1.16.4 \
             --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
             --set aksbyocni.enabled=false \
             --set nodeinit.enabled=false \
@@ -33,6 +33,7 @@ for unique in $sufixes; do
             --set envoy.enabled=false \
             --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
             --set cluster.id=${unique} \
+            --set cluster.name=${clusterPrefix}-${unique} \
             --set ipam.mode=delegated-plugin \
             --set routingMode=native \
             --set endpointRoutes.enabled=true \
@@ -40,11 +41,14 @@ for unique in $sufixes; do
             --set enableIPv4Masquerade=false \
             --set kubeProxyReplacement=true \
             --set kubeProxyReplacementHealthzBindAddr='0.0.0.0:10256' \
-            --set extraArgs="{--local-router-ipv4=169.254.23.0} {--install-iptables-rules=true}" \
+            --set extraArgs="{--local-router-ipv4=192.${unique}0.0.7} {--install-iptables-rules=true}" \
             --set endpointHealthChecking.enabled=false \
             --set cni.exclusive=false \
             --set bpf.enableTCX=false \
             --set bpf.hostLegacyRouting=true \
+            --set image.repository=acnpublic.azurecr.io/cilium/cilium \
+            --set image.tag=krunaljainhybridtest \
+            --set image.useDigest=false \
             --set l7Proxy=false \
             --set sessionAffinity=true
 
@@ -79,15 +83,6 @@ for unique in $sufixes; do
 # cilium config set local-router-ipv4 169.254.23.0
 # cilium config set enable-endpoint-routes true
 # cilium config set enable-endpoint-health-checking false
-
-
-    make test-load CNS_ONLY=true \
-        AZURE_IPAM_VERSION=v0.2.0 CNS_VERSION=v1.5.32 \
-        INSTALL_CNS=true INSTALL_OVERLAY=true \
-        CNS_IMAGE_REPO=MCR IPAM_IMAGE_REPO=MCR
-    if [ $install == "helm" ]; then
-        kubectl get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,HOSTNETWORK:.spec.hostNetwork --no-headers=true | grep '<none>' | awk '{print "-n "$1" "$2}' | xargs -L 1 -r kubectl delete pod
-    fi
 done
 
 cd hack/scripts
