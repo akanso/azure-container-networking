@@ -81,6 +81,7 @@ steps:
 - bash: |
     set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
 
+    trap 'echo "##[info]Directory ($TARGET_REL_PATH) already exists. Preventing error."; exit 0' ERR
     if ! [[ -d "$TARGET_REL_PATH" ]]; then
       echo >&2 "##[info]Target path ($TARGET_REL_PATH) does not exist, copying source contents to new folder."
       cp -r "$SOURCE_REL_PATH" "$TARGET_REL_PATH"
