@@ -81,9 +81,9 @@ steps:
 - bash: |
     set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
 
-    trap 'echo "##[info]Directory ($TARGET_REL_PATH) already exists. Preventing error."; exit 0' ERR
+    trap 'echo "##[info]Directory ('$TARGET_REL_PATH') already exists. Preventing error."; exit 0' ERR
     if ! [[ -d "$TARGET_REL_PATH" ]]; then
-      echo >&2 "##[info]Target path ($TARGET_REL_PATH) does not exist, copying source contents to new folder."
+      echo >&2 "##[info]Target path ('$TARGET_REL_PATH') does not exist, copying source contents to new folder."
       cp -r "$SOURCE_REL_PATH" "$TARGET_REL_PATH"
     fi
   workingDirectory: $(ACR_DIR)
@@ -98,20 +98,10 @@ steps:
 - bash: |
     set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
 
-    echo >&2 "##[info]Renaming source dockerfile ($TARGET_DOCKERFILE) to desired name ($TARGET_DOCKERFILE)."
+    echo >&2 "##[info]Renaming source dockerfile ('$TARGET_DOCKERFILE') to desired name ('$TARGET_DOCKERFILE')."
     mv "$SOURCE_REL_PATH"/"$SOURCE_DOCKERFILE" "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE"
-
-    FILE_REFERENCES=( $(grep -rl "$REPLACE_PATH") )
-    echo >&2 "##[debug]Found $(echo ${FILE_REFERENCES[@]} | wc -l) files with references to \'$SOURCE_DOCKERFILE\'."
-    printf "%s\n" "${FILE_REFERENCES[@]}" | sed "s/^/$(printf '%*s' 4)/" >&2
-    if [[ -n $REFERENCE_REPLACE ]] && [[ $REFERENCE_REPLACE =~ ^[T|t]rue$ ]]; then
-      echo >&2 "##[info]Replacing references to old source dockerfile ($SOURCE_DOCKERFILE) to the new target name ($TARGET_DOCKERFILE)."
-      sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" "${FILE_REFERENCES[@]}"
-    fi
   workingDirectory: $(ACR_DIR)
   env: 
-    REFERENCE_REPLACE: ${{ parameters.replace_references }}
-    REPLACE_PATH: ${{ coalesce(parameters.replace_path, parameters.target_path) }}
     SOURCE_REL_PATH: ${{ parameters.source_path }}
     TARGET_REL_PATH: ${{ parameters.target_path }}
     SOURCE_DOCKERFILE: ${{ parameters.source_dockerfile }}
@@ -124,11 +114,12 @@ steps:
 - bash: |
     set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
 
-    FILE_REFERENCES=( $(grep -rl "$REPLACE_PATH") )
-    echo >&2 "##[debug]Found $(echo ${FILE_REFERENCES[@]} | wc -l) files with references to \'$SOURCE_DOCKERFILE\'."
+    count=$(grep -rl "$SOURCE_DOCKERFILE" "$REPLACE_PATH" | wc -l)
+    FILE_REFERENCES=( $(grep -rl "$SOURCE_DOCKERFILE" "$REPLACE_PATH") )
+    echo >&2 "##[debug]Found '$count' files with references to '$SOURCE_DOCKERFILE'."
     printf "%s\n" "${FILE_REFERENCES[@]}" | sed "s/^/$(printf '%*s' 4)/" >&2
 
-    echo >&2 "##[info]Replacing references to old source dockerfile ($SOURCE_DOCKERFILE) to the new target name ($TARGET_DOCKERFILE)."
+    echo >&2 "##[info]Replacing references to old source dockerfile ('$SOURCE_DOCKERFILE') to the new target name ('$TARGET_DOCKERFILE')."
     sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" "${FILE_REFERENCES[@]}"
   workingDirectory: $(ACR_DIR)
   condition: and(succeeded(), '${{ parameters.replace_references }}')
@@ -146,7 +137,7 @@ steps:
 - bash: |
     set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
 
-    echo >&2 "##[info]Deleting top-level dockerfiles that are -not- the target ($TARGET_DOCKERFILE)."
+    echo >&2 "##[info]Deleting top-level dockerfiles that are -not- the target ('$TARGET_DOCKERFILE')."
     find "$TARGET_REL_PATH" -maxdepth 1 -type f -name '*Dockerfile' ! -wholename "$TARGET_REL_PATH"/"$TARGET_DOCKERFILE" -delete
   workingDirectory: $(ACR_DIR)
   env: 

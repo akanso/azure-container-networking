@@ -111,20 +111,8 @@ stages:
 
   # We can remove this and make sure it is only part of the official template
 - ${{ if not(contains(variables['Build.SourceBranch'], 'refs/pull')) }}:
-  - stage: binaries
-    displayName: Build Binaries
-    dependsOn:
-      - setup
-      - test
-    variables:
-      STORAGE_ID: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
-      ACN_DIR: azure-container-networking
-    jobs:
-    - template: templates/binaries.jobs.yaml
-
-
-  - stage: containerize
-    displayName: Build Images
+  - stage: build
+    displayName: "Build Project"
     dependsOn:
       - setup
       - test
@@ -135,6 +123,7 @@ stages:
       CNS_AI_PATH: $(ACN_PACKAGE_PATH)/cns/logger.aiMetadata
       NPM_AI_PATH: $(ACN_PACKAGE_PATH)/npm.aiMetadata
 
+      STORAGE_ID: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.StorageID'] ]
       TAG: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.Tag'] ]
       AZURE_IPAM_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.azureIpamVersion'] ]
       CNI_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.cniVersion'] ]
@@ -142,18 +131,32 @@ stages:
       IPV6_HP_BPF_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.ipv6HpBpfVersion'] ]
       NPM_VERSION: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.npmVersion'] ]
     jobs:
+    - job: binaries
+      displayName: "Build Binaries"
+      pool:
+        type: linux
+      variables:
+        LinuxContainerImage: $(LinuxContainerImage2)
+        ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
+        ob_git_checkout: true
+    
+        ACN_DIR: azure-container-networking
+      steps:
+      - checkout: azure-container-networking
+      - template: templates/binaries.steps.yaml
 
-    - job: containerize_amd64
-      displayName: Build Images
+
+    - job: images_amd64
+      displayName: "Build Images"
       pool:
         os: linux
         type: docker
       variables:
         #LinuxContainerImage: $(LinuxContainerImage2)
+        #ob_git_checkout: true
 
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
-        ob_git_checkout: true
         ob_build_container: true
 
         ARCH: amd64
@@ -163,17 +166,17 @@ stages:
             name: azure-ipam
             os: linux
             dockerfilePath: $(ACN_DIR)/azure-ipam
+            extraArgs: ''
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
-            extraArgs: ''
           azure_ipam_windows:
             name: azure-ipam
             os: windows
             osVersion: ltsc2022
             dockerfilePath: $(ACN_DIR)/azure-ipam
+            extraArgs: ''
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
-            extraArgs: ''
           cni_linux_amd64:
             name: cni
             os: linux
@@ -227,8 +230,6 @@ stages:
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
       steps:
-      - checkout: azure-container-networking
-  
       - template: containers/container-template.steps.yaml
         parameters:
           arch: amd64
@@ -240,8 +241,8 @@ stages:
           build_tag: $(archiveVersion)
 
   
-    - job: containerize_linux_arm64
-      displayName: Build arm64 Images
+    - job: images_arm64
+      displayName: "Build arm64 Images"
       pool:
         os: linux
         type: docker
@@ -250,7 +251,7 @@ stages:
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
         ob_build_container: true
         ob_enable_qemu: true
-        ob_git_checkout: true
+        #ob_git_checkout: true
 
         ARCH: arm64
       strategy:
@@ -291,8 +292,6 @@ stages:
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
       steps:
-      - checkout: azure-container-networking
-  
       - template: containers/container-template.steps.yaml
         parameters:
           arch: arm64
@@ -303,43 +302,58 @@ stages:
           extra_args: $(extraArgs)
           archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
 
-#  - stage: publish
-#    displayName: Publish Multiarch Manifests
-#    dependsOn:
-#      - containerize
-#    variables:
-#      Packaging.EnableSBOMSigning: false
-#      IMAGE_PUBLISH_DIR: (Build.ArtifactStagingDirectory)/images
-#    jobs:
-#    - job:
-#      displayName: Compile Manifests
-#      pool:
-#        os: linux
-#        type: docker
-#      variables:
-#        ob_git_checkout: true
-#      strategy:
-#        matrix:
-#          azure_ipam:
-#            name: azure-ipam
-#            platforms: linux/amd64 linux/arm64 windows/amd64
-#          cni:
-#            name: cni
-#            platforms: linux/amd64 linux/arm64 windows/amd64
-#          cns:
-#            name: cns
-#            platforms: linux/amd64 linux/arm64 windows/amd64
-#          ipv6_hp_bpf:
-#            name: ipv6-hp-bpf
-#            platforms: linux/amd64 linux/arm64
-#          npm:
-#            name: npm
-#            platforms: linux/amd64 linux/arm64 windows/amd64
-#      steps:
-#      - template: containers/manifest-template.steps.yaml
-#        parameters:
-#          name: $(name)
-#          platforms: $(platforms)
+
+  - stage: publish
+    displayName: Publish Multiarch Manifests
+    dependsOn:
+      - containerize
+    variables:
+      Packaging.EnableSBOMSigning: false
+      IMAGE_PUBLISH_DIR: (Build.ArtifactStagingDirectory)/images
+    jobs:
+    - job:
+      displayName: Compile Manifests
+      pool:
+        os: linux
+        type: docker
+      variables:
+        ob_git_checkout: true
+      strategy:
+        matrix:
+          azure_ipam:
+            name: azure-ipam
+            platforms: |
+              linux/amd64 
+              linux/arm64 
+              windows/amd64
+          cni:
+            name: cni
+            platforms: |
+              linux/amd64 
+              linux/arm64
+              windows/amd64
+          cns:
+            name: cns
+            platforms: |
+              linux/amd64 
+              linux/arm64 
+              windows/amd64
+          ipv6_hp_bpf:
+            name: ipv6-hp-bpf
+            platforms: |
+              linux/amd64 
+              linux/arm64
+          npm:
+            name: npm
+            platforms: |
+              linux/amd64 
+              linux/arm64 
+              windows/amd64
+      steps:
+      - template: containers/manifest-template.steps.yaml
+        parameters:
+          name: $(name)
+          platforms: $(platforms)
 
 
 #    # Cilium Podsubnet E2E tests
