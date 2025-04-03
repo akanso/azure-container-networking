@@ -13,11 +13,11 @@ FILE_PATH="/etc/cni/net.d/05-cilium.conflist"
 
 cd ../..
 for unique in $sufixes; do
-    # make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
-    #     AZCLI=az REGION=westus2 SUB=$SUB \
-    #     CLUSTER=${clusterPrefix}-${unique} \
-    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-    #     VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
+    make -C ./hack/aks overlay-byocni-nokubeproxy-up-mesh \
+        AZCLI=az REGION=westus2 SUB=$SUB \
+        CLUSTER=${clusterPrefix}-${unique} \
+        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.10.0/24
 
     if [ $install == "helm" ]; then
         # cilium install -n kube-system cilium cilium/cilium --version v1.16.4 \
@@ -25,6 +25,9 @@ for unique in $sufixes; do
         # --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
         # --set hubble.enabled=false \
         # --set envoy.enabled=false
+        kubectl config use-context ${clusterPrefix}-${unique}
+        LATEST_SECRET=$(kubectl get secrets -o json | jq -r '.items[].metadata.name' | grep -E 'sh.helm.release.v1.cilium.v[0-9]+' | sort -t 'v' -k3,3n | tail -n 1)
+        kubectl delete secret "$LATEST_SECRET"
 
         helm upgrade --install -n kube-system cilium cilium/cilium --version v1.16.4 \
             --set azure.resourceGroup=${clusterPrefix}-${unique}-rg \
@@ -36,7 +39,7 @@ for unique in $sufixes; do
             --set cluster.id=${unique} \
             --set cluster.name=${clusterPrefix}-${unique} \
             --set ipam.mode=delegated-plugin \
-            --set routingMode=native \
+            --set routingMode=tunnel \
             --set endpointRoutes.enabled=true \
             --set enable-ipv4=true \
             --set enableIPv4Masquerade=false \
@@ -52,9 +55,7 @@ for unique in $sufixes; do
             --set bpf.hostLegacyRouting=true \
             --set l7Proxy=false \
             --set sessionAffinity=true
-            FILE_PATH="/etc/cni/net.d/05-cilium.conflist"
         # Define the path to the file on AKS nodes
-        FILE_PATH="/etc/cni/net.d/05-cilium.conflist"
 
 # Get all node names
         NODES=$(kubectl get nodes -o name | cut -d'/' -f2)
@@ -62,29 +63,33 @@ for unique in $sufixes; do
 # Iterate over each node and update the file
         for NODE in $NODES; do
                 echo "Updating CNI config on node: $NODE"
-
-                kubectl debug node/$NODE --image=busybox -- bash -c "
-                        mkdir -p $(dirname $FILE_PATH)
-                        cat <<EOF > $FILE_PATH
+                LOG=$(kubectl debug node/$NODE --image=busybox -- bash -c "
+                mkdir -p \$(dirname \$FILE_PATH)
+                cat <<EOF > \$FILE_PATH
+                {
+                    \"cniVersion\": \"0.3.1\",
+                    \"name\": \"cilium\",
+                    \"plugins\": [
                         {
-                            \"cniVersion\": \"0.3.1\",
-                            \"name\": \"cilium\",
-                            \"plugins\": [
-                                {
-                                    \"type\": \"cilium-cni\",
-                                    \"ipam\": {
-                                        \"type\": \"azure-ipam\"
-                                    },
-                                    \"enable-debug\": true,
-                                    \"log-file\": \"/var/log/cilium-cni.log\"
-                                }
-                            ]
+                            \"type\": \"cilium-cni\",
+                            \"ipam\": {
+                                \"type\": \"azure-ipam\"
+                            },
+                            \"enable-debug\": true,
+                            \"log-file\": \"/var/log/cilium-cni.log\"
                         }
+                    ]
+                }
 EOF
-                        echo 'Updated $FILE_PATH on $NODE'
-                "
-        done
+                echo 'Updated \$FILE_PATH on \$NODE'
+        ")
 
+                
+        done
+        POD_NAME=$(echo $LOG | awk '{for(i=1;i<=NF;i++) if($i=="pod") print $(i+1)}')
+
+        echo "Pod name is $POD_NAME"
+        kubectl delete pod $POD_NAME --namespace=kube-system --force --grace-period=0
         echo "CNI configuration updated on all nodes."
 
     fi
