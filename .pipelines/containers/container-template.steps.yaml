@@ -45,7 +45,7 @@ parameters:
 - name: common_build_args
   type: object
   default:
-    - "PLATFORM=$(os) "
+    - "PLATFORM=$(os)/$(arch) "
     - "ARCH=$(arch) "
     - "OS=$(os) "
     - "VERSION=$(Tag) "
@@ -80,11 +80,11 @@ steps:
 
     compress: true
     saveImageToPath: images/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz
-    saveMetadataToPath: images/$(os)-$(arch)/metadata/${{ parameters.archive_file }}.json
+    saveMetadataToPath: images/$(os)-$(arch)/metadata/${{ parameters.archive_file }}-metadata.json
 
     # Docker Build Arguments
     ${{ if parameters.common_build_args }}:
-      arguments: --build-arg ${{ join(' --build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
+      arguments: --build-arg ${{ join('--build-arg ', parameters.common_build_args) }} ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
     ${{ else }}:
       arguments: ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
 
