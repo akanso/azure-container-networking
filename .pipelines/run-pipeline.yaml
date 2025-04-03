@@ -19,7 +19,7 @@ stages:
 
 
 - stage: test
-  displayName: "Test ACN"
+  displayName: "Test Project"
   dependsOn:
   - setup
   variables:

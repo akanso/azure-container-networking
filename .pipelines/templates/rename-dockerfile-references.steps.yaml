@@ -124,12 +124,16 @@ steps:
     set -e; [[ -n $SYSTEM_DEBUG ]] && [[ $SYSTEM_DEBUG =~ ^[T|t]rue$ ]] && set -x
 
     count=$(grep -rl "$SOURCE_DOCKERFILE" "$REPLACE_PATH" | wc -l)
-    FILE_REFERENCES=( $(grep -rl "$SOURCE_DOCKERFILE" "$REPLACE_PATH") )
-    echo >&2 "##[debug]Found '$count' files with references to '$SOURCE_DOCKERFILE'."
-    printf "%s\n" "${FILE_REFERENCES[@]}" | sed "s/^/$(printf '%*s' 4)/" >&2
+    if (( $count > 0 )); then
+      FILE_REFERENCES=( $(grep -rl "$SOURCE_DOCKERFILE" "$REPLACE_PATH") )
+      echo >&2 "##[debug]Found '$count' files with references to '$SOURCE_DOCKERFILE'."
+      printf "%s\n" "${FILE_REFERENCES[@]}" | sed "s/^/$(printf '%*s' 4)/" >&2
 
-    echo >&2 "##[info]Replacing references to old source dockerfile ('$SOURCE_DOCKERFILE') to the new target name ('$TARGET_DOCKERFILE')."
-    sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" "${FILE_REFERENCES[@]}"
+      echo >&2 "##[info]Replacing references to old source dockerfile ('$SOURCE_DOCKERFILE') to the new target name ('$TARGET_DOCKERFILE')."
+      sed -i "s|$SOURCE_DOCKERFILE|$TARGET_DOCKERFILE|g" "${FILE_REFERENCES[@]}"
+    else
+      echo >&2 "##[info]No other dockerfiles found."
+    fi
   workingDirectory: $(ACR_DIR)
   condition: and(succeeded(), '${{ parameters.replace_references }}')
   env: 
