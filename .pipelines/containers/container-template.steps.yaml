@@ -67,6 +67,7 @@ steps:
 - task: onebranch.pipeline.imagebuildinfo@1
   displayName: Image Build
   retryCountOnTaskFailure: 3
+  timeoutInMinutes: 30
   inputs:
     endpoint: $(ACR_ARM_SERVICE_CONNECTION)
     registry: $(ACR).azurecr.io

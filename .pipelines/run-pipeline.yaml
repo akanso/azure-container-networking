@@ -63,15 +63,13 @@ stages:
         os: linux
         type: docker
       variables:
-        #LinuxContainerImage: $(LinuxContainerImage2)
-        #ob_git_checkout: true
-
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
-        ob_build_container: true
+        #ob_build_container: true
 
         ARCH: amd64
       strategy:
+        maxParallel: 5
         matrix:
           azure_ipam_linux_amd64:
             name: azure-ipam
@@ -160,12 +158,12 @@ stages:
       variables:
         ob_outputDirectory: $(Build.SourcesDirectory)/out
         ob_artifactSuffix: _$(name)_$(os)_$(arch)
-        ob_build_container: true
+        #ob_build_container: true
         ob_enable_qemu: true
-        #ob_git_checkout: true
 
         ARCH: arm64
       strategy:
+        maxParallel: 3
         matrix:
           azure_ipam_linux_arm64:
             name: azure-ipam
