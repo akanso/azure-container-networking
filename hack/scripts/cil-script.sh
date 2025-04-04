@@ -36,31 +36,20 @@ for unique in $sufixes; do
         --set debug.verbose="datapath" \
         --set endpointRoutes.enabled=true \
         --set bpf.hostLegacyRouting=true \
-        --set envoy.enabled=false
-
-
-    else # Ignore this block for now, was testing internal resources.
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-config/cilium-config.yaml
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-agent/files
-        kubectl apply -f test/integration/manifests/cilium/v${DIR}/cilium-operator/files
-        export CILIUM_VERSION_TAG=v1.16-240904
-        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/integration/manifests/cilium/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
-
-        export CILIUM_VERSION_TAG=v1.16-240904
-        export CILIUM_IMAGE_REGISTRY=acnpublic.azurecr.io
-        DIR=1.16
-        kubectl apply -f test/manifests/v${DIR}/cilium-agent/files
-        kubectl apply -f test/manifests/v${DIR}/cilium-operator/files
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY},${IPV6_HP_BPF_VERSION}' < test/manifests/v${DIR}/cilium-agent/templates/daemonset.yaml | kubectl apply -f -
-        envsubst '${CILIUM_VERSION_TAG},${CILIUM_IMAGE_REGISTRY}' < test/manifests/v${DIR}/cilium-operator/templates/deployment.yaml | kubectl apply -f -
+        --set aksbyocni.enabled=false \
+        --set nodeinit.enabled=false \
+        --set envoy.enabled=false \
+        --set enable-ipv4=true \
+        --set kubeProxyReplacement=true \
+        --set kubeProxyReplacementHealthzBindAddr='0.0.0.0:10256' \
+        --set extraArgs="{--local-router-ipv4=192.${unique}0.0.7} {--install-iptables-rules=true}" \
+        --set endpointHealthChecking.enabled=false \
+        --set cni.exclusive=false \
+        --set bpf.enableTCX=false \
+        --set bpf.hostLegacyRouting=true \
+        --set l7Proxy=false \
+        --set sessionAffinity=true
     fi
-
-    make test-load CNS_ONLY=true \
-        AZURE_IPAM_VERSION=v0.2.0 CNS_VERSION=v1.5.32 \
-        INSTALL_CNS=true INSTALL_OVERLAY=true \
-        CNS_IMAGE_REPO=MCR IPAM_IMAGE_REPO=MCR
 done
 
 cd hack/scripts
