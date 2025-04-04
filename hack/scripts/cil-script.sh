@@ -49,6 +49,7 @@ for unique in $sufixes; do
         --set endpointHealthChecking.enabled=false \
         --set cni.exclusive=false \
         --set bpf.enableTCX=false \
+        --set enableIPv4Masquerade=false \
         --set bpf.hostLegacyRouting=true \
         --set l7Proxy=false \
         --set sessionAffinity=true
