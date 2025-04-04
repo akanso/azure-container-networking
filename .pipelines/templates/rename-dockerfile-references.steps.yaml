@@ -96,6 +96,8 @@ steps:
     else
       echo >&2 "##[info]Target path ('$TARGET_REL_PATH') exits. Nothing to do."
     fi
+    ls -la "$TARGET_REL_PATH"
+    ls -la "$SOURCE_REL_PATH"
   workingDirectory: $(ACR_DIR)
   env: 
     SOURCE_REL_PATH: ${{ parameters.source_path }}
