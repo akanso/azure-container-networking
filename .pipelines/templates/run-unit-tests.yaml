@@ -77,6 +77,8 @@ stages:
     displayName: Run Tests
     pool:
       type: windows
+      isCustom: true
+      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     steps:
@@ -93,10 +95,3 @@ stages:
         command: test
         arguments: '-timeout 30m ./npm/... ./cni/... ./platform/...'
         workingDirectory: 'azure-container-networking'
-
-#    # Only run one go test per script
-#    - script: |
-#        cd azure-container-networking/
-#        go test -timeout 30m ./npm/... ./cni/... ./platform/...
-#      retryCountOnTaskFailure: 3
-#      displayName: "Run Windows Tests"
