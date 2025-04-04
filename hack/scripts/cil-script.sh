@@ -19,9 +19,11 @@ for unique in $sufixes; do
         VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
     kubectl config use-context ${clusterPrefix}-${unique}
     cluster_id=1
+    cilium_image=krunaljainhybridtest
     if (( unique % 2 == 0 )); then
         echo "overriding cluster id to 2 for $unique"
         cluster_id=2
+        cilium_image=krunaljainhybridnochanges
     fi
     if [ $install == "helm" ]; then
         helm upgrade --install -n kube-system cilium cilium/cilium --version v1.16.1 \
@@ -32,7 +34,7 @@ for unique in $sufixes; do
         --set ipam.mode=delegated-plugin \
         --set debug.enabled=true \
         --set image.repository=acnpublic.azurecr.io/cilium/cilium \
-        --set image.tag=krunaljainhybridtest \
+        --set image.tag=$cilium_image \
         --set image.useDigest=false \
         --set debug.verbose="datapath" \
         --set endpointRoutes.enabled=true \
