@@ -92,7 +92,7 @@ steps:
     if ! [[ -d "$TARGET_REL_PATH" ]]; then
       echo >&2 "##[info]Target path ('$TARGET_REL_PATH') does not exist, copying source contents to new folder."
       mkdir -p "$TARGET_REL_PATH"
-      cp -r "$SOURCE_REL_PATH" "$TARGET_REL_PATH"
+      cp -r "$SOURCE_REL_PATH"/* "$TARGET_REL_PATH"
     else
       echo >&2 "##[info]Target path ('$TARGET_REL_PATH') exits. Nothing to do."
     fi
