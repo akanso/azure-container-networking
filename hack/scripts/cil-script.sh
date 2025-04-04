@@ -28,7 +28,11 @@ for unique in $sufixes; do
         --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
         --set cluster.name=${clusterPrefix}-${unique} \
         --set hubble.enabled=false \
+        --set ipam.mode=delegated-plugin \
         --set debug.enabled=true \
+        --set image.repository=acnpublic.azurecr.io/cilium/cilium \
+        --set image.tag=krunaljainhybridtest \
+        --set image.useDigest=false \
         --set debug.verbose="datapath" \
         --set endpointRoutes.enabled=true \
         --set bpf.hostLegacyRouting=true \
