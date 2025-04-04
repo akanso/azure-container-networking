@@ -12,11 +12,11 @@ echo "sufixes ${sufixes}"
 
 cd ../..
 for unique in $sufixes; do
-    # make -C ./hack/aks $clusterType \
-    #     AZCLI=az REGION=westus2 SUB=$SUB \
-    #     CLUSTER=${clusterPrefix}-${unique} \
-    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-    #     VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
+    make -C ./hack/aks $clusterType \
+        AZCLI=az REGION=westus2 SUB=$SUB \
+        CLUSTER=${clusterPrefix}-${unique} \
+        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
     kubectl config use-context ${clusterPrefix}-${unique}
     cluster_id=1
     if (( unique % 2 == 0 )); then
