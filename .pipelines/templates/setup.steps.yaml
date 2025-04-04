@@ -10,21 +10,21 @@ steps:
 
 - template: /.pipelines/templates/rename-dockerfile-references.steps.yaml
   parameters:
+    topic: "Windows - npm"
+    replace_references: true
+    working_directory: $(ACN_DIR)
+    source_path: npm
+    target_path: npm-windows
+    source_dockerfile: windows.Dockerfile
+
+- template: /.pipelines/templates/rename-dockerfile-references.steps.yaml
+  parameters:
     topic: "Linux - npm"
     replace_references: true
     working_directory: $(ACN_DIR)
     source_path: npm
     target_path: npm
     source_dockerfile: linux.Dockerfile
-
-- template: /.pipelines/templates/rename-dockerfile-references.steps.yaml
-  parameters:
-    topic: "Windows - npm"
-    replace_references: true
-    working_directory: $(ACN_DIR)
-    source_path: npm-windows
-    target_path: npm-windows
-    source_dockerfile: windows.Dockerfile
 
 - bash: |
     rm -rf .pipelines .hooks .github
