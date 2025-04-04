@@ -407,7 +407,7 @@ func configureDefaultAddResult(info *IPResultInfo, addConfig *IPAMAddConfig, add
 
 	podGateway := net.ParseIP(info.ncGatewayIPAddress)
 	// TODO: Remove v4overlay and dualstackoverlay options, after 'overlay' rolls out in AKS-RP
-	isPodSubnetMode := (ipamMode != util.V4Overlay) && (ipamMode != util.DualStackOverlay) && (ipamMode != util.Overlay) && (ipamMode != util.Nodesubnet)
+	isPodSubnetMode := ipamMode != util.V4Overlay && ipamMode != util.DualStackOverlay && ipamMode != util.Overlay && ipamMode != util.Nodesubnet
 
 	if podGateway == nil {
 		if isPodSubnetMode {
