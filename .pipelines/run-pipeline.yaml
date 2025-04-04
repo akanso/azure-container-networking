@@ -46,10 +46,11 @@ stages:
       displayName: "Build Binaries"
       pool:
         type: linux
+        vmImage: $(LinuxContainerImage2)
       variables:
-        LinuxContainerImage: $(LinuxContainerImage2)
         ob_outputDirectory: $(Build.ArtifactStagingDirectory)/output
         ob_git_checkout: true
+        ob_enable_qemu: true
     
         ACN_DIR: azure-container-networking
       steps:
@@ -57,81 +58,98 @@ stages:
       - template: templates/binaries.steps.yaml
 
 
-    - job: images_amd64
-      displayName: "Build Images"
+    - job: images_linux_amd64
+      displayName: "Build Linux/AMD64 Images"
       pool:
         os: linux
         type: docker
       variables:
-        ob_outputDirectory: $(Build.ArtifactStagingDirectory)
-        ob_artifactSuffix: _$(name)_$(os)_$(arch)
+        ob_outputDirectory: $(Build.SourcesDirectory)/out
+        ob_artifactSuffix: _$(name)_linux_amd64
 
         ARCH: amd64
+        OS: linux
       strategy:
         maxParallel: 5
         matrix:
-          azure_ipam_linux_amd64:
+          azure_ipam:
             name: azure-ipam
-            os: linux
             dockerfilePath: $(ACN_DIR)/azure-ipam
             extraArgs: ''
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
-          azure_ipam_windows:
-            name: azure-ipam
-            os: windows
-            osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/azure-ipam
-            extraArgs: ''
-            archiveName: azure-ipam
-            archiveVersion: $(AZURE_IPAM_VERSION)
-          cni_linux_amd64:
+          cni:
             name: cni
-            os: linux
             dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
-          cni_windows_amd64:
-            name: cni
-            os: windows
-            osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cni
-            extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
-            archiveName: azure-cni
-            archiveVersion: $(CNI_VERSION)
-          cns_linux_amd64:
+          cns:
             name: cns
-            os: linux
             dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
-          cns_windows_amd64:
-            name: cns
-            os: windows
-            osVersion: ltsc2022
-            dockerfilePath: $(ACN_DIR)/cns
-            extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
-            archiveName: azure-cns
-            archiveVersion: $(CNS_VERSION)
-          ipv6_hp_bpf_linux_amd64:
+          ipv6_hp_bpf:
             name: ipv6-hp-bpf
-            os: linux
             dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(IPV6_HP_BPF_VERSION)
-          npm_linux_amd64:
+          npm:
             name: npm
-            os: linux
             dockerfilePath: $(ACN_DIR)/npm
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
             archiveName: azure-npm
             archiveVersion: $(NPM_VERSION)
-          npm_windows_amd64:
+      steps:
+      - template: containers/container-template.steps.yaml
+        parameters:
+          arch: amd64
+          os: linux
+          name: $(name)
+          dockerfile_path: $(dockerfilePath)
+          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
+          extra_args: $(extraArgs)
+          build_tag: $(archiveVersion)
+
+    - job: images_windows_amd64
+      displayName: "Build Windows Images"
+      pool:
+        os: windows
+        type: docker
+      variables:
+        ob_outputDirectory: $(Build.SourcesDirectory)/out
+        ob_artifactSuffix: _$(name)_windows_amd64
+
+        ARCH: amd64
+        OS: windows
+      strategy:
+        maxParallel: 5
+        matrix:
+          azure_ipam:
+            name: azure-ipam
+            osVersion: ltsc2022
+            dockerfilePath: $(ACN_DIR)/azure-ipam
+            extraArgs: ''
+            archiveName: azure-ipam
+            archiveVersion: $(AZURE_IPAM_VERSION)
+          cni:
+            name: cni
+            osVersion: ltsc2022
+            dockerfilePath: $(ACN_DIR)/cni
+            extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
+            archiveName: azure-cni
+            archiveVersion: $(CNI_VERSION)
+          cns:
+            name: cns
+            osVersion: ltsc2022
+            dockerfilePath: $(ACN_DIR)/cns
+            extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
+            archiveName: azure-cns
+            archiveVersion: $(CNS_VERSION)
+          npm:
             name: npm
-            os: windows
             osVersion: ltsc2022
             dockerfilePath: $(ACN_DIR)/npm-windows
             extraArgs: '--build-arg NPM_AI_PATH=$(NPM_AI_PATH) --build-arg NPM_AI_ID=$(NPM_AI_ID)'
@@ -141,16 +159,16 @@ stages:
       - template: containers/container-template.steps.yaml
         parameters:
           arch: amd64
+          os: windows
           name: $(name)
-          os: $(os)
           dockerfile_path: $(dockerfilePath)
-          archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
+          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
           extra_args: $(extraArgs)
           build_tag: $(archiveVersion)
 
   
-    - job: images_arm64
-      displayName: "Build arm64 Images"
+    - job: images_linux_arm64
+      displayName: "Build Linux/AMD64 Images"
       pool:
         os: linux
         type: docker
@@ -158,41 +176,42 @@ stages:
       variables:
         #LinuxContainerImage: $(LinuxContainerImage3) # Use if Mariner does not work.
         ob_outputDirectory: $(Build.SourcesDirectory)/out
-        ob_artifactSuffix: _$(name)_$(os)_$(arch)
+        ob_artifactSuffix: _$(name)_linux_arm64
 
         ARCH: arm64
+        OS: linux
       strategy:
         maxParallel: 3
         matrix:
-          azure_ipam_linux_arm64:
+          azure_ipam:
             name: azure-ipam
             os: linux
             dockerfilePath: $(ACN_DIR)/azure-ipam
             archiveName: azure-ipam
             archiveVersion: $(AZURE_IPAM_VERSION)
             extraArgs: ''
-          cni_linux_arm64:
+          cni:
             name: cni
             os: linux
             dockerfilePath: $(ACN_DIR)/cni
             extraArgs: '--build-arg CNI_AI_PATH=$(CNI_AI_PATH) --build-arg CNI_AI_ID=$(CNI_AI_ID)'
             archiveName: azure-cni
             archiveVersion: $(CNI_VERSION)
-          cns_linux_arm64:
+          cns:
             name: cns
             os: linux
             dockerfilePath: $(ACN_DIR)/cns
             extraArgs: '--build-arg CNS_AI_PATH=$(CNS_AI_PATH) --build-arg CNS_AI_ID=$(CNS_AI_ID)'
             archiveName: azure-cns
             archiveVersion: $(CNS_VERSION)
-          ipv6_hp_bpf_linux_arm64:
+          ipv6_hp_bpf:
             name: ipv6-hp-bpf
             os: linux
             dockerfilePath: $(ACN_DIR)/bpf-prog/ipv6-hp-bpf
             extraArgs: "--build-arg DEBUG=$(System.Debug)"
             archiveName: ipv6-hp-bpf
             archiveVersion: $(IPV6_HP_BPF_VERSION)
-          npm_linux_arm64:
+          npm:
             name: npm
             os: linux
             dockerfilePath: $(ACN_DIR)/npm
