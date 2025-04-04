@@ -12,18 +12,19 @@ echo "sufixes ${sufixes}"
 
 cd ../..
 for unique in $sufixes; do
-    make -C ./hack/aks $clusterType \
-        AZCLI=az REGION=westus2 SUB=$SUB \
-        CLUSTER=${clusterPrefix}-${unique} \
-        POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
-        VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
+    # make -C ./hack/aks $clusterType \
+    #     AZCLI=az REGION=westus2 SUB=$SUB \
+    #     CLUSTER=${clusterPrefix}-${unique} \
+    #     POD_CIDR=192.${unique}0.0.0/16 SVC_CIDR=192.${unique}1.0.0/16 DNS_IP=192.${unique}1.0.10 \
+    #     VNET_PREFIX=10.${unique}0.0.0/16 SUBNET_PREFIX=10.${unique}0.0.0/16
+    kubectl config use-context ${clusterPrefix}-${unique}
     cluster_id=1
     if (( unique % 2 == 0 )); then
         echo "overriding cluster id to 2 for $unique"
         cluster_id=2
     fi
     if [ $install == "helm" ]; then
-        cilium install -n kube-system cilium cilium/cilium --version v1.16.1 \
+        helm upgrade --install -n kube-system cilium cilium/cilium --version v1.16.1 \
         --set azure.resourceGroup=${clusterPrefix}-${unique}-rg --set cluster.id=${cluster_id} \
         --set ipam.operator.clusterPoolIPv4PodCIDRList='{192.'${unique}'0.0.0/16}' \
         --set cluster.name=${clusterPrefix}-${unique} \
@@ -49,6 +50,12 @@ for unique in $sufixes; do
         --set bpf.hostLegacyRouting=true \
         --set l7Proxy=false \
         --set sessionAffinity=true
+
+        make test-load CNS_ONLY=true \
+        AZURE_IPAM_VERSION=v0.2.0 CNS_VERSION=v1.5.32 \
+        INSTALL_CNS=true INSTALL_OVERLAY=true \
+        CNS_IMAGE_REPO=MCR IPAM_IMAGE_REPO=MCR
+        kubectl get pods --all-namespaces -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,HOSTNETWORK:.spec.hostNetwork --no-headers=true | grep '<none>' | awk '{print "-n "$1" "$2}' | xargs -L 1 -r kubectl delete pod
     fi
 done
 
