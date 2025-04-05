@@ -121,6 +121,7 @@ stages:
       variables:
         ob_outputDirectory: $(Build.SourcesDirectory)/out
         ob_artifactSuffix: _$(name)_windows_amd64
+        ob_build_container: true
 
         ARCH: amd64
         OS: windows
