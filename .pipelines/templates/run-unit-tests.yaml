@@ -65,6 +65,9 @@ stages:
         displayName: Check Coverage
         pool:
           name: "$(BUILD_POOL_NAME_DEFAULT)"
+        variables:
+          system.debug: true
+          BQC.LogRawData: true
         steps:
           - task: DownloadPipelineArtifact@2
             inputs:
