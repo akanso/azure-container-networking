@@ -55,10 +55,6 @@ stages:
             retryCountOnTaskFailure: 3
             name: "TestWindows"
             displayName: "Run Windows Tests"
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: 'windows-coverage.out'
-              artifactName: 'windows-coverage'
 
   - stage: code_coverage
     displayName: Code Coverage Check
@@ -79,8 +75,8 @@ stages:
               sudo ln -s $(pwd)/build/tools/bin/gocov /usr/local/bin/gocov
               sudo ln -s $(pwd)/build/tools/bin/gocov-xml /usr/local/bin/gocov-xml
 
-              GOOS=linux gocov convert linux-coverage.out > linux-coverage.json
-              GOOS=linux gocov-xml < linux-coverage.json > linux-coverage.xml
+              gocov convert linux-coverage.out > linux-coverage.json
+              gocov-xml < linux-coverage.json > linux-coverage.xml
 
               mkdir coverage
 
