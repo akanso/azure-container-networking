@@ -87,6 +87,10 @@ stages:
             name: "Coverage"
             displayName: "Generate Coverage Report"
             condition: always()
+          - task: UseDotNet@2
+            displayName: 'Use .NET Core sdk 7.0.x for Publish Code Coverage Results v2'
+            inputs:
+              version: 7.0.x
           - task: PublishCodeCoverageResults@2
             displayName: "Publish Code Coverage Report"
             condition: always()
