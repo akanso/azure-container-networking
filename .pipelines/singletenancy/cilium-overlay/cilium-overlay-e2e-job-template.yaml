@@ -79,6 +79,8 @@ stages:
           - ${{ parameters.name }}
           - cni_${{ parameters.os }}
         condition: failed()
+        pool:
+          type: linux
         steps:
           - template: ../../templates/log-template.yaml
             parameters:

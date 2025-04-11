@@ -15,8 +15,8 @@ stages:
       - ${{ parameters.dependsOn }}
       - setup
     pool:
-      isCustom: true
       type: linux
+      isCustom: true
       name: $(BUILD_POOL_NAME_DEFAULT)
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
@@ -52,12 +52,12 @@ stages:
         displayName: Singletenancy AKS Swift Suite - (${{ parameters.name }})
         timeoutInMinutes: 120
         pool:
+          type: linux
+          isCustom: true
           name: $(BUILD_POOL_NAME_DEFAULT)
           demands:
           - agent.os -equals Linux
           - Role -equals $(CUSTOM_E2E_ROLE)
-          isCustom: true
-          type: linux
         steps:
           - template: e2e-step-template.yaml
             parameters:
@@ -83,6 +83,8 @@ stages:
           - ${{ parameters.name }}
           - cni_linux
         condition: failed()
+        pool:
+          type: linux
         steps:
           - template: ../../templates/log-template.yaml
             parameters:
