@@ -252,7 +252,7 @@ stages:
       clusterName: "cilndsubnete2e"
       vmSize: Standard_B2s
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
 
   # Cilium Overlay E2E tests
   - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml
@@ -263,7 +263,7 @@ stages:
       clusterName: "cilovere2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
 
   # Cilium Dualstack Overlay E2E tests
   - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
@@ -275,7 +275,7 @@ stages:
       clusterName: "cildsovere2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
 
       # Cilium Overlay with hubble E2E tests
   - template: singletenancy/cilium-overlay-withhubble/cilium-overlay-e2e-job-template.yaml
@@ -286,7 +286,7 @@ stages:
       clusterName: "cilwhleovere2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
       testHubble: true
 
   # Azure Overlay E2E tests
@@ -299,7 +299,7 @@ stages:
       clusterName: "linuxazovere2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
       scaleup: 100
   
   - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
@@ -311,7 +311,7 @@ stages:
       clusterName: "winazovere2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
       scaleup: 50
 
   # Azure Overlay E2E Stateless CNI tests
@@ -323,7 +323,7 @@ stages:
       clusterType: overlay-byocni-up
       clusterName: "statelesswin"
       vmSize: Standard_B2ms
-      dependsOn: build
+      dependsOn: "containerize"
 
   # AKS Swift E2E tests
   - template: singletenancy/aks-swift/e2e-job-template.yaml
@@ -335,7 +335,7 @@ stages:
       clusterName: "swifte2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: build
+      dependsOn: "containerize"
 
   # AKS Swift Vnet Scale E2E tests
   - template: singletenancy/aks-swift/e2e-job-template.yaml
@@ -347,7 +347,7 @@ stages:
       clusterName: "vscaleswifte2e"
       vmSize: Standard_B2ms
       k8sVersion: "1.30"
-      dependsOn: build
+      dependsOn: "containerize"
 
   # CNIv1 E2E tests
   - template: singletenancy/aks/e2e-job-template.yaml
@@ -361,7 +361,7 @@ stages:
       vmSize: Standard_B2s
       k8sVersion: 1.25
       scaleup: 100
-      dependsOn: build
+      dependsOn: "containerize"
 
   - template: singletenancy/aks/e2e-job-template.yaml
     parameters:
@@ -374,30 +374,30 @@ stages:
       vmSize: Standard_B2ms
       os_version: "ltsc2022"
       scaleup: 50
-      dependsOn: build
+      dependsOn: "containerize"
 
-#  # CNI dual stack overlay E2E tests
-#  - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
-#    parameters:
-#      name: "linux_dualstackoverlay_e2e"
-#      displayName: AKS DualStack Overlay Linux
-#      os: linux
-#      clusterType: dualstack-overlay-byocni-up
-#      clusterName: "linuxdsovere2e"
-#      vmSize: Standard_B2ms
-#      dependsOn: build
-#      scaleup: 100
-#
-#  - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
-#    parameters:
-#      name: "win_dualstackoverlay_e2e"
-#      displayName: AKS DualStack Overlay Windows
-#      os: windows
-#      clusterType: dualstack-overlay-byocni-up
-#      clusterName: "windsovere2e"
-#      vmSize: Standard_B2ms
-#      dependsOn: build
-#      scaleup: 50
+  # CNI dual stack overlay E2E tests
+  - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
+    parameters:
+      name: "linux_dualstackoverlay_e2e"
+      displayName: AKS DualStack Overlay Linux
+      os: linux
+      clusterType: dualstack-overlay-byocni-up
+      clusterName: "linuxdsovere2e"
+      vmSize: Standard_B2ms
+      dependsOn: "containerize"
+      scaleup: 100
+
+  - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
+    parameters:
+      name: "win_dualstackoverlay_e2e"
+      displayName: AKS DualStack Overlay Windows
+      os: windows
+      clusterType: dualstack-overlay-byocni-up
+      clusterName: "windsovere2e"
+      vmSize: Standard_B2ms
+      dependsOn: "containerize"
+      scaleup: 50
 
   - stage: delete
     displayName: Delete Clusters
@@ -415,8 +415,8 @@ stages:
       - aks_ubuntu_22_linux_e2e
       - aks_swift_vnetscale_e2e
       - aks_windows_22_e2e
-#      - linux_dualstackoverlay_e2e
-#      - win_dualstackoverlay_e2e
+      - linux_dualstackoverlay_e2e
+      - win_dualstackoverlay_e2e
       - cilium_dualstackoverlay_e2e
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
@@ -473,14 +473,14 @@ stages:
             name: aks_windows_22_e2e
             clusterName: "win22e2e"
             region: $(REGION_AKS_CLUSTER_TEST)
-#          linux_dualstackoverlay_e2e:
-#            name: linux_dualstackoverlay_e2e
-#            clusterName: "linuxdsovere2e"
-#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-#          windows_dualstackoverlay_e2e:
-#            name: windows_dualstackoverlay_e2e
-#            clusterName: "windsovere2e"
-#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+          linux_dualstackoverlay_e2e:
+            name: linux_dualstackoverlay_e2e
+            clusterName: "linuxdsovere2e"
+            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+          windows_dualstackoverlay_e2e:
+            name: windows_dualstackoverlay_e2e
+            clusterName: "windsovere2e"
+            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
           cilium_dualstackoverlay_e2e:
             name: cilium_dualstackoverlay_e2e
             clusterName: "cildsovere2e"

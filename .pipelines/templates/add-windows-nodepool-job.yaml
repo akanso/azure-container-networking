@@ -8,6 +8,8 @@ jobs:
   displayName: Add Windows Nodepool
   dependsOn: ${{ parameters.depend }}
   pool:
+    isCustom: true
+    type: linux
     name: $(BUILD_POOL_NAME_DEFAULT)
     demands:
     - agent.os -equals Linux
