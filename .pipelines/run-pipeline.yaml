@@ -241,7 +241,7 @@ stages:
       clusterName: "ciliume2e"
       vmSize: Standard_B2ms
       k8sVersion: ""
-      dependsOn: "containerize"
+      dependsOn: "build"
 
 #  # Cilium Nodesubnet E2E tests
 #  - template: singletenancy/cilium-nodesubnet/cilium-nodesubnet-e2e-job-template.yaml
