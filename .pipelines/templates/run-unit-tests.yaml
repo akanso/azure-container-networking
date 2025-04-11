@@ -78,7 +78,6 @@ stages:
     pool:
       type: windows
     variables:
-      WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2019/vse2022:latest'
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     steps:
     - checkout: azure-container-networking
