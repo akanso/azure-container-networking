@@ -288,94 +288,94 @@ stages:
       k8sVersion: ""
       dependsOn: build
       testHubble: true
-#
-#  # Azure Overlay E2E tests
-#  - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
-#    parameters:
-#      name: "linux_azure_overlay_e2e"
-#      displayName: Azure Overlay Linux
-#      os: linux
-#      clusterType: overlay-byocni-up
-#      clusterName: "linuxazovere2e"
-#      vmSize: Standard_B2ms
-#      k8sVersion: ""
-#      dependsOn: build
-#      scaleup: 100
-#  
-#  - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
-#    parameters:
-#      name: "win_azure_overlay_e2e"
-#      displayName: Azure Overlay Windows
-#      os: windows
-#      clusterType: overlay-byocni-up
-#      clusterName: "winazovere2e"
-#      vmSize: Standard_B2ms
-#      k8sVersion: ""
-#      dependsOn: build
-#      scaleup: 50
-#
-#  # Azure Overlay E2E Stateless CNI tests
-#  - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
-#    parameters:
-#      name: "azure_overlay_stateless_e2e"
-#      displayName: Azure Stateless CNI Overlay
-#      os: windows
-#      clusterType: overlay-byocni-up
-#      clusterName: "statelesswin"
-#      vmSize: Standard_B2ms
-#      dependsOn: build
-#
-#  # AKS Swift E2E tests
-#  - template: singletenancy/aks-swift/e2e-job-template.yaml
-#    parameters:
-#      name: "aks_swift_e2e"
-#      displayName: AKS Swift Ubuntu
-#      os: linux
-#      clusterType: swift-byocni-up
-#      clusterName: "swifte2e"
-#      vmSize: Standard_B2ms
-#      k8sVersion: ""
-#      dependsOn: build
-#
-#  # AKS Swift Vnet Scale E2E tests
-#  - template: singletenancy/aks-swift/e2e-job-template.yaml
-#    parameters:
-#      name: "aks_swift_vnetscale_e2e"
-#      displayName: AKS Swift Vnet Scale Ubuntu
-#      os: linux
-#      clusterType: vnetscale-swift-byocni-up
-#      clusterName: "vscaleswifte2e"
-#      vmSize: Standard_B2ms
-#      k8sVersion: "1.30"
-#      dependsOn: build
-#
-#  # CNIv1 E2E tests
-#  - template: singletenancy/aks/e2e-job-template.yaml
-#    parameters:
-#      name: "aks_ubuntu_22_linux_e2e"
-#      displayName: AKS Ubuntu 22
-#      arch: "amd64"
-#      os: "linux"
-#      clusterType: cniv1-up
-#      clusterName: "ubuntu22e2e"
-#      vmSize: Standard_B2s
-#      k8sVersion: 1.25
-#      scaleup: 100
-#      dependsOn: build
-#
-#  - template: singletenancy/aks/e2e-job-template.yaml
-#    parameters:
-#      name: "aks_windows_22_e2e"
-#      displayName: AKS Windows 2022
-#      arch: amd64
-#      os: "windows"
-#      clusterType: cniv1-up
-#      clusterName: "win22e2e"
-#      vmSize: Standard_B2ms
-#      os_version: "ltsc2022"
-#      scaleup: 50
-#      dependsOn: build
-#
+
+  # Azure Overlay E2E tests
+  - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
+    parameters:
+      name: "linux_azure_overlay_e2e"
+      displayName: Azure Overlay Linux
+      os: linux
+      clusterType: overlay-byocni-up
+      clusterName: "linuxazovere2e"
+      vmSize: Standard_B2ms
+      k8sVersion: ""
+      dependsOn: build
+      scaleup: 100
+  
+  - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
+    parameters:
+      name: "win_azure_overlay_e2e"
+      displayName: Azure Overlay Windows
+      os: windows
+      clusterType: overlay-byocni-up
+      clusterName: "winazovere2e"
+      vmSize: Standard_B2ms
+      k8sVersion: ""
+      dependsOn: build
+      scaleup: 50
+
+  # Azure Overlay E2E Stateless CNI tests
+  - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
+    parameters:
+      name: "azure_overlay_stateless_e2e"
+      displayName: Azure Stateless CNI Overlay
+      os: windows
+      clusterType: overlay-byocni-up
+      clusterName: "statelesswin"
+      vmSize: Standard_B2ms
+      dependsOn: build
+
+  # AKS Swift E2E tests
+  - template: singletenancy/aks-swift/e2e-job-template.yaml
+    parameters:
+      name: "aks_swift_e2e"
+      displayName: AKS Swift Ubuntu
+      os: linux
+      clusterType: swift-byocni-up
+      clusterName: "swifte2e"
+      vmSize: Standard_B2ms
+      k8sVersion: ""
+      dependsOn: build
+
+  # AKS Swift Vnet Scale E2E tests
+  - template: singletenancy/aks-swift/e2e-job-template.yaml
+    parameters:
+      name: "aks_swift_vnetscale_e2e"
+      displayName: AKS Swift Vnet Scale Ubuntu
+      os: linux
+      clusterType: vnetscale-swift-byocni-up
+      clusterName: "vscaleswifte2e"
+      vmSize: Standard_B2ms
+      k8sVersion: "1.30"
+      dependsOn: build
+
+  # CNIv1 E2E tests
+  - template: singletenancy/aks/e2e-job-template.yaml
+    parameters:
+      name: "aks_ubuntu_22_linux_e2e"
+      displayName: AKS Ubuntu 22
+      arch: "amd64"
+      os: "linux"
+      clusterType: cniv1-up
+      clusterName: "ubuntu22e2e"
+      vmSize: Standard_B2s
+      k8sVersion: 1.25
+      scaleup: 100
+      dependsOn: build
+
+  - template: singletenancy/aks/e2e-job-template.yaml
+    parameters:
+      name: "aks_windows_22_e2e"
+      displayName: AKS Windows 2022
+      arch: amd64
+      os: "windows"
+      clusterType: cniv1-up
+      clusterName: "win22e2e"
+      vmSize: Standard_B2ms
+      os_version: "ltsc2022"
+      scaleup: 50
+      dependsOn: build
+
 #  # CNI dual stack overlay E2E tests
 #  - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
 #    parameters:
@@ -404,17 +404,17 @@ stages:
     condition: always()
     dependsOn:
       - setup
-#      - linux_azure_overlay_e2e
-#      - win_azure_overlay_e2e
-#      - azure_overlay_stateless_e2e
-#      - aks_swift_e2e
+      - linux_azure_overlay_e2e
+      - win_azure_overlay_e2e
+      - azure_overlay_stateless_e2e
+      - aks_swift_e2e
       - cilium_e2e
       - cilium_nodesubnet_e2e
       - cilium_overlay_e2e
       - cilium_h_overlay_e2e
-#      - aks_ubuntu_22_linux_e2e
-#      - aks_swift_vnetscale_e2e
-#      - aks_windows_22_e2e
+      - aks_ubuntu_22_linux_e2e
+      - aks_swift_vnetscale_e2e
+      - aks_windows_22_e2e
 #      - linux_dualstackoverlay_e2e
 #      - win_dualstackoverlay_e2e
       - cilium_dualstackoverlay_e2e
@@ -445,34 +445,34 @@ stages:
             name: cilium_h_overlay_e2e
             clusterName: "cilwhleovere2e"
             region: $(REGION_AKS_CLUSTER_TEST)
-#          linux_azure_overlay_e2e:
-#            name: linux_azure_overlay_e2e
-#            clusterName: "linuxazovere2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          windows_azure_overlay_e2e:
-#            name: win_azure_overlay_e2e
-#            clusterName: "winazovere2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          azure_overlay_stateless_e2e:
-#            name: azure_overlay_stateless_e2e
-#            clusterName: "statelesswin"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_swift_e2e:
-#            name: aks_swift_e2e
-#            clusterName: "swifte2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_swift_vnetscale_e2e:
-#            name: aks_swift_vnetscale_e2e
-#            clusterName: "vscaleswifte2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_ubuntu_22_linux_e2e:
-#            name: aks_ubuntu_22_linux_e2e
-#            clusterName: "ubuntu22e2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_windows_22_e2e:
-#            name: aks_windows_22_e2e
-#            clusterName: "win22e2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
+          linux_azure_overlay_e2e:
+            name: linux_azure_overlay_e2e
+            clusterName: "linuxazovere2e"
+            region: $(REGION_AKS_CLUSTER_TEST)
+          windows_azure_overlay_e2e:
+            name: win_azure_overlay_e2e
+            clusterName: "winazovere2e"
+            region: $(REGION_AKS_CLUSTER_TEST)
+          azure_overlay_stateless_e2e:
+            name: azure_overlay_stateless_e2e
+            clusterName: "statelesswin"
+            region: $(REGION_AKS_CLUSTER_TEST)
+          aks_swift_e2e:
+            name: aks_swift_e2e
+            clusterName: "swifte2e"
+            region: $(REGION_AKS_CLUSTER_TEST)
+          aks_swift_vnetscale_e2e:
+            name: aks_swift_vnetscale_e2e
+            clusterName: "vscaleswifte2e"
+            region: $(REGION_AKS_CLUSTER_TEST)
+          aks_ubuntu_22_linux_e2e:
+            name: aks_ubuntu_22_linux_e2e
+            clusterName: "ubuntu22e2e"
+            region: $(REGION_AKS_CLUSTER_TEST)
+          aks_windows_22_e2e:
+            name: aks_windows_22_e2e
+            clusterName: "win22e2e"
+            region: $(REGION_AKS_CLUSTER_TEST)
 #          linux_dualstackoverlay_e2e:
 #            name: linux_dualstackoverlay_e2e
 #            clusterName: "linuxdsovere2e"
