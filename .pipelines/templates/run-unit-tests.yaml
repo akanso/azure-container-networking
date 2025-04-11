@@ -77,9 +77,8 @@ stages:
     displayName: Run Tests
     pool:
       type: windows
-      isCustom: true
-      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
     variables:
+      WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2019/vse2022:latest'
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     steps:
     - checkout: azure-container-networking
