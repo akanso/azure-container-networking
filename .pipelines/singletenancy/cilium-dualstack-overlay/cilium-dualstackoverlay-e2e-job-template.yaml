@@ -35,7 +35,6 @@ stages:
     displayName: E2E - ${{ parameters.displayName }}
     dependsOn:
     - setup
-    - publish
     - ${{ parameters.clusterName }}
     variables:
       GOPATH: "$(Agent.TempDirectory)/go" # Go workspace path
@@ -80,6 +79,8 @@ stages:
         condition: failed()
         pool:
           type: linux
+        variables:
+          ob_outputDirectory: $(Build.ArtifactStagingDirectory)/out
         steps:
           - template: ../../templates/log-template.yaml
             parameters:

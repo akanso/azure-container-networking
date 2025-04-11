@@ -37,7 +37,6 @@ stages:
     displayName: E2E - ${{ parameters.displayName }}
     dependsOn:
     - setup
-    - publish
     - ${{ parameters.clusterName }}
     variables:
       TAG: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.Tag'] ]
@@ -85,6 +84,8 @@ stages:
         condition: failed()
         pool:
           type: linux
+        variables:
+          ob_outputDirectory: $(Build.ArtifactStagingDirectory)/out
         steps:
           - template: ../../templates/log-template.yaml
             parameters:

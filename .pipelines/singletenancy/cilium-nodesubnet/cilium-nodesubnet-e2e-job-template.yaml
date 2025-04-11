@@ -45,7 +45,6 @@ stages:
     condition: and(succeeded(), eq(variables.TAG, variables.CURRENT_VERSION))
     dependsOn:
     - setup
-    - publish
     - ${{ parameters.clusterName }}
     jobs:
       - job: ${{ parameters.name }}
@@ -87,6 +86,8 @@ stages:
         condition: failed()
         pool:
           type: linux
+        variables:
+          ob_outputDirectory: $(Build.ArtifactStagingDirectory)/out
         steps:
           - template: ../../templates/log-template.yaml
             parameters:
