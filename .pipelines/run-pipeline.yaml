@@ -115,14 +115,12 @@ stages:
     - job: images_windows_amd64
       displayName: "Build Windows Images"
       pool:
-        os: windows
+        os: linux
         type: docker
-        vmImage: $(WindowsContainerImage2)
       variables:
-        WindowsContainerImage: $(WindowsContainerImage2)
         ob_outputDirectory: $(Build.SourcesDirectory)/out
         ob_artifactSuffix: _$(name)_windows_amd64
-        #ob_enable_qemu: true
+        ob_enable_qemu: true
         #ob_build_container: true
 
         ARCH: amd64
