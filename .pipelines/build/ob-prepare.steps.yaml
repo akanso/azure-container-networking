@@ -1,6 +1,6 @@
 
 steps:
-- template: /.pipelines/templates/rename-dockerfile-references.steps.yaml
+- template: utils/rename-dockerfile-references.steps.yaml
   parameters:
     topic: "Linux - ipv6-hp-bpf"
     replace_references: true
@@ -8,7 +8,7 @@ steps:
     target_path: bpf-prog/ipv6-hp-bpf
     source_dockerfile: linux.Dockerfile
 
-- template: /.pipelines/templates/rename-dockerfile-references.steps.yaml
+- template: utils/rename-dockerfile-references.steps.yaml
   parameters:
     topic: "Windows - npm"
     replace_references: true
@@ -17,7 +17,7 @@ steps:
     target_path: npm-windows
     source_dockerfile: windows.Dockerfile
 
-- template: /.pipelines/templates/rename-dockerfile-references.steps.yaml
+- template: utils/rename-dockerfile-references.steps.yaml
   parameters:
     topic: "Linux - npm"
     replace_references: true
