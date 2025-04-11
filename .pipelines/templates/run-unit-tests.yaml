@@ -77,9 +77,8 @@ stages:
     displayName: Run Tests
     pool:
       type: windows
-      vmImage: $(WindowsContainerImage)
-      #isCustom: true
-      #name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
+      isCustom: true
+      name: "$(BUILD_POOL_NAME_DEFAULT_WINDOWS_ALT)"
     variables:
       ob_outputDirectory: $(Build.ArtifactStagingDirectory)
     steps:
