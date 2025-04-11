@@ -117,6 +117,7 @@ stages:
       pool:
         os: windows
         type: docker
+        vmImage: $(WindowsContainerImage)
       variables:
         ob_outputDirectory: $(Build.SourcesDirectory)/out
         ob_artifactSuffix: _$(name)_windows_amd64
@@ -161,6 +162,7 @@ stages:
         parameters:
           arch: amd64
           os: windows
+          os_version: $(osVersion)
           name: $(name)
           dockerfile_path: $(dockerfilePath)
           archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
@@ -169,7 +171,7 @@ stages:
 
   
     - job: images_linux_arm64
-      displayName: "Build Linux/AMD64 Images"
+      displayName: "Build Linux/ARM64 Images"
       pool:
         os: linux
         type: docker
@@ -493,6 +495,7 @@ stages:
           region: $(region)
           sub: $(SUB_AZURE_NETWORK_AGENT_BUILD_VALIDATIONS)
           svcConn: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
+
 #- stage: e2e
 #  displayName: "Run E2E Tests"
 #  dependsOn:
