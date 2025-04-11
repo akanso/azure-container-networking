@@ -15,6 +15,8 @@ stages:
       - ${{ parameters.dependsOn }}
       - setup
     pool:
+      isCustom: true
+      type: linux
       name: $(BUILD_POOL_NAME_DEFAULT)
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
@@ -45,8 +47,6 @@ stages:
       GOBIN: "$(GOPATH)/bin" # Go binaries path
       modulePath: "$(GOPATH)/src/github.com/Azure/azure-container-networking"
     condition: and(succeeded(), eq(variables.TAG, variables.CURRENT_VERSION))
-    pool:
-      name: $(BUILD_POOL_NAME_DEFAULT)
     jobs:
       - job: ${{ parameters.name }}
         displayName: Singletenancy AKS Swift Suite - (${{ parameters.name }})
@@ -56,6 +56,8 @@ stages:
           demands:
           - agent.os -equals Linux
           - Role -equals $(CUSTOM_E2E_ROLE)
+          isCustom: true
+          type: linux
         steps:
           - template: e2e-step-template.yaml
             parameters:

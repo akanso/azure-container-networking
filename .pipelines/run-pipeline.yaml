@@ -425,6 +425,8 @@ stages:
       displayName: Delete Cluster
       pool:
         name: "$(BUILD_POOL_NAME_DEFAULT)"
+        isCustom: true
+        type: linux
       strategy:
         matrix:
           cilium_e2e:
