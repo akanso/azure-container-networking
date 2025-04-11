@@ -14,10 +14,6 @@ stages:
     dependsOn:
       - ${{ parameters.dependsOn }}
       - setup
-    pool:
-      name: $(BUILD_POOL_NAME_DEFAULT)
-      isCustom: true
-      type: linux
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
     jobs:
@@ -84,6 +80,8 @@ stages:
         condition: failed()
         pool:
           type: linux
+          isCustom: true
+          name: $(BUILD_POOL_NAME_DEFAULT)
         steps:
           - template: ../../templates/log-template.yaml
             parameters:
