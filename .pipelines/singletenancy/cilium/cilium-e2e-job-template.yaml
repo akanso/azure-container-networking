@@ -83,7 +83,7 @@ stages:
           isCustom: true
           name: $(BUILD_POOL_NAME_DEFAULT)
         variables:
-          ob_outputDirectory: $(ACN_DIR)/${{ parameters.clusterName }}-$(commitID)_FailedE2ELogs_Attempt_#$(System.StageAttempt)
+          ob_outputDirectory: $(Build.ArtifactStagingDirectory)/out
         steps:
           - template: ../../templates/log-template.yaml
             parameters:
