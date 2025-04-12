@@ -16,6 +16,10 @@ steps:
     name: "GoEnv"
     displayName: "Set up the Go environment"
 
+  - task: KubectlInstaller@0
+    inputs:
+      kubectlVersion: latest
+
   - task: AzureCLI@2
     displayName: 'Update IP configs'
     inputs:
@@ -33,10 +37,6 @@ steps:
           SECONDARY_IP_COUNT=$((SCALE_UP * 2)) \
           RESOURCE_GROUP="MC_${clusterName}_${clusterName}_$(REGION_AKS_CLUSTER_TEST)" \
           go run $(Build.SourcesDirectory)/test/integration/cilium-nodesubnet/ipconfigupdate.go
-
-  - task: KubectlInstaller@0
-    inputs:
-      kubectlVersion: latest
 
   - task: AzureCLI@2
     inputs:
