@@ -19,6 +19,7 @@ jobs:
       isCustom: true
       type: linux
     steps:
+      - checkout: azure-container-networking
       - task: AzureCLI@2
         inputs:
           azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)

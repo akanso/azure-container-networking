@@ -22,7 +22,6 @@ stages:
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
     jobs:
-      - checkout: azure-container-networking
       - template: ../../templates/create-cluster.yaml
         parameters:
           name: ${{ parameters.name }}
