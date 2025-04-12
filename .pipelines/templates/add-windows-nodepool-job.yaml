@@ -16,6 +16,7 @@ jobs:
     - Role -equals $(CUSTOM_E2E_ROLE)
   timeoutInMinutes: 30
   steps:
+    - checkout: azure-container-networking
     - task: AzureCLI@2
       inputs:
         azureSubscription: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
