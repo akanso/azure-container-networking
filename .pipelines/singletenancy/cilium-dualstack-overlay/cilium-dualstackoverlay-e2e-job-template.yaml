@@ -20,6 +20,7 @@ stages:
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
     jobs:
+      - checkout: azure-container-networking
       - template: ../../templates/create-cluster.yaml
         parameters:
           name: ${{ parameters.name }}
@@ -53,6 +54,7 @@ stages:
           isCustom: true
           type: linux
         steps:
+          - checkout: azure-container-networking
           - template: cilium-dualstackoverlay-e2e-step-template.yaml
             parameters:
               name: ${{ parameters.name }}
@@ -82,6 +84,7 @@ stages:
         variables:
           ob_outputDirectory: $(Build.ArtifactStagingDirectory)/out
         steps:
+          - checkout: azure-container-networking
           - template: ../../templates/log-template.yaml
             parameters:
               clusterName: ${{ parameters.clusterName }}-$(commitID)

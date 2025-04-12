@@ -21,6 +21,7 @@ stages:
     variables:
       commitID: $[ stagedependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
     jobs:
+      - checkout: azure-container-networking
       - template: ../../templates/create-cluster.yaml
         parameters:
           name: ${{ parameters.name }}
@@ -58,6 +59,7 @@ stages:
           - agent.os -equals Linux
           - Role -equals $(CUSTOM_E2E_ROLE)
         steps:
+          - checkout: azure-container-networking
           - template: e2e-step-template.yaml
             parameters:
               name: ${{ parameters.name }}
@@ -87,6 +89,7 @@ stages:
         variables:
           ob_outputDirectory: $(Build.ArtifactStagingDirectory)/out
         steps:
+          - checkout: azure-container-networking
           - template: ../../templates/log-template.yaml
             parameters:
               clusterName: ${{ parameters.clusterName }}-$(commitID)

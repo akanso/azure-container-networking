@@ -16,6 +16,7 @@ jobs:
       isCustom: true
       name: $(BUILD_POOL_NAME_DEFAULT)
     steps:
+      - checkout: azure-container-networking
       - task: AzureCLI@2
         inputs:
           azureSubscription: ${{ parameters.sub }}
