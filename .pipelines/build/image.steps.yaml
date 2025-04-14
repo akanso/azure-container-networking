@@ -79,6 +79,7 @@ steps:
     enable_network: true
     enable_pull: true
     build_tag: ${{ parameters.build_tag }}
+    enable_acr_push:  true
 
     compress: true
     saveImageToPath: images/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz
@@ -90,8 +91,20 @@ steps:
     ${{ else }}:
       arguments: ${{ parameters.extra_args }} ${{ join(' ', parameters.default_args) }}
 
-    # OS Specific Settings
-    ${{ if eq(parameters.os, 'windows') }}:
-      enable_acr_push:  true
-    ${{ else }}:
-      enable_acr_push: false
+
+- bash: |
+    IMAGE_FULL_NAME="$IMAGE_PREFIX/$IMAGE_NAME"
+    echo >&2 "##vso[task.setvariable variable=IMAGE_PLATFORM_TAG;isOutput=true;]$IMAGE_PLATFORM_TAG"
+    #echo >&2 "##vso[task.setvariable variable=IMAGE_FULL_NAME;isOutput=true;]$IMAGE_FULL_NAME"
+    echo >&2 "##vso[task.setvariable variable=IMAGE_REFERENCE;isOutput=true;]$IMAGE_REPO/$IMAGE_FULL_NAME:$IMAGE_PLATFORM_TAG"
+    #echo >&2 "##vso[task.setvariable variable=IMAGE_ARTIFACT_METADATA_PATH;isOutput=true;]$METADATA_FILE"
+    #echo >&2 "##vso[task.setvariable variable=IMAGE_ARTIFACT_TAR_PATH;isOutput=true;]$IMAGE_TAR_PATH"
+  displayName: "Output Image Details"
+  name: detail
+  env:
+    IMAGE_NAME: '${{ parameters.name }}'
+    IMAGE_PREFIX: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
+    IMAGE_PLATFORM_TAG: '${{ parameters.build_tag }}'
+    IMAGE_REPO: $(ACN)
+    METADATA_FILE: images/$(os)-$(arch)/metadata/${{ parameters.archive_file }}-metadata.json
+    IMAGE_TAR_PATH: images/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz

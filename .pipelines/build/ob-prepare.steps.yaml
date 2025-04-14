@@ -46,7 +46,8 @@ steps:
     echo "##vso[task.setvariable variable=StorageID;isOutput=true]$STORAGE_ID"
     echo "STORAGE_ID: $STORAGE_ID"
     
-    COMMITID=$(echo $(make revision)-$(date "+%d%H%M"))
+    COMMITID=$(git rev-parse --short HEAD)
+    COMMITID="$COMMITID"-"$(date "+%d%H%M")"
     echo "##vso[task.setvariable variable=commitID;isOutput=true]$COMMITID"
     echo "COMMITID: $COMMITID"
 
