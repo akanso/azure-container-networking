@@ -118,9 +118,11 @@ byocni-up: swift-byocni-up ## Alias to swift-byocni-up
 cilium-up: swift-cilium-up ## Alias to swift-cilium-up
 up: swift-up ## Alias to swift-up
 
+TIPSESSIONTAG := TipNode.SessionId=tipSessionIdHere
 
 nodesubnet-byocni-nokubeproxy-up: rg-up ipv4 overlay-net-up ## Brings up an NodeSubnet BYO CNI cluster without kube-proxy
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -138,6 +140,7 @@ nodesubnet-byocni-nokubeproxy-up: rg-up ipv4 overlay-net-up ## Brings up an Node
 
 overlay-byocni-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay BYO CNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -158,6 +161,7 @@ endif
 
 overlay-byocni-nokubeproxy-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay BYO CNI cluster without kube-proxy
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -175,6 +179,7 @@ overlay-byocni-nokubeproxy-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay
 
 overlay-cilium-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay Cilium cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -192,6 +197,7 @@ overlay-cilium-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay Cilium clus
 
 overlay-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay AzCNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -208,6 +214,7 @@ overlay-up: rg-up ipv4 overlay-net-up ## Brings up an Overlay AzCNI cluster
 
 swift-byocni-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT BYO CNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -227,6 +234,7 @@ endif
 
 swift-byocni-nokubeproxy-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT BYO CNI cluster without kube-proxy, add managed identity and public ip
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -244,6 +252,7 @@ swift-byocni-nokubeproxy-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT BYO CNI
 
 swift-cilium-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT Cilium cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -261,6 +270,7 @@ swift-cilium-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT Cilium cluster
 
 swift-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT AzCNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -276,6 +286,7 @@ swift-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT AzCNI cluster
 
 swiftv2-multitenancy-cluster-up: rg-up ipv4
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--network-plugin azure \
 		--network-plugin-mode overlay \
 		--kubernetes-version $(K8S_VER) \
@@ -290,6 +301,7 @@ swiftv2-multitenancy-cluster-up: rg-up ipv4
 
 swiftv2-dummy-cluster-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT AzCNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--network-plugin azure \
 		--vnet-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/nodenet \
 		--pod-subnet-id /subscriptions/$(SUB)/resourceGroups/$(GROUP)/providers/Microsoft.Network/virtualNetworks/$(VNET)/subnets/podnet \
@@ -303,6 +315,7 @@ swiftv2-dummy-cluster-up: rg-up ipv4 swift-net-up ## Bring up a SWIFT AzCNI clus
 # https://dev.azure.com/msazure/CloudNativeCompute/_git/aks-rp?path=/resourceprovider/server/microsoft.com/containerservice/flags/network_flags.go&version=GBmaster&line=134&lineEnd=135&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
 vnetscale-swift-byocni-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT BYO CNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -320,6 +333,7 @@ vnetscale-swift-byocni-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet 
 
 vnetscale-swift-byocni-nokubeproxy-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT BYO CNI cluster without kube-proxy
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -338,6 +352,7 @@ vnetscale-swift-byocni-nokubeproxy-up: rg-up ipv4 vnetscale-swift-net-up ## Brin
 
 vnetscale-swift-cilium-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT Cilium cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -356,6 +371,7 @@ vnetscale-swift-cilium-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet 
 
 vnetscale-swift-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet Scale SWIFT AzCNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -372,6 +388,7 @@ vnetscale-swift-up: rg-up ipv4 vnetscale-swift-net-up ## Bring up a Vnet Scale S
 
 cniv1-up: rg-up ipv4 overlay-net-up ## Bring up a CNIv1 cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -391,6 +408,7 @@ endif
 
 dualstack-overlay-up: rg-up ipv4 ipv6 overlay-net-up ## Brings up an dualstack Overlay cluster with Linux node only
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -408,6 +426,7 @@ dualstack-overlay-up: rg-up ipv4 ipv6 overlay-net-up ## Brings up an dualstack O
 
 dualstack-overlay-byocni-up: rg-up ipv4 ipv6 overlay-net-up ## Brings up an dualstack Overlay BYO CNI cluster
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -428,6 +447,7 @@ endif
 
 cilium-dualstack-up: rg-up ipv4 ipv6 overlay-net-up ## Brings up a Cilium Dualstack Overlay cluster with Linux node only
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
@@ -446,6 +466,7 @@ cilium-dualstack-up: rg-up ipv4 ipv6 overlay-net-up ## Brings up a Cilium Dualst
 
 dualstack-byocni-nokubeproxy-up: rg-up ipv4 ipv6 overlay-net-up ## Brings up a Dualstack overlay BYOCNI cluster with Linux node only and no kube-proxy
 	$(AZCLI) aks create -n $(CLUSTER) -g $(GROUP) -l $(REGION) \
+		--tags $(TIPSESSIONTAG) \
 		--auto-upgrade-channel $(AUTOUPGRADE) \
 		--node-os-upgrade-channel $(NODEUPGRADE) \
 		--kubernetes-version $(K8S_VER) \
