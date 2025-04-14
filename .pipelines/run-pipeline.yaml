@@ -245,76 +245,72 @@ stages:
           archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
 
 
-    - job: image_manifests
-      dependsOn: 
-      - linux_amd64
-      - linux_arm64
-      - windows_amd64
-      displayName: "Generate Image Manifests"
-      pool:
-        type: docker
-      variables:
-        ob_outputDirectory: $(Build.SourcesDirectory)/out
-        ob_git_checkout: false
-
-        IMAGE_REPO_PATH: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
-      steps:
-      - template: build/manifest.steps.yaml
-        parameters:
-          name: azure-ipam
-          image_tag: $(AZURE_IPAM_VERSION)
-          platforms:
-          - platform: linux/amd64
-            imageReference: $[ dependencies.linux_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
-          - platform: linux/arm64
-            imageReference: $[ dependencies.linux_arm64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
-          - platform: windows/amd64
-            imageReference: $[ dependencies.windows_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
-      - template: build/manifest.steps.yaml
-        parameters:
-          name: cni
-          image_tag: $(CNI_VERSION)
-          platforms:
-          - platform: linux/amd64
-            imageReference: $[ dependencies.linux_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
-          - platform: linux/arm64
-            imageReference: $[ dependencies.linux_arm64.outputs['cni.detail.IMAGE_REFERENCE'] ]
-          - platform: windows/amd64
-            osVersion: ltsc2022
-            imageReference: $[ dependencies.windows_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
-      - template: build/manifest.steps.yaml
-        parameters:
-          name: cns
-          image_tag: $(CNS_VERSION)
-          platforms:
-          - platform: linux/amd64
-            imageReference: $[ dependencies.linux_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
-          - platform: linux/arm64
-            imageReference: $[ dependencies.linux_arm64.outputs['cns.detail.IMAGE_REFERENCE'] ]
-          - platform: windows/amd64
-            osVersion: ltsc2022
-            imageReference: $[ dependencies.windows_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
-      - template: build/manifest.steps.yaml
-        parameters:
-          name: ipv6-hp-bpf
-          image_tag: $(IPV6_HP_BPF_VERSION)
-          platforms:
-          - platform: linux/amd64
-            imageReference: $[ dependencies.linux_amd64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
-          - platform: linux/arm64
-            imageReference: $[ dependencies.linux_arm64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
-      - template: build/manifest.steps.yaml
-        parameters:
-          name: npm
-          image_tag: $(NPM_VERSION)
-          platforms:
-          - platform: linux/amd64
-            imageReference: $[ dependencies.linux_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
-          - platform: linux/arm64
-            imageReference: $[ dependencies.linux_arm64.outputs['npm.detail.IMAGE_REFERENCE'] ]
-          - platform: windows/amd64
-            osVersion: ltsc2022
-            imageReference: $[ dependencies.windows_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+  - stage: manifests
+    displayName: "Image Manifests"
+    dependsOn:
+    - build
+    variables:
+      IMAGE_REPO_PATH: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
+    jobs:
+    - template: build/manifests.jobs.yaml
+      parameters:
+        generate:
+        - job: azure_ipam
+          templateContext:
+            name: azure-ipam
+            image_tag: $(AZURE_IPAM_VERSION)
+            platforms:
+            - platform: linux/amd64
+              imageReference: $[ stageDependencies.build.linux_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+            - platform: linux/arm64
+              imageReference: $[ stageDependencies.build.linux_arm64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+            - platform: windows/amd64
+              imageReference: $[ stageDependencies.build.windows_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+        - job: cni
+          templateContext:
+            name: cni
+            image_tag: $(CNI_VERSION)
+            platforms:
+            - platform: linux/amd64
+              imageReference: $[ stageDependencies.build.linux_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+            - platform: linux/arm64
+              imageReference: $[ stageDependencies.build.linux_arm64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+            - platform: windows/amd64
+              osVersion: ltsc2022
+              imageReference: $[ stageDependencies.build.windows_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+        - job: cns
+          templateContext:
+            name: cns
+            image_tag: $(CNS_VERSION)
+            platforms:
+            - platform: linux/amd64
+              imageReference: $[ stageDependencies.build.linux_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+            - platform: linux/arm64
+              imageReference: $[ stageDependencies.build.linux_arm64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+            - platform: windows/amd64
+              osVersion: ltsc2022
+              imageReference: $[ stageDependencies.build.windows_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+        - job: ipv6_hp_bpf
+          templateContext:
+            name: ipv6-hp-bpf
+            image_tag: $(IPV6_HP_BPF_VERSION)
+            platforms:
+            - platform: linux/amd64
+              imageReference: $[ stageDependencies.build.linux_amd64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
+            - platform: linux/arm64
+              imageReference: $[ stageDependencies.build.linux_arm64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
+        - job: npm
+          templateContext:
+            name: npm
+            image_tag: $(NPM_VERSION)
+            platforms:
+            - platform: linux/amd64
+              imageReference: $[ stageDependencies.build.linux_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+            - platform: linux/arm64
+              imageReference: $[ stageDependencies.build.linux_arm64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+            - platform: windows/amd64
+              osVersion: ltsc2022
+              imageReference: $[ stageDependencies.build.windows_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
 
 
   # Cilium Podsubnet E2E tests
