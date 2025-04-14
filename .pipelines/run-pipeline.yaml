@@ -109,13 +109,13 @@ stages:
       steps:
       - template: build/image.steps.yaml
         parameters:
-          arch: amd64
-          os: linux
+          arch: $(ARCH)
+          os: $(OS)
           name: $(name)
           dockerfile_path: $(dockerfilePath)
-          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
-          extra_args: $(extraArgs)
           build_tag: $(imageTag)
+          extra_args: $(extraArgs)
+          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
 
     - job: images_windows_amd64
       displayName: "Build Windows Images"
@@ -167,14 +167,14 @@ stages:
       steps:
       - template: build/image.steps.yaml
         parameters:
-          arch: amd64
-          os: windows
+          arch: $(ARCH)
+          os: $(OS)
           os_version: $(osVersion)
           name: $(name)
           dockerfile_path: $(dockerfilePath)
-          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
-          extra_args: $(extraArgs)
           build_tag: $(imageTag)
+          extra_args: $(extraArgs)
+          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
   
     - job: images_linux_arm64
       displayName: "Build Linux/ARM64 Images"
@@ -236,14 +236,13 @@ stages:
       steps:
       - template: build/image.steps.yaml
         parameters:
-          arch: arm64
+          arch: $(ARCH)
+          os: $(OS)
           name: $(name)
-          os: $(os)
           dockerfile_path: $(dockerfilePath)
-          build_tag: $(archiveVersion)
-          extra_args: $(extraArgs)
-          archive_file: $(archiveName)-$(os)-$(arch)-$(archiveVersion)
           build_tag: $(imageTag)
+          extra_args: $(extraArgs)
+          archive_file: $(archiveName)-$(OS)-$(ARCH)-$(archiveVersion)
 
 
     - job: image_manifests
