@@ -41,7 +41,7 @@ jobs:
             make -C ./hack/aks azcfg AZCLI=az REGION=${{ parameters.region }}
 
             make -C ./hack/aks ${{ parameters.clusterType }} \
-            AZCLI=az REGION=${{ parameters.region }} SUB=$(SUB_AZURE_NETWORK_AGENT_BUILD_VALIDATIONS) \
+            AZCLI=az REGION=${{ parameters.region }} SUB=7abb5f36-fffb-4700-b2f8-04588d3b8eeb \
             CLUSTER=${{ parameters.clusterName }} \
             VM_SIZE=${{ parameters.vmSize }} VM_SIZE_WIN=${{ parameters.vmSizeWin }} \
             OS_SKU_WIN=${{ parameters.osSkuWin }} OS=${{ parameters.os }}
