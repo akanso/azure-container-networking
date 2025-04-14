@@ -498,5 +498,5 @@ stages:
                 name: $(name)
                 clusterName: $(clusterName)-$(commitID)
                 region: $(region)
-                sub: $(SUB_AZURE_NETWORK_AGENT_BUILD_VALIDATIONS)
+                sub: "7abb5f36-fffb-4700-b2f8-04588d3b8eeb"
                 svcConn: $(BUILD_VALIDATIONS_SERVICE_CONNECTION)
