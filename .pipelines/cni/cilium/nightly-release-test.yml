@@ -179,6 +179,18 @@ stages:
             parameters:
               clusterName: $(clusterName)-$(commitID)
 
+          - template: ../../templates/log-check-template.yaml # Agent Check
+            parameters:
+              clusterName: $(clusterName)-$(commitID)
+              podLabel: "k8s-app=cilium"
+              logGrep: "level=error"
+
+          - template: ../../templates/log-check-template.yaml # Operator Check
+            parameters:
+              clusterName: $(clusterName)-$(commitID)
+              podLabel: "name=cilium-operator"
+              logGrep: "level=error"
+
           - template: ../../templates/delete-cluster.yaml
             parameters:
               name: $(name)
