@@ -139,6 +139,7 @@ stages:
             extraArgs: ''
             archiveName: azure-ipam
             archiveVersion: $(OS)-$(ARCH)-$(AZURE_IPAM_VERSION)-ltsc2022
+            imageTag: $(OS)-$(ARCH)-$(AZURE_IPAM_VERSION)-ltsc2022
           cni:
             name: cni
             osVersion: ltsc2022
@@ -311,6 +312,146 @@ stages:
             - platform: windows/amd64
               osVersion: ltsc2022
               imageReference: $[ stageDependencies.build.windows_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+
+
+#  - stage: e2e
+#    displayName: "Run E2E Tests"
+#    dependsOn:
+#    - manifests
+#    variables:
+#      IMAGE_REPO_PATH: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
+#    jobs:
+#
+#    # Cilium Swift E2E Tests
+#    - job: cilium_podsubnet
+#      displayName: "Cilium Podsubnet"
+#      templateContext:
+#        provision:
+#        - cluster: "cilium-podsubnet"
+#          type: podsubnet
+#          region: $(REGION_AKS_CLUSTER_TEST)
+#          dataplane: cilium
+#          vmSize: Standard_B2ms
+#        e2e:
+#        - 
+#        logs:
+#      steps:
+#      - template: singletenancy/cilium/cilium-e2e-job-template.yaml
+#
+#    # Cilium Nodesubnet E2E tests
+#    - job: cilium_nodesubnet
+#      displayName: "Cilium Nodesubnet"
+#      templateContext:
+#       clusterType: nodesubnet-byocni-nokubeproxy-up
+#        clusters:
+#        - cluster: "cilium-nodesubnet"
+#          type: nodesubnet
+#          region: $(REGION_AKS_CLUSTER_TEST)
+#          dataplane: cilium
+#          vmSize: Standard_B2s
+#        e2e:
+#        - 
+#        logs:
+#      steps:
+#      - template: singletenancy/cilium-nodesubnet/cilium-nodesubnet-e2e-job-template.yaml
+#
+#    # Cilium Overlay E2E tests
+#    - job: cilium_overlay
+#      #clusterType: overlay-byocni-nokubeproxy-up
+#      displayName: "Cilium on AKS Overlay"
+#      templateContext:
+#       clusterType: overlay-byocni-nokubeproxy-up
+#        clusters:
+#        - cluster: "cilium-overlay"
+#          type: overlay
+#          region: $(REGION_AKS_CLUSTER_TEST)
+#          dataplane: cilium
+#          vmSize: Standard_B2ms
+#        e2e:
+#        - 
+#        logs:
+#      steps:
+#      - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml
+#
+#    # Cilium Dualstack Overlay E2E tests
+#    - job: cilium_overlay_ds
+#      displayName: "Cilium on AKS Dualstack Overlay"
+#      #clusterType: dualstack-byocni-nokubeproxy-up
+#      templateContext:
+#        clusters:
+#        - cluster: "cilium-overlay-ds"
+#          type: overlay
+#          region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+#          dataplane: cilium
+#          vmSize: Standard_B2ms
+#          capabilities:
+#            dualstackEnabled: true
+#        e2e:
+#        - 
+#        logs:
+#      steps:
+#      - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
+#
+#      # Cilium Overlay with hubble E2E tests
+#    - job: cilium_h_overlay
+#      displayName: "Cilium (with Hubble) on AKS Overlay"
+#      #clusterType: overlay-byocni-nokubeproxy-up
+#      templateContext:
+#        clusters:
+#        - cluster: "cilium-h-overlay"
+#          type: overlay
+#          region: $(REGION_AKS_CLUSTER_TEST)
+#          dataplane: cilium
+#          vmSize: Standard_B2ms
+#          capabilities:
+#            hubbleEnabled: true
+#        e2e:
+#        - 
+#        logs:
+#      steps:
+#      - template: singletenancy/cilium-overlay-withhubble/cilium-overlay-e2e-job-template.yaml
+#
+#    parameters:
+#          linux_azure_overlay_e2e:
+#            name: linux_azure_overlay_e2e
+#            clusterName: "linuxazovere2e"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          windows_azure_overlay_e2e:
+#            name: win_azure_overlay_e2e
+#            clusterName: "winazovere2e"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          azure_overlay_stateless_e2e:
+#            name: azure_overlay_stateless_e2e
+#            clusterName: "statelesswin"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          aks_swift_e2e:
+#            name: aks_swift_e2e
+#            clusterName: "swifte2e"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          aks_swift_vnetscale_e2e:
+#            name: aks_swift_vnetscale_e2e
+#            clusterName: "vscaleswifte2e"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          aks_ubuntu_22_linux_e2e:
+#            name: aks_ubuntu_22_linux_e2e
+#            clusterName: "ubuntu22e2e"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          aks_windows_22_e2e:
+#            name: aks_windows_22_e2e
+#            clusterName: "win22e2e"
+#            region: $(REGION_AKS_CLUSTER_TEST)
+#          linux_dualstackoverlay_e2e:
+#            name: linux_dualstackoverlay_e2e
+#            clusterName: "linuxdsovere2e"
+#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+#          windows_dualstackoverlay_e2e:
+#            name: windows_dualstackoverlay_e2e
+#            clusterName: "windsovere2e"
+#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+#          cilium_dualstackoverlay_e2e:
+#            name: cilium_dualstackoverlay_e2e
+#            clusterName: "cildsovere2e"
+#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
 
 
   # Cilium Podsubnet E2E tests
