@@ -71,7 +71,7 @@ steps:
   inputs:
     endpoint: $(ACR_ARM_SERVICE_CONNECTION)
     registry: $(ACR).azurecr.io
-    repositoryName: '${{ parameters.name }}'
+    repositoryName: $(os)-$(arch)/${{ parameters.name }}
     os: '${{ parameters.os }}'
     buildkit: 1
     dockerFileRelPath: ${{ parameters.dockerfile_path }}/Dockerfile
@@ -83,7 +83,7 @@ steps:
 
     compress: true
     saveImageToPath: images/$(os)-$(arch)/${{ parameters.archive_file }}.tar.gz
-    saveMetadataToPath: images/$(os)-$(arch)/metadata/${{ parameters.archive_file }}-metadata.json
+    #saveMetadataToPath: images/$(os)-$(arch)/metadata/${{ parameters.archive_file }}-metadata.json
 
     # Docker Build Arguments
     ${{ if parameters.common_build_args }}:
@@ -102,7 +102,7 @@ steps:
   displayName: "Output Image Details"
   name: detail
   env:
-    IMAGE_NAME: '${{ parameters.name }}'
+    IMAGE_NAME: $(os)-$(arch)/${{ parameters.name }}
     IMAGE_PREFIX: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
     IMAGE_PLATFORM_TAG: '${{ parameters.build_tag }}'
     IMAGE_REPO: $(ACN)
