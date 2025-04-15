@@ -253,24 +253,24 @@ stages:
     variables:
       IMAGE_REPO_PATH: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
 
-      IPAM_LINUX_AMD64_REF: $[ stageDependencies.build.images_linux_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
-      IPAM_LINUX_ARM64_REF: $[ stageDependencies.build.images_linux_arm64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
-      IPAM_WINDOWS_AMD64_REF: $[ stageDependencies.build.images_windows_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+      IPAM_LINUX_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-amd64/azure-ipam:$(AZURE_IPAM_VERSION)
+      IPAM_LINUX_ARM64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-arm64/azure-ipam:$(AZURE_IPAM_VERSION)
+      IPAM_WINDOWS_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/windows-amd64/azure-ipam:$(AZURE_IPAM_VERSION)
 
-      CNI_LINUX_AMD64_REF: $[ stageDependencies.build.images_linux_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
-      CNI_LINUX_ARM64_REF: $[ stageDependencies.build.images_linux_arm64.outputs['cni.detail.IMAGE_REFERENCE'] ]
-      CNI_WINDOWS_AMD64_REF: $[ stageDependencies.build.images_windows_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+      CNI_LINUX_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-amd64/cni:$(CNI_VERSION)
+      CNI_LINUX_ARM64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-arm64/cni:$(CNI_VERSION)
+      CNI_WINDOWS_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/windows-amd64/cni:$(CNI_VERSION)
 
-      CNS_LINUX_AMD64_REF: $[ stageDependencies.build.images_linux_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
-      CNS_LINUX_ARM64_REF: $[ stageDependencies.build.images_linux_arm64.outputs['cns.detail.IMAGE_REFERENCE'] ]
-      CNS_WINDOWS_AMD64_REF: $[ stageDependencies.build.images_windows_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+      CNS_LINUX_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-amd64/cns:$(CNS_VERSION)
+      CNS_LINUX_ARM64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-arm64/cns:$(CNS_VERSION)
+      CNS_WINDOWS_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/windows-amd64/cns:$(CNS_VERSION)
 
-      IPV6_LINUX_AMD64_REF: $[ stageDependencies.build.images_linux_amd64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
-      IPV6_LINUX_ARM64_REF: $[ stageDependencies.build.images_linux_arm64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
+      IPV6_LINUX_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-amd64/ipv6-hp-bpf:$(IPV6_HP_BPF_VERSION)
+      IPV6_LINUX_ARM64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-arm64/ipv6-hp-bpf:$(IPV6_HP_BPF_VERSION)
 
-      NPM_LINUX_AMD64_REF: $[ stageDependencies.build.images_linux_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
-      NPM_LINUX_ARM64_REF: $[ stageDependencies.build.images_linux_arm64.outputs['npm.detail.IMAGE_REFERENCE'] ]
-      NPM_WINDOWS_AMD64_REF: $[ stageDependencies.build.images_windows_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+      NPM_LINUX_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-amd64/npm:$(NPM_VERSION)
+      NPM_LINUX_ARM64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/linux-arm64/npm:$(NPM_VERSION)
+      NPM_WINDOWS_AMD64_REF: $(ACR).azurecr.io/$(IMAGE_REPO_PATH)/windows-amd64/npm:$(NPM_VERSION)
     jobs:
     - template: build/manifests.jobs.yaml
       parameters:
