@@ -262,198 +262,327 @@ stages:
             image_tag: $(AZURE_IPAM_VERSION)
             platforms:
             - platform: linux/amd64
-              imageReference: $[ stageDependencies.build.linux_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
             - platform: linux/arm64
-              imageReference: $[ stageDependencies.build.linux_arm64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_arm64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
             - platform: windows/amd64
-              imageReference: $[ stageDependencies.build.windows_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_windows_amd64.outputs['azure_ipam.detail.IMAGE_REFERENCE'] ]
         - job: cni
           templateContext:
             name: cni
             image_tag: $(CNI_VERSION)
             platforms:
             - platform: linux/amd64
-              imageReference: $[ stageDependencies.build.linux_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
             - platform: linux/arm64
-              imageReference: $[ stageDependencies.build.linux_arm64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_arm64.outputs['cni.detail.IMAGE_REFERENCE'] ]
             - platform: windows/amd64
               osVersion: ltsc2022
-              imageReference: $[ stageDependencies.build.windows_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_windows_amd64.outputs['cni.detail.IMAGE_REFERENCE'] ]
         - job: cns
           templateContext:
             name: cns
             image_tag: $(CNS_VERSION)
             platforms:
             - platform: linux/amd64
-              imageReference: $[ stageDependencies.build.linux_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
             - platform: linux/arm64
-              imageReference: $[ stageDependencies.build.linux_arm64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_arm64.outputs['cns.detail.IMAGE_REFERENCE'] ]
             - platform: windows/amd64
               osVersion: ltsc2022
-              imageReference: $[ stageDependencies.build.windows_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_windows_amd64.outputs['cns.detail.IMAGE_REFERENCE'] ]
         - job: ipv6_hp_bpf
           templateContext:
             name: ipv6-hp-bpf
             image_tag: $(IPV6_HP_BPF_VERSION)
             platforms:
             - platform: linux/amd64
-              imageReference: $[ stageDependencies.build.linux_amd64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_amd64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
             - platform: linux/arm64
-              imageReference: $[ stageDependencies.build.linux_arm64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_arm64.outputs['ipv6_hp_bpf.detail.IMAGE_REFERENCE'] ]
         - job: npm
           templateContext:
             name: npm
             image_tag: $(NPM_VERSION)
             platforms:
             - platform: linux/amd64
-              imageReference: $[ stageDependencies.build.linux_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
             - platform: linux/arm64
-              imageReference: $[ stageDependencies.build.linux_arm64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_linux_arm64.outputs['npm.detail.IMAGE_REFERENCE'] ]
             - platform: windows/amd64
               osVersion: ltsc2022
-              imageReference: $[ stageDependencies.build.windows_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
+              imageReference: $[ stageDependencies.build.images_windows_amd64.outputs['npm.detail.IMAGE_REFERENCE'] ]
 
 
 #  - stage: e2e
 #    displayName: "Run E2E Tests"
 #    dependsOn:
+#    - setup
 #    - manifests
 #    variables:
 #      IMAGE_REPO_PATH: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
+#      commitID: $[ stageDependencies.setup.env.outputs['EnvironmentalVariables.commitID'] ]
 #    jobs:
-#
-#    # Cilium Swift E2E Tests
-#    - job: cilium_podsubnet
-#      displayName: "Cilium Podsubnet"
-#      templateContext:
-#        provision:
-#        - cluster: "cilium-podsubnet"
-#          type: podsubnet
-#          region: $(REGION_AKS_CLUSTER_TEST)
-#          dataplane: cilium
-#          vmSize: Standard_B2ms
-#        e2e:
-#        - 
-#        logs:
-#      steps:
-#      - template: singletenancy/cilium/cilium-e2e-job-template.yaml
-#
-#    # Cilium Nodesubnet E2E tests
-#    - job: cilium_nodesubnet
-#      displayName: "Cilium Nodesubnet"
-#      templateContext:
-#       clusterType: nodesubnet-byocni-nokubeproxy-up
-#        clusters:
-#        - cluster: "cilium-nodesubnet"
-#          type: nodesubnet
-#          region: $(REGION_AKS_CLUSTER_TEST)
-#          dataplane: cilium
-#          vmSize: Standard_B2s
-#        e2e:
-#        - 
-#        logs:
-#      steps:
-#      - template: singletenancy/cilium-nodesubnet/cilium-nodesubnet-e2e-job-template.yaml
-#
-#    # Cilium Overlay E2E tests
-#    - job: cilium_overlay
-#      #clusterType: overlay-byocni-nokubeproxy-up
-#      displayName: "Cilium on AKS Overlay"
-#      templateContext:
-#       clusterType: overlay-byocni-nokubeproxy-up
-#        clusters:
-#        - cluster: "cilium-overlay"
-#          type: overlay
-#          region: $(REGION_AKS_CLUSTER_TEST)
-#          dataplane: cilium
-#          vmSize: Standard_B2ms
-#        e2e:
-#        - 
-#        logs:
-#      steps:
-#      - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml
-#
-#    # Cilium Dualstack Overlay E2E tests
-#    - job: cilium_overlay_ds
-#      displayName: "Cilium on AKS Dualstack Overlay"
-#      #clusterType: dualstack-byocni-nokubeproxy-up
-#      templateContext:
-#        clusters:
-#        - cluster: "cilium-overlay-ds"
-#          type: overlay
-#          region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-#          dataplane: cilium
-#          vmSize: Standard_B2ms
-#          capabilities:
-#            dualstackEnabled: true
-#        e2e:
-#        - 
-#        logs:
-#      steps:
-#      - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
-#
-#      # Cilium Overlay with hubble E2E tests
-#    - job: cilium_h_overlay
-#      displayName: "Cilium (with Hubble) on AKS Overlay"
-#      #clusterType: overlay-byocni-nokubeproxy-up
-#      templateContext:
-#        clusters:
-#        - cluster: "cilium-h-overlay"
-#          type: overlay
-#          region: $(REGION_AKS_CLUSTER_TEST)
-#          dataplane: cilium
-#          vmSize: Standard_B2ms
-#          capabilities:
-#            hubbleEnabled: true
-#        e2e:
-#        - 
-#        logs:
-#      steps:
-#      - template: singletenancy/cilium-overlay-withhubble/cilium-overlay-e2e-job-template.yaml
-#
-#    parameters:
-#          linux_azure_overlay_e2e:
-#            name: linux_azure_overlay_e2e
-#            clusterName: "linuxazovere2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          windows_azure_overlay_e2e:
-#            name: win_azure_overlay_e2e
-#            clusterName: "winazovere2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          azure_overlay_stateless_e2e:
-#            name: azure_overlay_stateless_e2e
-#            clusterName: "statelesswin"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_swift_e2e:
-#            name: aks_swift_e2e
-#            clusterName: "swifte2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_swift_vnetscale_e2e:
-#            name: aks_swift_vnetscale_e2e
-#            clusterName: "vscaleswifte2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_ubuntu_22_linux_e2e:
-#            name: aks_ubuntu_22_linux_e2e
-#            clusterName: "ubuntu22e2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          aks_windows_22_e2e:
-#            name: aks_windows_22_e2e
-#            clusterName: "win22e2e"
-#            region: $(REGION_AKS_CLUSTER_TEST)
-#          linux_dualstackoverlay_e2e:
-#            name: linux_dualstackoverlay_e2e
-#            clusterName: "linuxdsovere2e"
-#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-#          windows_dualstackoverlay_e2e:
-#            name: windows_dualstackoverlay_e2e
-#            clusterName: "windsovere2e"
-#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-#          cilium_dualstackoverlay_e2e:
-#            name: cilium_dualstackoverlay_e2e
-#            clusterName: "cildsovere2e"
-#            region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
-
-
+#    - template: test/e2e/run-e2es.jobs.yaml
+#      parameters:
+#        scenarios:
+#        # Cilium Swift E2E Tests
+#        - job: cilium_podsubnet
+#          displayName: "Cilium Podsubnet"
+#          templateContext:
+#            provision:
+#            - cluster: "cilium-swift"
+#              type: podsubnet
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: cilium
+#              vmSize: Standard_B2ms
+#            e2e:
+#            - 
+#            logs:
+#          steps:
+#          - template: singletenancy/cilium/cilium-e2e-job-template.yaml
+#    
+#        # Cilium Nodesubnet E2E tests
+#        - job: cilium_nodesubnet
+#          displayName: "Cilium Nodesubnet"
+#          templateContext:
+#           clusterType: nodesubnet-byocni-nokubeproxy-up
+#            clusters:
+#            - cluster: "cilium-nodesubnet"
+#              type: nodesubnet
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: cilium
+#              vmSize: Standard_B2s
+#            e2e:
+#            - 
+#            logs:
+#          steps:
+#          - template: singletenancy/cilium-nodesubnet/cilium-nodesubnet-e2e-job-template.yaml
+#    
+#        # Cilium Overlay E2E tests
+#        - job: cilium_overlay
+#          #clusterType: overlay-byocni-nokubeproxy-up
+#          displayName: "Cilium on AKS Overlay"
+#          templateContext:
+#           clusterType: overlay-byocni-nokubeproxy-up
+#            clusters:
+#            - cluster: "cilium-overlay"
+#              type: overlay
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: cilium
+#              vmSize: Standard_B2ms
+#            e2e:
+#            - 
+#            logs:
+#          steps:
+#          - template: singletenancy/cilium-overlay/cilium-overlay-e2e-job-template.yaml
+#    
+#        # Cilium Dualstack Overlay E2E tests
+#        - job: cilium_overlay_ds
+#          displayName: "Cilium on AKS Dualstack Overlay"
+#          #clusterType: dualstack-byocni-nokubeproxy-up
+#          templateContext:
+#            clusters:
+#            - cluster: "cilium-overlay-ds"
+#              type: overlay
+#              region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+#              dataplane: cilium
+#              vmSize: Standard_B2ms
+#              capabilities:
+#                dualstackEnabled: true
+#            e2e:
+#            - 
+#            logs:
+#          steps:
+#          - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
+#    
+#        # Cilium Overlay with hubble E2E tests
+#        - job: cilium_h_overlay
+#          displayName: "Cilium (with Hubble) on AKS Overlay"
+#          #clusterType: overlay-byocni-nokubeproxy-up
+#          templateContext:
+#            clusters:
+#            - cluster: "cilium-h-overlay"
+#              type: overlay
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: cilium
+#              vmSize: Standard_B2ms
+#              capabilities:
+#                hubbleEnabled: true
+#            e2e:
+#            - 
+#            logs:
+#          steps:
+#          - template: singletenancy/cilium-overlay-withhubble/cilium-overlay-e2e-job-template.yaml
+#    
+#        # Azure Overlay E2E tests
+#        - job: overlay_linux
+#          displayName: "Azure CNI (Linux) Overlay"
+#            #clusterType: overlay-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "overlay-linux"
+#              type: overlay
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: linux
+#              vmSize: Standard_B2ms
+#            e2e:
+#              - scale: 100
+#            logs:
+#          steps:
+#          - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
+#    
+#        # Azure Windows Overlay E2E tests
+#        - job: overlay_windows
+#          displayName: "Azure CNI (Windows) Overlay"
+#            #clusterType: overlay-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "overlay-windows"
+#              type: overlay
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: windows
+#              vmSize: Standard_B2ms
+#            e2e:
+#              - scale: 50
+#            logs:
+#          steps:
+#          - template: singletenancy/azure-cni-overlay/azure-cni-overlay-e2e-job-template.yaml
+#    
+#        # Azure Overlay E2E Stateless CNI tests
+#        - job: overlay_stateless
+#          displayName: "Azure CNI Stateless (Windows) Overlay"
+#            #clusterType: overlay-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "stateless-overlay-win"
+#              type: overlay
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: windows
+#              vmSize: Standard_B2ms
+#            e2e:
+#            logs:
+#          steps:
+#          - template: singletenancy/azure-cni-overlay-stateless/azure-cni-overlay-stateless-e2e-job-template.yaml
+#    
+#        # AKS Swift E2E tests
+#        - job: podsubnet_linux
+#          displayName: "AKS Swift (Ubuntu)"
+#            #clusterType: swift-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "swift-linux"
+#              type: podsubnet
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: ubuntu
+#              vmSize: Standard_B2ms
+#            e2e:
+#            logs:
+#          steps:
+#          - template: singletenancy/aks-swift/e2e-job-template.yaml
+#    
+#        # AKS Swift Vnet Scale E2E tests
+#        - job: podsubnet_vnetscale
+#          displayName: "AKS Swift VNetScale (Ubuntu)"
+#          #clusterType: vnetscale-swift-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "vnetscale"
+#              type: podsubnet
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              k8sVersion: "1.30"
+#              os: ubuntu
+#              vmSize: Standard_B2ms
+#              capabilities:
+#                vnetscaleEnabled: true
+#            e2e:
+#            logs:
+#          steps:
+#          - template: singletenancy/aks-swift/e2e-job-template.yaml
+#    
+#        # CNIv1 E2E tests
+#        - job: cniv1
+#          displayName: "CNIv1 (Ubuntu)"
+#          #clusterType: cniv1-up
+#          templateContext:
+#            clusters:
+#            - cluster: "cniv1"
+#              type: cniv1
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: ubuntu
+#              vmSize: Standard_B2s
+#              k8sVersion: 1.25
+#            e2e:
+#            - scale: 100
+#            logs:
+#          steps:
+#          - template: singletenancy/aks/e2e-job-template.yaml
+#    
+#        # CNIv1 Windows E2E Tests
+#        - job: cniv1_windows
+#          displayName: "CNIv1 (Windows)"
+#          #clusterType: cniv1-up
+#          templateContext:
+#            clusters:
+#            - cluster: "cniv1-windows"
+#              type: cniv1
+#              region: $(REGION_AKS_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: windows
+#              osVersion: "ltsc2022"
+#              vmSize: Standard_B2ms
+#              k8sVersion: 1.25
+#            e2e:
+#            - scale: 50
+#            logs:
+#          steps:
+#          - template: singletenancy/aks/e2e-job-template.yaml
+#    
+#        # CNI Dualstack Overlay E2E Tests
+#        - job: overlay_ds_linux
+#          displayName: "Dualstack Overlay (Ubuntu)"
+#          #clusterType: dualstack-overlay-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "overlay-ds"
+#              type: overlay
+#              region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: linux
+#              vmSize: Standard_B2ms
+#              capabilities:
+#                dualstackEnabled: true
+#            e2e:
+#            - scale: 100
+#            logs:
+#          steps:
+#          - template: singletenancy/dualstack-overlay/dualstackoverlay-e2e-job-template.yaml
+#    
+#        # CNI Dualstack Overlay E2E Tests
+#        - job: overlay_ds_windows
+#          displayName: "Dualstack Overlay (Windows)"
+#          #clusterType: dualstack-overlay-byocni-up
+#          templateContext:
+#            clusters:
+#            - cluster: "overlay-ds-win"
+#              type: overlay
+#              region: $(REGION_DUALSTACKOVERLAY_CLUSTER_TEST)
+#              dataplane: kubenet
+#              os: windows
+#              vmSize: Standard_B2ms
+#              capabilities:
+#                dualstackEnabled: true
+#            e2e:
+#            - scale: 50
+#            logs:
+#          steps:
+#          - template: singletenancy/cilium-dualstack-overlay/cilium-dualstackoverlay-e2e-job-template.yaml
   # Cilium Podsubnet E2E tests
   - template: singletenancy/cilium/cilium-e2e-job-template.yaml
     parameters:
@@ -620,6 +749,7 @@ stages:
       vmSize: Standard_B2ms
       dependsOn: manifests
       scaleup: 50
+
 
   - stage: delete
     displayName: Delete Clusters
