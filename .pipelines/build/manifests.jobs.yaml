@@ -4,9 +4,9 @@ parameters:
 
 
 jobs:
-- ${{ for job in parameters.generate }}:
-  - job: ${{ job.name }}_generate_manifest
-    displayName: "Generate Image Manifest - ${{ job.name }}"
+- ${{ for manifest_job in parameters.generate }}:
+  - job: ${{ manifest_job.job }}_generate_manifest
+    displayName: "Generate Image Manifest - ${{ manifest_job.job }}"
     pool:
       type: linux
     variables:
@@ -15,12 +15,12 @@ jobs:
     steps:
     - template: /.pipelines/build/generate-manifest.steps.yaml
       parameters:
-        platforms: ${{ job.templateContext.platforms }}
+        platforms: ${{ manifest_job.templateContext.platforms }}
 
-  - job: ${{ job.name }}_publish_manifest
-    displayName: "Publish Image Manifest - ${{ job.name }}"
+  - job: ${{ manifest_job.job }}_publish_manifest
+    displayName: "Publish Image Manifest - ${{ manifest_job.job }}"
     dependsOn:
-    - ${{ job.name }}_generate_manifest
+    - ${{ manifest_job.job }}_generate_manifest
     pool:
       type: docker
     variables:
@@ -29,6 +29,6 @@ jobs:
     steps:
     - template: /.pipelines/build/publish-manifest.steps.yaml
       parameters:
-        image_repository: $(IMAGE_REPO_PATH)/${{ job.templateContext.name }}
-        image_tag: ${{ job.templateContext.image_tag }}
-        manifest_data: $[ dependencies.${{ job.name }}_generate_manifest.outputs['data.MANIFEST'] ]
+        image_repository: $(IMAGE_REPO_PATH)/${{ manifest_job.templateContext.name }}
+        image_tag: ${{ manifest_job.templateContext.image_tag }}
+        manifest_data: $[ dependencies.${{ manifest_job.job }}_generate_manifest.outputs['data.MANIFEST'] ]

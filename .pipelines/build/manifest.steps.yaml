@@ -19,7 +19,7 @@ steps:
         .args = [ ("--os "   + .args[0]     ), ("--platform " + .args[1]     ) ] | 
         if .osVersion then .args += ["--os-version " + .osVersion] else . end    |
         { image: .imageReference, annotate: .args }' | \
-      jq -rs)
+      jq -crs)
     echo >&2 "##vso[task.setvariable variable=${IMAGE_NAME}_MANIFEST]$MANIFEST_DATA"
   displayName: "Generate Manifest Data"
   env:
