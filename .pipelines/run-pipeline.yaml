@@ -249,6 +249,7 @@ stages:
   - stage: manifests
     displayName: "Image Manifests"
     dependsOn:
+    - setup
     - build
     variables:
       IMAGE_REPO_PATH: 'artifact/dd590928-4e04-48cb-9d3d-ee06c5f0e17f/buddy'
