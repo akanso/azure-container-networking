@@ -471,10 +471,12 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (
 	}
 
 	// If the Host - container connectivity is requested, create endpoint in HostNCApipaNetwork
-	if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost {
+	if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost { 
 		if err = nw.createHostNCApipaEndpoint(cli, epInfo); err != nil {
 			return nil, fmt.Errorf("Failed to create HostNCApipaEndpoint due to error: %v", err)
 		}
+	} else {
+		logger.Info("Skipping creation of HostNCApipaEndpoint for host container connectivity")
 	}
 
 	var vlanid int

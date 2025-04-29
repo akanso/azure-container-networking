@@ -418,8 +418,11 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	if argErr := plugin.validateArgs(args, nwCfg); argErr != nil {
 		err = argErr
+		logger.Error("Failed to validate args, Invalid CNI args", zap.Error(err))
 		return err
 	}
+
+	logger.Info("Successfully parsed and validated network configuration", zap.Any("networkConfig", nwCfg))
 
 	iptables.DisableIPTableLock = nwCfg.DisableIPTableLock
 	plugin.setCNIReportDetails(nwCfg, CNI_ADD, "")
@@ -453,7 +456,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		addSnatInterface(nwCfg, cniResult) //nolint TODO: check whether Linux supports adding secondary snatinterface
 
 		// add IB NIC interfaceInfo to cniResult
-		for _, epInfo := range epInfos {
+		for _, epInfo := range epInfos {	
 			if epInfo.NICType == cns.BackendNIC {
 				cniResult.Interfaces = append(cniResult.Interfaces, &cniTypesCurr.Interface{
 					Name:  epInfo.MasterIfName,
@@ -468,6 +471,8 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		if vererr != nil {
 			logger.Error("GetAsVersion failed", zap.Error(vererr))
 			plugin.Error(vererr) //nolint
+		} else {
+			logger.Info("CNI version used", zap.String("version", nwCfg.CNIVersion))
 		}
 
 		if err == nil && res != nil {
@@ -481,12 +486,16 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			zap.Error(log.NewErrorWithoutStackTrace(err)))
 	}()
 
+	// Initialize IPAM result.
 	ipamAddResult = IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
+	shadowIpamAddResult := IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
 
 	// Parse Pod arguments.
 	k8sPodName, k8sNamespace, err := plugin.getPodInfo(args.Args)
 	if err != nil {
 		return err
+	} else {
+		logger.Info("Parsed Pod Info", zap.String("podName", k8sPodName), zap.String("namespace", k8sNamespace))
 	}
 
 	plugin.report.ContainerName = k8sPodName + ":" + k8sNamespace
@@ -538,6 +547,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	options := make(map[string]any)
 	ipamAddConfig := IPAMAddConfig{nwCfg: nwCfg, args: args, options: options}
 
+	
 	if nwCfg.MultiTenancy {
 		// triggered only in swift v1 multitenancy
 		// dual nic multitenancy -> two interface infos
@@ -568,6 +578,31 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			return plugin.Errorf(errMsg)
 		}
 	} else {
+		// using the multitenancy client for single-tenancy just to get the network container
+		// this is a workaround for the fact that we need to call GetAllNetworkContainers
+		logger.Info("calling GetAllNetworkContainers even for single-tenancy.", zap.Any("ipamAddConfig", ipamAddConfig))
+		plugin.multitenancyClient.Init(cnsClient, AzureNetIOShim{})
+		if !nwCfg.EnableExactMatchForPodName {
+			logger.Info("EnableExactMatchForPodName is false, setting it to true, before calling GetAllNetworkContainers", zap.Any("Network Config:", nwCfg.EnableExactMatchForPodName))
+			nwCfg.EnableExactMatchForPodName = true
+			if !nwCfg.MultiTenancy {
+				logger.Info("The multitenancy flag is false, however we will call GetAllNetworkContainers to support APIPA creation")
+			}
+		}
+
+		shadowIpamAddResult, err = plugin.multitenancyClient.GetAllNetworkContainers(context.TODO(), nwCfg, k8sPodName, k8sNamespace, args.IfName)
+		if err != nil {
+			err = fmt.Errorf("GetAllNetworkContainers failed for podname %s namespace %s. error: %w", k8sPodName, k8sNamespace, err)
+			logger.Error("GetAllNetworkContainers failed",
+				zap.String("pod", k8sPodName),
+				zap.String("namespace", k8sNamespace),
+				zap.Error(err))
+			return err
+		}
+
+		logger.Info("GetAllNetworkContainers succeeded, IPAM add result:", zap.Any("shadowIpamAddResult", shadowIpamAddResult.PrettyString()))
+		// now that we have the shadowIpamAddResult, we can use it to get the networkID, after we call the ipamInvoker
+
 		// when nwcfg.multitenancy (use multitenancy flag for swift v1 only) is false
 		if plugin.ipamInvoker == nil {
 			switch nwCfg.IPAM.Type {
@@ -583,6 +618,11 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		ipamAddResult, err = plugin.addIpamInvoker(ipamAddConfig)
 		if err != nil {
 			return fmt.Errorf("IPAM Invoker Add failed with error: %w", err)
+		} else {
+			logger.Info("IPAM Invoker Add succeeded",
+				zap.String("pod", k8sPodName),
+				zap.String("namespace", k8sNamespace),
+				zap.Any("ipamAddResult before adding NCResponse", ipamAddResult.PrettyString()))
 		}
 
 		// TODO: This proably needs to be changed as we return all interfaces...
@@ -613,6 +653,16 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	for key := range ipamAddResult.interfaceInfo {
 		ifInfo := ipamAddResult.interfaceInfo[key]
 		logger.Info("Processing interfaceInfo:", zap.Any("ifInfo", ifInfo))
+
+		// check if the sahdowIpamAddResult includes the interfaceInfo for the same key
+		if shadowIfInfo, ok := shadowIpamAddResult.interfaceInfo[key]; ok {
+			if shadowIfInfo.NCResponse != nil {
+				shadowIfInfo.NCResponse.AllowHostToNCCommunication = true
+				shadowIfInfo.NCResponse.AllowNCToHostCommunication = true
+				ifInfo.NCResponse = shadowIfInfo.NCResponse
+				logger.Info("adding the NCResponse we got from multitenancyClient.GetAllNetworkContainers to the interface info", zap.Any("shadowIfInfo", shadowIfInfo.PrettyString()))
+			}
+		}
 
 		if ifInfo.NICType == cns.DelegatedVMNIC {
 			logger.Info("The NIC type is Delegated VM NIC, we will also create the APIPA endpoint")
@@ -682,6 +732,11 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	err = plugin.nm.EndpointCreate(cnsclient, epInfos)
 	if err != nil {
 		return errors.Wrap(err, "failed to create endpoint") // behavior can change if you don't assign to err prior to returning
+	} else {
+		for _, epInfo := range epInfos {
+			logger.Info("plugin.nm.EndpointCreate succeeded for endpoint",
+				zap.String("endpoint info", epInfo.PrettyString()))
+		}
 	}
 	// telemetry added
 	sendEvent(plugin, fmt.Sprintf("CNI ADD Process succeeded for interfaces: %v", ipamAddResult.PrettyString()))

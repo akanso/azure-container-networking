@@ -335,20 +335,25 @@ func (nm *networkManager) EndpointCreate(cnsclient apipaClient, epInfos []*Endpo
 			err = nm.CreateNetwork(epInfo)
 			if err != nil {
 				return err
+			} else {
+				logger.Info("Created network", zap.String("networkID", epInfo.NetworkID))	
 			}
 		}
 
 		ep, err := nm.createEndpoint(cnsclient, epInfo.NetworkID, epInfo)
 		if err != nil {
 			return err
+		} else {
+			logger.Info("Created endpoint", zap.String("endpointID", ep.Id), zap.String("networkID", epInfo.NetworkID))
 		}
 
 		eps = append(eps, ep)
 	}
 
 	if err := validateEndpoints(eps); err != nil {
+		logger.Error("Failed to validate endpoints", zap.Error(err))
 		return err
-	}
+	} 
 
 	// save endpoints
 	return nm.SaveState(eps)
