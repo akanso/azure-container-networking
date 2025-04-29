@@ -1,6 +1,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/Azure/azure-container-networking/cni/util"
 	"github.com/Azure/azure-container-networking/cns"
 	"github.com/Azure/azure-container-networking/common"
+	"github.com/Azure/azure-container-networking/network"
 	acnnetwork "github.com/Azure/azure-container-networking/network"
 	"github.com/Azure/azure-container-networking/network/networkutils"
 	"github.com/Azure/azure-container-networking/network/policy"
@@ -1894,4 +1896,52 @@ func TestValidateArgs(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test case when the error is nil – the function should return false.
+func TestIsAcceptableError_NilError(t *testing.T) {
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{},
+    }
+    result := isAcceptableError(ipamRes, nil)
+    require.False(t, result, "Expected false when err is nil")
+}
+
+// Test case when the error does not include the string "VFP programming is pending".
+func TestIsAcceptableError_NonMatchingError(t *testing.T) {
+    // Even though we set DelegatedVMNIC in the map,
+    // the error string does not include the target message.
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{
+            "eth0": {NICType: cns.DelegatedVMNIC},
+        },
+    }
+    err := errors.New("an unrelated error")
+    result := isAcceptableError(ipamRes, err)
+    require.False(t, result, "Expected false when error does not contain target string")
+}
+
+// Test case when the error message includes the target string but no interface has DelegatedVMNIC.
+func TestIsAcceptableError_NoDelegatedVMNIC(t *testing.T) {
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{
+            "eth0": {NICType: cns.InfraNIC},
+        },
+    }
+    err := errors.New("VFP programming is pending due to a delay")
+    result := isAcceptableError(ipamRes, err)
+    require.False(t, result, "Expected false when no interface has DelegatedVMNIC")
+}
+
+// Test case when the error message includes the target string and at least one interface has DelegatedVMNIC.
+func TestIsAcceptableError_WithDelegatedVMNIC(t *testing.T) {
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{
+            "eth0": {NICType: cns.InfraNIC},
+            "eth1": {NICType: cns.DelegatedVMNIC},
+        },
+    }
+    err := errors.New("VFP programming is pending due to timeout")
+    result := isAcceptableError(ipamRes, err)
+    require.True(t, result, "Expected true when error contains target string and a DelegatedVMNIC interface is present")
 }

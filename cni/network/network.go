@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-container-networking/aitelemetry"
@@ -488,6 +489,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	// Initialize IPAM result.
 	ipamAddResult = IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
+	// Initialize shadow IPAM result. it is used to get the network container ID 
 	shadowIpamAddResult := IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
 
 	// Parse Pod arguments.
@@ -547,7 +549,6 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	options := make(map[string]any)
 	ipamAddConfig := IPAMAddConfig{nwCfg: nwCfg, args: args, options: options}
 
-	
 	if nwCfg.MultiTenancy {
 		// triggered only in swift v1 multitenancy
 		// dual nic multitenancy -> two interface infos
@@ -591,13 +592,17 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 
 		shadowIpamAddResult, err = plugin.multitenancyClient.GetAllNetworkContainers(context.TODO(), nwCfg, k8sPodName, k8sNamespace, args.IfName)
+		// Check if the error contains VFP programming is pending
 		if err != nil {
-			err = fmt.Errorf("GetAllNetworkContainers failed for podname %s namespace %s. error: %w", k8sPodName, k8sNamespace, err)
-			logger.Error("GetAllNetworkContainers failed",
-				zap.String("pod", k8sPodName),
-				zap.String("namespace", k8sNamespace),
-				zap.Error(err))
-			return err
+			if !isAcceptableError(shadowIpamAddResult, err) {
+				err = fmt.Errorf("GetAllNetworkContainers failed for podname %s namespace %s: %w", k8sPodName, k8sNamespace, err)
+				logger.Error("GetAllNetworkContainers failed",
+					zap.String("pod", k8sPodName),
+					zap.String("namespace", k8sNamespace),
+					zap.Error(err))
+				return err
+			}
+			logger.Info("VFP programming is pending, but we will continue execution")
 		}
 
 		logger.Info("GetAllNetworkContainers succeeded, IPAM add result:", zap.Any("shadowIpamAddResult", shadowIpamAddResult.PrettyString()))
@@ -1535,6 +1540,24 @@ func convertNnsToIPConfigs(
 	}
 
 	return ipConfigs
+}
+
+// isAcceptableError checks if the error is acceptable for the given IPAM add result.
+// Currently, it checks for the "VFP programming is pending" error and ignores it for delegated VM/container NICs.
+func isAcceptableError(ipamAddRes IPAMAddResult, err error) bool {
+    if err != nil && strings.Contains(err.Error(), "VFP programming is pending") {
+		for key, info := range ipamAddRes.interfaceInfo {
+			if info.NICType == cns.DelegatedVMNIC {
+				logger.Info("Ignoring VFP programming is pending error for delegated vm nic",
+					zap.String("interface", key),
+					zap.String("error", err.Error()))
+				// This is a known issue with the VFP programming. We can ignore this error for now for delegated NICs.
+				return true
+			}
+		}
+    }
+
+	return false
 }
 
 func convertInterfaceInfoToCniResult(info network.InterfaceInfo, ifName string) *cniTypesCurr.Result {
