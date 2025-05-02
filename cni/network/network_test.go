@@ -1904,7 +1904,7 @@ func TestIsAcceptableError_NilError(t *testing.T) {
         interfaceInfo: map[string]network.InterfaceInfo{},
     }
     result := isAcceptableError(ipamRes, nil)
-    require.False(t, result, "Expected false when err is nil")
+    require.True(t, result, "Expected true when err is nil")
 }
 
 // Test case when the error does not include the string "VFP programming is pending".

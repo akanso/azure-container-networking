@@ -114,50 +114,53 @@ func (c *Client) GetAllNetworkContainers(ctx context.Context, orchestratorContex
 
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(payload); err != nil {
+		// encoding errors should be surfaced to the caller
 		return nil, &CNSClientError{
 			Code: types.UnexpectedError,
 			Err:  err,
 		}
 	}
+
+	var resp cns.GetAllNetworkContainersResponse
 
 	u := c.routes[cns.GetAllNetworkContainers]
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build request")
 	}
+
 	req.Header.Set(headerContentType, contentTypeJSON)
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "http request failed")
-	}
+	res, reqErr := c.client.Do(req)
 	defer res.Body.Close()
+	
+	decodeErr := json.NewDecoder(res.Body).Decode(&resp)
+	if reqErr != nil {
+		if decodeErr == nil {
+			return resp.NetworkContainers, errors.Wrap(reqErr, "http request failed")
+		}
+		return nil, errors.Wrap(reqErr, "http request failed and decode failed")
+	}
+	if decodeErr != nil {
+		return nil, errors.Wrap(decodeErr, "http request succeeded but decode failed")
+	}
 
 	//  investigate 404 orchestratorContext which is invalid and make sure this is addressed
 	if res.StatusCode == http.StatusNotFound {
-		return nil, &CNSClientError{
+		return resp.NetworkContainers, &CNSClientError{
 			Code: types.UnsupportedAPI,
 			Err:  errors.Errorf("Unsupported API"),
 		}
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, &CNSClientError{
+		return resp.NetworkContainers, &CNSClientError{
 			Code: types.UnexpectedError,
 			Err:  errors.Errorf("http response %d", res.StatusCode),
 		}
 	}
 
-	var resp cns.GetAllNetworkContainersResponse
-	err = json.NewDecoder(res.Body).Decode(&resp)
-	if err != nil {
-		return nil, &CNSClientError{
-			Code: types.UnexpectedError,
-			Err:  err,
-		}
-	}
-
 	if resp.Response.ReturnCode != 0 {
-		return nil, &CNSClientError{
+		return resp.NetworkContainers, &CNSClientError{
 			Code: resp.Response.ReturnCode,
 			Err:  errors.New(resp.Response.Message),
 		}
@@ -185,31 +188,34 @@ func (c *Client) GetNetworkContainer(ctx context.Context, orchestratorContext []
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build request")
 	}
+
+	var resp cns.GetNetworkContainerResponse
+
 	req.Header.Set(headerContentType, contentTypeJSON)
-	res, err := c.client.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "http request failed")
-	}
+	res, reqErr := c.client.Do(req)
 	defer res.Body.Close()
 
+	decodeErr := json.NewDecoder(res.Body).Decode(&resp)
+	if reqErr != nil {
+		if decodeErr == nil {
+			return &resp, errors.Wrap(reqErr, "http request failed")
+		}
+		return nil, errors.Wrap(reqErr, "http request failed and decode failed")
+	}
+	if decodeErr != nil {
+		return nil, errors.Wrap(decodeErr, "http request succeeded but decode failed")
+	}
+	
+
 	if res.StatusCode != http.StatusOK {
-		return nil, &CNSClientError{
+		return &resp, &CNSClientError{
 			Code: types.UnexpectedError,
 			Err:  errors.Errorf("http response %d", res.StatusCode),
 		}
 	}
 
-	var resp cns.GetNetworkContainerResponse
-	err = json.NewDecoder(res.Body).Decode(&resp)
-	if err != nil {
-		return nil, &CNSClientError{
-			Code: types.UnexpectedError,
-			Err:  err,
-		}
-	}
-
 	if resp.Response.ReturnCode != 0 {
-		return nil, &CNSClientError{
+		return &resp, &CNSClientError{
 			Code: resp.Response.ReturnCode,
 			Err:  errors.New(resp.Response.Message),
 		}

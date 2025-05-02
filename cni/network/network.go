@@ -1550,6 +1550,10 @@ func convertNnsToIPConfigs(
 // Currently, it checks for the "VFP programming is pending" error and ignores it for delegated VM/container NICs.
 func isAcceptableError(ipamAddRes IPAMAddResult, err error) bool {
 
+	if err == nil {
+		return true
+	}
+
     if err != nil && strings.Contains(err.Error(), "VFP programming is pending") {
 
 		for key, info := range ipamAddRes.interfaceInfo {
@@ -1569,7 +1573,7 @@ func isAcceptableError(ipamAddRes IPAMAddResult, err error) bool {
 
 		logger.Info("Error is not nil and includes VFP programming is pending, however, no delegated vm nic found",
 		zap.String("error", err.Error()))
-    }
+    } 
 
 	logger.Info("Error is not acceptable",
 	zap.String("error", err.Error()),

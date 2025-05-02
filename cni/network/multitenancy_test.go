@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"strconv"
 	"testing"
 
 	"github.com/Azure/azure-container-networking/cni"
@@ -714,6 +715,71 @@ func TestGetMultiTenancyCNIResultUnsupportedAPI(t *testing.T) {
 			require.Equal(cns.InfraNIC, got.interfaceInfo[string(cns.InfraNIC)+"0"].NICType)
 		})
 	}
+}
+
+func TestPopulateIPAMResult_LengthMismatch(t *testing.T) {
+    // Create dummy ncResponses with 2 elements and only one host subnet.
+    ncResponses := []cns.GetNetworkContainerResponse{
+        {IPConfiguration: cns.IPConfiguration{IPSubnet: cns.IPSubnet{IPAddress: "1.2.3.4", PrefixLength: 24}}},
+        {IPConfiguration: cns.IPConfiguration{IPSubnet: cns.IPSubnet{IPAddress: "5.6.7.8", PrefixLength: 24}}},
+    }
+    // Only one host subnet provided.
+    _, ipNet, _ := net.ParseCIDR("10.0.0.0/24")
+    hostSubnetPrefixes := []net.IPNet{*ipNet}
+
+    m := &Multitenancy{}
+
+    // Expect an empty IPAMAddResult when lengths mismatch.
+    result := m.populateIPAMResult(ncResponses, hostSubnetPrefixes)
+    require.Empty(t, result.interfaceInfo, "Expected empty interfaceInfo due to length mismatch")
+}
+
+func TestPopulateIPAMResult_Success(t *testing.T) {
+   
+    // Create one dummy network container response.
+    ncResponses := []cns.GetNetworkContainerResponse{
+        {
+            IPConfiguration: cns.IPConfiguration{
+                IPSubnet: cns.IPSubnet{
+                    IPAddress:    "1.2.3.4",
+                    PrefixLength: 24,
+                },
+                GatewayIPAddress: "1.2.3.1",
+            },
+            LocalIPConfiguration: cns.IPConfiguration{
+                IPSubnet: cns.IPSubnet{
+                    IPAddress:    "1.2.3.4",
+                    PrefixLength: 24,
+                },
+            },
+			Routes: []cns.Route{
+                {
+                    IPAddress:        "1.2.0.0/16",
+                    GatewayIPAddress: "1.2.3.1",
+                },
+            },
+        },
+    }
+    // Create a matching host subnet slice.
+    _, ipNet, err := net.ParseCIDR("10.0.0.0/24")
+    require.NoError(t, err)
+    hostSubnetPrefixes := []net.IPNet{*ipNet}
+
+    m := &Multitenancy{}
+    result := m.populateIPAMResult(ncResponses, hostSubnetPrefixes)
+
+    // We expect one entry in the interfaceInfo map.
+    require.Len(t, result.interfaceInfo, 1, "Expected one interfaceInfo returned")
+    // Check that the key is equal to cns.InfraNIC + "0"
+    expectedKey := string(cns.InfraNIC) + strconv.Itoa(0)
+    ifInfo, exists := result.interfaceInfo[expectedKey]
+    require.True(t, exists, "Expected interface info with key %s", expectedKey)
+    // Check if NICType is set to InfraNIC.
+    require.Equal(t, cns.InfraNIC, ifInfo.NICType, "Expected NICType to be InfraNIC")
+    // Check that IPConfigs was populated by dummyConvertToIPConfigAndRouteInfo.
+    require.Len(t, ifInfo.IPConfigs, 1, "Expected one IPConfig")
+    // Check that routes were populated.
+    require.Len(t, ifInfo.Routes, 1, "Expected one route")
 }
 
 // TestGetMultiTenancyCNIResultNotFound test includes two sub test cases:

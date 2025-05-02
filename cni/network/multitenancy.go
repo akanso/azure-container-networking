@@ -201,25 +201,48 @@ func (m *Multitenancy) GetAllNetworkContainers(
 
 	logger.Info("Podname without suffix", zap.String("podName", podNameWithoutSuffix))
 
+	// Get network container(s) for the pod
 	ncResponses, hostSubnetPrefixes, err := m.getNetworkContainersInternal(ctx, podNamespace, podNameWithoutSuffix)
 	if err != nil {
-		return IPAMAddResult{}, fmt.Errorf("%w", err)
+		if ncResponses == nil || len(ncResponses) == 0 {
+			logger.Error("GetNetworkContainer failed, no ncResponses received, returning an empty IPAMAddResult", zap.Error(err))
+			return IPAMAddResult{}, fmt.Errorf("%w", err)
+		} else {
+			logger.Error("GetNetworkContainer failed, however we received the ncResponses, moving on...", zap.Error(err))
+			return  m.populateIPAMResult(ncResponses , hostSubnetPrefixes ), fmt.Errorf("%w", err)
+		}
 	}
 
-	for i := 0; i < len(ncResponses); i++ {
+	for i := range ncResponses {
 		if nwCfg.EnableSnatOnHost {
 			if ncResponses[i].LocalIPConfiguration.IPSubnet.IPAddress == "" {
 				logger.Info("Snat IP is not populated for ncs. Got empty string",
 					zap.Any("response", ncResponses))
-				return IPAMAddResult{}, errSnatIP
+				return  m.populateIPAMResult(ncResponses , hostSubnetPrefixes), errSnatIP
 			}
 		}
 	}
 
-	ipamResult := IPAMAddResult{}
+	logger.Info("Network config received successfully from cns", zap.Any("nconfig", ncResponses))
+	return  m.populateIPAMResult(ncResponses , hostSubnetPrefixes), err
+}
+
+// populateIPAMResult populates the IPAMAddResult with the network container responses and host subnet prefixes
+// It creates a map of interface information for each network container response and its corresponding host subnet prefix.
+// The map key is a combination of NIC type and index, and the value is the interface information struct.
+// The function returns the populated IPAMAddResult.
+func (m *Multitenancy) populateIPAMResult(ncResponses []cns.GetNetworkContainerResponse, hostSubnetPrefixes []net.IPNet)(ipamResult IPAMAddResult) {
+
+	if len(ncResponses) > len(hostSubnetPrefixes) {
+		logger.Error("populateIPAMResult failed, ncResponses and hostSubnetPrefixes length mismatch",
+			zap.Int("ncResponses", len(ncResponses)),
+			zap.Int("hostSubnetPrefixes", len(hostSubnetPrefixes)))
+		return IPAMAddResult{}
+	}
+
 	ipamResult.interfaceInfo = make(map[string]network.InterfaceInfo)
 
-	for i := 0; i < len(ncResponses); i++ {
+	for i := range ncResponses {
 		// one ncResponse gets you one interface info in the returned IPAMAddResult
 		ifInfo := network.InterfaceInfo{
 			NCResponse:       &ncResponses[i],
@@ -235,7 +258,7 @@ func (m *Multitenancy) GetAllNetworkContainers(
 		ipamResult.interfaceInfo[m.getInterfaceInfoKey(ifInfo.NICType, i)] = ifInfo
 	}
 
-	return ipamResult, err
+	return ipamResult
 }
 
 // get all network containers configuration for given orchestratorContext
@@ -258,28 +281,44 @@ func (m *Multitenancy) getNetworkContainersInternal(
 	ncConfigs, err := m.cnsclient.GetAllNetworkContainers(ctx, orchestratorContext)
 	if err != nil && client.IsUnsupportedAPI(err) {
 		ncConfig, errGetNC := m.cnsclient.GetNetworkContainer(ctx, orchestratorContext)
-		if errGetNC != nil {
+		if errGetNC != nil && ncConfig == nil {
+			logger.Error("GetNetworkContainer failed and did not return any ncConfig", zap.Error(errGetNC))
 			return nil, []net.IPNet{}, fmt.Errorf("%w", errGetNC)
 		}
 		ncConfigs = append(ncConfigs, *ncConfig)
-	} else if err != nil {
+	} else if err != nil  && len(ncConfigs) == 0 {
+		logger.Error("GetNetworkContainers failed and did not return any ncConfig", zap.Error(err))
 		return nil, []net.IPNet{}, fmt.Errorf("%w", err)
 	}
 
 	logger.Info("Network config received from cns", zap.Any("nconfig", ncConfigs))
 
-	subnetPrefixes := []net.IPNet{}
+	subnetPrefixes, err := m.populateSubnetPrefixes(ncConfigs)
+	if err != nil {
+		logger.Error("populateSubnetPrefixes failed", zap.Error(err))
+		return ncConfigs, subnetPrefixes, fmt.Errorf("%w", err)
+	}
+
+	logger.Info("Subnet prefixes populated successfully", zap.Any("subnetPrefixes", subnetPrefixes))
+	return ncConfigs, subnetPrefixes, nil
+}
+
+// populateSubnetPrefixes populates the subnet prefixes for the given network container configurations
+// by looking up the interface identifier in the network IO shim.
+// It returns a slice of net.IPNet representing the subnet prefixes.
+func (m *Multitenancy) populateSubnetPrefixes(ncConfigs []cns.GetNetworkContainerResponse) (subnetPrefixes []net.IPNet, err error) {
+
 	for i := 0; i < len(ncConfigs); i++ {
 		subnetPrefix := m.netioshim.GetInterfaceSubnetWithSpecificIP(ncConfigs[i].PrimaryInterfaceIdentifier)
 		if subnetPrefix == nil {
-			logger.Error(errIfaceNotFound.Error(),
+			logger.Error("failed to populateSubnetPrefixes after receiving the GetNetworkContainerResponses" + errIfaceNotFound.Error(),
 				zap.String("nodeIP", ncConfigs[i].PrimaryInterfaceIdentifier))
-			return nil, []net.IPNet{}, errIfaceNotFound
+			return subnetPrefixes, errIfaceNotFound
 		}
 		subnetPrefixes = append(subnetPrefixes, *subnetPrefix)
 	}
 
-	return ncConfigs, subnetPrefixes, nil
+	return subnetPrefixes, nil
 }
 
 func convertToCniResult(networkConfig *cns.GetNetworkContainerResponse, ifName string) *cniTypesCurr.Result {
