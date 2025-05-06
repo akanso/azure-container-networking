@@ -400,7 +400,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	startTime := time.Now()
 
-	logger.Info("Processing ADD command",
+	logger.Info("Processing ADD command, internal Prelude CNI version 1.0",
 		zap.String("containerId", args.ContainerID),
 		zap.String("netNS", args.Netns),
 		zap.String("ifName", args.IfName),
@@ -671,7 +671,10 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			}
 		}
 
-		logger.Info("interfaceInfo has no NCResponse", zap.Any("interface", key), zap.Any("ifInfo", ifInfo))
+		ifInfo.MacAddress = net.HardwareAddr(ifInfo.MacAddress)
+
+		logger.Info("Processing ipamAddResult with the following interfaceInfo:", zap.Any("interface", key), zap.Any("ifInfo", ifInfo))
+
 
 		if ifInfo.NICType == cns.DelegatedVMNIC {
 			logger.Info("The NIC type is Delegated VM NIC, we will also create the APIPA endpoint")
@@ -1554,7 +1557,11 @@ func isAcceptableError(ipamAddRes IPAMAddResult, err error) bool {
 		return true
 	}
 
-    if err != nil && strings.Contains(err.Error(), "VFP programming is pending") {
+	if ipamAddRes.interfaceInfo == nil || len(ipamAddRes.interfaceInfo) == 0 {
+		logger.Info("ipamAddRes.interfaceInfo is nil or has no interfaces")
+	}
+
+    if strings.Contains(err.Error(), "VFP programming is pending") {
 
 		for key, info := range ipamAddRes.interfaceInfo {
 

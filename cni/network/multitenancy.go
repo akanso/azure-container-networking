@@ -252,10 +252,13 @@ func (m *Multitenancy) populateIPAMResult(ncResponses []cns.GetNetworkContainerR
 		ipconfig, routes := convertToIPConfigAndRouteInfo(ifInfo.NCResponse)
 		ifInfo.IPConfigs = append(ifInfo.IPConfigs, ipconfig)
 		ifInfo.Routes = routes
-		ifInfo.NICType = cns.InfraNIC
-
+		ifInfo.NICType = cns.NodeNetworkInterfaceFrontendNIC // default to frontend nic, TODO: revisit this assumption
+		ifInfo.MacAddress = []byte(ifInfo.NCResponse.NetworkInterfaceInfo.MACAddress) 
+		
 		// assuming we only assign infra nics in this function
 		ipamResult.interfaceInfo[m.getInterfaceInfoKey(ifInfo.NICType, i)] = ifInfo
+
+		logger.Info("Populating IPAMAddResult with interface info", zap.String("key", m.getInterfaceInfoKey(ifInfo.NICType, i)), zap.Any("ifInfo", ifInfo))
 	}
 
 	return ipamResult
