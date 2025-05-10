@@ -1945,3 +1945,103 @@ func TestIsAcceptableError_WithDelegatedVMNIC(t *testing.T) {
     result := isAcceptableError(ipamRes, err)
     require.True(t, result, "Expected true when error contains target string and a DelegatedVMNIC interface is present")
 }
+
+// mustParseMAC parses a MAC address or panics.
+func mustParseMAC(s string) net.HardwareAddr {
+    mac, err := net.ParseMAC(s)
+    if err != nil {
+        panic(err)
+    }
+    return mac
+}
+
+func TestMatchIPAMAddResults_MacAddressMatch(t *testing.T) {
+    // Setup target interface with a MAC and NIC type (NIC type does not matter in MAC match)
+    mac := mustParseMAC("00:11:22:33:44:55")
+    targetIface := network.InterfaceInfo{
+        MacAddress: mac,
+        NICType:    "SomeOtherNIC",
+    }
+
+    // Build an IPAMAddResult with one interface that has the same MAC
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{
+            "iface1": {
+                MacAddress: mac,
+                NICType:    "IrrelevantNIC",
+            },
+            "iface2": {
+                MacAddress: mustParseMAC("66:77:88:99:AA:BB"),
+                NICType:    cns.DelegatedVMNIC,
+            },
+        },
+    }
+
+    foundIface, _ := matchIPAMAddResults(targetIface, ipamRes)
+    if foundIface.MacAddress.String() != mac.String() {
+        t.Errorf("Expected MAC match %s, got %s", mac.String(), foundIface.MacAddress.String())
+    }
+}
+
+
+func TestMatchIPAMAddResults_DelegatedNICMatch(t *testing.T) {
+    // Setup target interface with a MAC that does not match any entry and NIC type DelegatedVMNIC
+    targetIface := network.InterfaceInfo{
+        MacAddress: mustParseMAC("AA:BB:CC:DD:EE:FF"), // unique MAC
+        NICType:    cns.DelegatedVMNIC,
+    }
+
+    // Build an IPAMAddResult with no MAC match but one interface having NIC type DelegatedVMNIC
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{
+            "iface1": {
+                MacAddress: mustParseMAC("00:11:22:33:44:55"),
+                NICType:    "InfraNIC",
+            },
+            "iface2": {
+                MacAddress: mustParseMAC("66:77:88:99:AA:BB"),
+                NICType:    cns.DelegatedVMNIC,
+            },
+        },
+    }
+
+    foundIface, isFound := matchIPAMAddResults(targetIface, ipamRes)
+    if !isFound {
+        t.Errorf("Expected NIC type match for DelegatedVMNIC but no match was found")
+    }
+    if foundIface.NICType != cns.DelegatedVMNIC {
+        t.Errorf("Expected NIC type %s, got %s", cns.DelegatedVMNIC, foundIface.NICType)
+    }
+    // Ensure that MACs do not match (since MAC matching must have failed)
+    if foundIface.MacAddress.String() == targetIface.MacAddress.String() {
+        t.Errorf("MAC should not match as MAC matching failed, and the fallback relied on NIC type")
+    }
+}
+
+func TestMatchIPAMAddResults_NoMatch_NonDelegatedNIC(t *testing.T) {
+    // Setup target interface with a MAC that does not match any entry and NIC type not equal to DelegatedVMNIC
+    targetIface := network.InterfaceInfo{
+        MacAddress: mustParseMAC("AA:BB:CC:DD:EE:FF"),
+        NICType:    "InfraNIC", // non-delegated type
+    }
+
+    // Build an IPAMAddResult with no MAC match; even if an interface with DelegatedVMNIC is present,
+    // matching by NIC type should be skipped since target is not DelegatedVMNIC.
+    ipamRes := IPAMAddResult{
+        interfaceInfo: map[string]network.InterfaceInfo{
+            "iface1": {
+                MacAddress: mustParseMAC("00:11:22:33:44:55"),
+                NICType:    cns.DelegatedVMNIC,
+            },
+            "iface2": {
+                MacAddress: mustParseMAC("66:77:88:99:AA:BB"),
+                NICType:    "InfraNIC",
+            },
+        },
+    }
+
+    foundIface, isFound := matchIPAMAddResults(targetIface, ipamRes)
+    if isFound {
+        t.Errorf("Expected no match for non-delegated NIC type, but found match: %+v", foundIface)
+    }
+}

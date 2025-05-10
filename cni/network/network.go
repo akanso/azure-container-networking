@@ -400,7 +400,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	startTime := time.Now()
 
-	logger.Info("Processing ADD command, internal Prelude CNI version 1.0",
+	logger.Info("Processing ADD command, internal Prelude CNI version of May-09-2025",
 		zap.String("containerId", args.ContainerID),
 		zap.String("netNS", args.Netns),
 		zap.String("ifName", args.IfName),
@@ -659,16 +659,22 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	endpointIndex := 1
 	for key := range ipamAddResult.interfaceInfo {
 		ifInfo := ipamAddResult.interfaceInfo[key]
-		logger.Info("Processing interfaceInfo:", zap.Any("ifInfo", ifInfo))
+		logger.Info("Processing interfaceInfo:", zap.Any("key", key),zap.Any("ifInfo", ifInfo))
 
 		// check if the sahdowIpamAddResult includes the interfaceInfo for the same key
-		if shadowIfInfo, ok := shadowIpamAddResult.interfaceInfo[key]; ok {
-			if shadowIfInfo.NCResponse != nil {
-				shadowIfInfo.NCResponse.AllowHostToNCCommunication = true
-				shadowIfInfo.NCResponse.AllowNCToHostCommunication = true
-				ifInfo.NCResponse = shadowIfInfo.NCResponse
-				logger.Info("adding the NCResponse we got from multitenancyClient.GetAllNetworkContainers to the interface info", zap.Any("shadowIfInfo", shadowIfInfo.PrettyString()))
+		if foundIface, isFound := matchIPAMAddResults(ifInfo, shadowIpamAddResult); isFound{
+			if foundIface.NCResponse != nil {
+				foundIface.NCResponse.AllowHostToNCCommunication = true
+				foundIface.NCResponse.AllowNCToHostCommunication = true
+				ifInfo.NCResponse = foundIface.NCResponse
+				logger.Info("adding the NCResponse we got from multitenancyClient.GetAllNetworkContainers to the interface info", zap.Any("foundIface", foundIface.PrettyString()))
 			}
+		} else 
+		{
+			// print the two ipam resuls
+			logger.Info("IPAM results did not match",
+				zap.String("shadowIpamAddResult", shadowIpamAddResult.PrettyString()),
+				zap.String("ipamAddResult", ipamAddResult.PrettyString()))
 		}
 
 		ifInfo.MacAddress = net.HardwareAddr(ifInfo.MacAddress)
@@ -753,6 +759,38 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	// telemetry added
 	sendEvent(plugin, fmt.Sprintf("CNI ADD Process succeeded for interfaces: %v", ipamAddResult.PrettyString()))
 	return nil
+}
+
+
+func matchIPAMAddResults(iface network.InterfaceInfo, ipamRes IPAMAddResult) (foundIface network.InterfaceInfo, isFound bool) {
+    logger.Info("Entering matchIPAMAddResults", zap.Any("target_iface", iface), zap.Any("IPAMAddResult", ipamRes))
+
+    // first, attempt to match by MAC address
+    logger.Info("Attempting to match by MAC address")
+    for key, intf := range ipamRes.interfaceInfo {
+        logger.Debug("Checking MAC address match", zap.String("key", key), zap.String("current_mac", intf.MacAddress.String()), zap.String("target_mac", iface.MacAddress.String()))
+        if intf.MacAddress.String() == iface.MacAddress.String() {
+            logger.Info("Match found by MAC address", zap.String("key", key), zap.Any("matched_iface", intf))
+            return intf, true
+        }
+    }
+
+    // if no MAC address match, then only match by NIC type if the target NIC type is DelegatedVMNIC
+    if iface.NICType == cns.DelegatedVMNIC {
+        logger.Info("No MAC match found and target NIC type is DelegatedVMNIC, attempting to match by NIC type")
+        for key, intf := range ipamRes.interfaceInfo {
+            logger.Debug("Checking NIC type match", zap.String("key", key), zap.String("current_nicType", string(intf.NICType)), zap.String("target_nicType", string(iface.NICType)))
+            if intf.NICType == iface.NICType {
+                logger.Info("Match found by NIC type", zap.String("key", key), zap.Any("matched_iface", intf))
+                return intf,true
+            }
+        }
+    } else {
+        logger.Info("No MAC match found and target NIC type is not DelegatedVMNIC; skipping NIC type matching")
+    }
+
+    logger.Info("No matching interface found", zap.Any("target_iface", iface))
+    return foundIface, false
 }
 
 func (plugin *NetPlugin) findMasterInterface(opt *createEpInfoOpt) string {
