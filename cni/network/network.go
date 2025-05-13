@@ -645,6 +645,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			// for swift v1 multi-tenancies scenario, CNI is not supposed to invoke CNS for cleaning Ips
 			if !nwCfg.MultiTenancy {
 				for _, ifInfo := range ipamAddResult.interfaceInfo {
+					logger.Info("An error occured, and we are cleaning up IPs for interfaceInfo:", zap.Any("ifInfo", ifInfo))
 					// This used to only be called for infraNIC, test if this breaks scenarios
 					// If it does then will have to search for infraNIC
 					if ifInfo.NICType == cns.InfraNIC {
