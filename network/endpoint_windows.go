@@ -457,9 +457,13 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (
 		return nil, fmt.Errorf("Failed to get hcn namespace: %s due to error: %v", epInfo.NetNsPath, err)
 	}
 
+	logger.Info("Adding hcn endpoint to namespace", zap.String("namespaceId", namespace.Id), zap.String("endpointId", hnsResponse.Id))
+
 	if err = Hnsv2.AddNamespaceEndpoint(namespace.Id, hnsResponse.Id); err != nil {
 		return nil, fmt.Errorf("Failed to add endpoint: %s to hcn namespace: %s due to error: %v", hnsResponse.Id, namespace.Id, err) //nolint
 	}
+
+	logger.Info("Successfully added hcn endpoint to namespace", zap.String("namespaceId", namespace.Id), zap.String("endpointId", hnsResponse.Id))
 
 	defer func() {
 		if err != nil {
