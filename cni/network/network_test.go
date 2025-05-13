@@ -2040,8 +2040,7 @@ func TestMatchIPAMAddResults_NoMatch_NonDelegatedNIC(t *testing.T) {
         },
     }
 
-    foundIface, isFound := matchIPAMAddResults(targetIface, ipamRes)
-    if isFound {
+    if foundIface, isFound := matchIPAMAddResults(targetIface, ipamRes); isFound {
         t.Errorf("Expected no match for non-delegated NIC type, but found match: %+v", foundIface)
     }
 }

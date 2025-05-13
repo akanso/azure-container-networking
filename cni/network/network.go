@@ -400,7 +400,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	startTime := time.Now()
 
-	logger.Info("Processing ADD command, internal Prelude CNI version of May-09-2025",
+	logger.Info("Processing ADD command, internal Prelude CNI version of May-13-2025",
 		zap.String("containerId", args.ContainerID),
 		zap.String("netNS", args.Netns),
 		zap.String("ifName", args.IfName),
@@ -715,6 +715,22 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			return err
 		}
 
+		// Set the network container ID for the endpoint info if it is not set
+			if epInfo.NetworkContainerID == "" {
+				logger.Info("The network container ID for endpoint info is empty", zap.String("endpoint info", epInfo.PrettyString()))
+				// Set the network container ID for the endpoint info
+				if ifInfo.NCResponse != nil {
+					if ifInfo.NCResponse.NetworkContainerID == "" {
+						logger.Error("Network container ID is not set in both the NCResponse and endpoint info", zap.Any("network container ID", ifInfo.NCResponse))
+					} else {
+						epInfo.NetworkContainerID = ifInfo.NCResponse.NetworkContainerID
+						logger.Info("Setting network container ID for endpoint info", zap.String("network container ID", epInfo.NetworkContainerID))
+					}
+				} else {
+					logger.Info("No network container ID found for endpoint info, and the NCResponse is nil", zap.String("endpoint info", epInfo.PrettyString()))
+				}
+			}
+
 		epInfos = append(epInfos, epInfo)
 		// TODO: should this statement be based on the current iteration instead of the constant ifIndex?
 		// TODO figure out where to put telemetry: sendEvent(plugin, fmt.Sprintf("CNI ADD succeeded: IP:%+v, VlanID: %v, podname %v, namespace %v numendpoints:%d",
@@ -747,6 +763,8 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 	}()
 
+	logger.Info("Creating endpoint in CNS", zap.Any("epInfos", epInfos))
+
 	err = plugin.nm.EndpointCreate(cnsclient, epInfos)
 	if err != nil {
 		return errors.Wrap(err, "failed to create endpoint") // behavior can change if you don't assign to err prior to returning
@@ -760,8 +778,14 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	sendEvent(plugin, fmt.Sprintf("CNI ADD Process succeeded for interfaces: %v", ipamAddResult.PrettyString()))
 	return nil
 }
-
-
+ 
+// matchIPAMAddResults searches for a matching network interface in ipamRes based on the target interface (iface).
+// It first attempts to find a match by comparing the MAC addresses of iface with those in ipamRes.
+// If a match is found by MAC address, it returns the matched interface along with true.
+// If no MAC address match is found and the target NIC type is cns.DelegatedVMNIC,
+// the function then attempts to match by NIC type.
+// If a NIC type match is found in this case, it returns the matched interface and true.
+// If no matching interface is found through either method, the function returns a zero-value interface and false.
 func matchIPAMAddResults(iface network.InterfaceInfo, ipamRes IPAMAddResult) (foundIface network.InterfaceInfo, isFound bool) {
     logger.Info("Entering matchIPAMAddResults", zap.Any("target_iface", iface), zap.Any("IPAMAddResult", ipamRes))
 

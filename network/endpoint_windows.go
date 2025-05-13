@@ -399,6 +399,12 @@ func (nw *network) createHostNCApipaEndpoint(cli apipaClient, epInfo *EndpointIn
 			" due to error: %v", epInfo.NetNsPath, err)
 	}
 
+	// Check if the network container ID is set, since it can create a panic in the cni/plugin.go
+	if epInfo.NetworkContainerID == "" {
+		logger.Error("Network container ID is not set for endpoint info", zap.String("endpoint info", epInfo.PrettyString()))
+		return fmt.Errorf("Network container ID is not set for endpoint info: %s", epInfo.PrettyString())
+	}
+
 	logger.Info("Creating HostNCApipaEndpoint for host container connectivity for NC",
 		zap.String("NetworkContainerID", epInfo.NetworkContainerID))
 
@@ -421,6 +427,8 @@ func (nw *network) createHostNCApipaEndpoint(cli apipaClient, epInfo *EndpointIn
 
 // newEndpointImplHnsV2 creates a new endpoint in the network using Hnsv2
 func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (*endpoint, error) {
+
+	logger.Info("Creating hcn endpoint for network container", zap.Any("endpoint info", epInfo))
 	hcnEndpoint, err := nw.configureHcnEndpoint(epInfo)
 	if err != nil {
 		logger.Error("Failed to configure hcn endpoint due to", zap.Error(err))
@@ -471,7 +479,8 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (
 	}
 
 	// If the Host - container connectivity is requested, create endpoint in HostNCApipaNetwork
-	if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost { 
+	if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost {
+		logger.Info("Creating HostNCApipaEndpoint for host container connectivity", zap.Any("endpoint info", epInfo)) 
 		if err = nw.createHostNCApipaEndpoint(cli, epInfo); err != nil {
 			return nil, fmt.Errorf("Failed to create HostNCApipaEndpoint due to error: %v", err)
 		}

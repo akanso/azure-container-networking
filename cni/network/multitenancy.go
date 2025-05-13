@@ -242,6 +242,8 @@ func (m *Multitenancy) populateIPAMResult(ncResponses []cns.GetNetworkContainerR
 
 	ipamResult.interfaceInfo = make(map[string]network.InterfaceInfo)
 
+	var err error
+
 	for i := range ncResponses {
 		// one ncResponse gets you one interface info in the returned IPAMAddResult
 		ifInfo := network.InterfaceInfo{
@@ -253,7 +255,12 @@ func (m *Multitenancy) populateIPAMResult(ncResponses []cns.GetNetworkContainerR
 		ifInfo.IPConfigs = append(ifInfo.IPConfigs, ipconfig)
 		ifInfo.Routes = routes
 		ifInfo.NICType = cns.NodeNetworkInterfaceFrontendNIC // default to frontend nic, TODO: revisit this assumption
-		ifInfo.MacAddress = []byte(ifInfo.NCResponse.NetworkInterfaceInfo.MACAddress) 
+		ifInfo.MacAddress, err = net.ParseMAC(ifInfo.NCResponse.NetworkInterfaceInfo.MACAddress) // setting the outer MAC address to the inner one in the NC Response
+		if err != nil {
+			logger.Error("failed to parse MAC address for the interface info in the NC response", zap.Any("ifInfo", ifInfo.PrettyString()), zap.Error(err))
+			// TODO: do proper error handling, for now we continue processing to see where we will fail
+			// this is not causing a failure in the non-multi-tenant scenario that we are trying to support in swiftv2
+		}
 		
 		// assuming we only assign infra nics in this function
 		ipamResult.interfaceInfo[m.getInterfaceInfoKey(ifInfo.NICType, i)] = ifInfo
