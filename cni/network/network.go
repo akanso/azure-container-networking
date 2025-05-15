@@ -1087,9 +1087,9 @@ func (plugin *NetPlugin) Get(args *cniSkel.CmdArgs) error {
 		if err == nil && res != nil {
 			// Output the result to stdout.
 			if err = res.Print(); err != nil {
-				logger.Error("CNI result printing failed", zap.Error(err), zap.Any("cni result", res.Print()))
+				logger.Error("CNI result printing failed", zap.Error(err), zap.Any("cni result", res))
 			} else {
-				logger.Info("CNI result printed successfully", zap.Any("cni result", res.Print()))
+				logger.Info("CNI result printed successfully", zap.Any("cni result", res))
 			}
 		}
 
@@ -1443,9 +1443,9 @@ func (plugin *NetPlugin) Update(args *cniSkel.CmdArgs) error {
 		if err == nil && res != nil {
 			// Output the result to stdout.
 			if err = res.Print(); err != nil {
-				logger.Error("CNI result printing failed", zap.Error(err), zap.Any("cni result", res.Print()))
+				logger.Error("CNI result printing failed", zap.Error(err), zap.Any("cni result", res))
 			} else {
-				logger.Info("CNI result printed successfully", zap.Any("cni result", res.Print()))
+				logger.Info("CNI result printed successfully", zap.Any("cni result", res))
 			}
 		}
 
