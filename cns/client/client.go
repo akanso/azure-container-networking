@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-container-networking/cns"
-	"github.com/Azure/azure-container-networking/cns/logger"
 	"github.com/Azure/azure-container-networking/cns/restserver"
 	"github.com/Azure/azure-container-networking/cns/types"
 	"github.com/pkg/errors"
@@ -230,7 +229,7 @@ func (c *Client) CreateHostNCApipaEndpoint(ctx context.Context, networkContainer
 		NetworkContainerID: networkContainerID,
 	}
 
-	logger.Printf("CreateHostNCApipaEndpoint is called from the CNS client for network: %s", networkContainerID)
+	fmt.Printf("CreateHostNCApipaEndpoint is called from the CNS client for network: %s \n", networkContainerID)
 
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(payload); err != nil {

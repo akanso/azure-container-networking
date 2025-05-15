@@ -1,6 +1,7 @@
 package network
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -20,6 +21,8 @@ import (
 	"github.com/Azure/azure-container-networking/nns"
 	"github.com/Azure/azure-container-networking/telemetry"
 	cniSkel "github.com/containernetworking/cni/pkg/skel"
+	"github.com/containernetworking/cni/pkg/types"
+	types100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -2042,5 +2045,75 @@ func TestMatchIPAMAddResults_NoMatch_NonDelegatedNIC(t *testing.T) {
 
     if foundIface, isFound := matchIPAMAddResults(targetIface, ipamRes); isFound {
         t.Errorf("Expected no match for non-delegated NIC type, but found match: %+v", foundIface)
+    }
+}
+
+func TestFullResultJSON(t *testing.T) {
+    // Create a full Result object
+    result := &types100.Result{
+        CNIVersion: "1.1.0",
+        Interfaces: []*types100.Interface{
+            {
+                Name:    "eth0",
+                Mac:     "00:1A:2B:3C:4D:5E",
+                Mtu:     1500,
+                Sandbox: "/var/run/netns/test",
+            },
+        },
+        IPs: []*types100.IPConfig{
+            {
+                Address: net.IPNet{
+                    IP:   net.ParseIP("192.168.1.1"),
+                    Mask: net.CIDRMask(24, 32),
+                },
+                Gateway: net.ParseIP("192.168.1.254"),
+            },
+        },
+        Routes: []*types.Route{
+            {
+                Dst: net.IPNet{
+                    IP:   net.ParseIP("0.0.0.0"),
+                    Mask: net.CIDRMask(0, 32),
+                },
+                GW: net.ParseIP("192.168.1.254"),
+            },
+        },
+        DNS: types.DNS{
+            Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+            Search:      []string{"example.com"},
+            Options:     []string{"ndots:5"},
+        },
+    }
+
+    // Marshal the Result to JSON
+    data, err := json.Marshal(result)
+    if err != nil {
+        t.Fatalf("Failed to marshal Result to JSON: %v", err)
+    }
+
+    // Print the JSON for debugging purposes
+    fmt.Println(string(data))
+
+    // Unmarshal the JSON back to a Result object
+    var unmarshaledResult types100.Result
+    if err := json.Unmarshal(data, &unmarshaledResult); err != nil {
+        t.Fatalf("Failed to unmarshal JSON back to Result: %v", err)
+    }
+
+    // Validate that the unmarshaled object matches the original
+    if unmarshaledResult.CNIVersion != result.CNIVersion {
+        t.Errorf("CNIVersion mismatch: expected %s, got %s", result.CNIVersion, unmarshaledResult.CNIVersion)
+    }
+    if len(unmarshaledResult.Interfaces) != len(result.Interfaces) {
+        t.Errorf("Interfaces length mismatch: expected %d, got %d", len(result.Interfaces), len(unmarshaledResult.Interfaces))
+    }
+    if len(unmarshaledResult.IPs) != len(result.IPs) {
+        t.Errorf("IPs length mismatch: expected %d, got %d", len(result.IPs), len(unmarshaledResult.IPs))
+    }
+    if len(unmarshaledResult.Routes) != len(result.Routes) {
+        t.Errorf("Routes length mismatch: expected %d, got %d", len(result.Routes), len(unmarshaledResult.Routes))
+    }
+    if len(unmarshaledResult.DNS.Nameservers) != len(result.DNS.Nameservers) {
+        t.Errorf("DNS Nameservers length mismatch: expected %d, got %d", len(result.DNS.Nameservers), len(unmarshaledResult.DNS.Nameservers))
     }
 }

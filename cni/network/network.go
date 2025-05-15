@@ -477,8 +477,19 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 
 		if err == nil && res != nil {
+			// print the result in JSON.	
+			output, err := json.Marshal(res)
+			if err != nil {
+				logger.Error("Error marshalling result to JSON", zap.Error(err), zap.Any("result", res))
+			} else {
+				logger.Info("CNI result marshalled to JSON successfully", zap.Any("cni result", string(output)))
+			}
 			// Output the result to stdout.
-			res.Print()
+			if err = res.Print(); err != nil {
+				logger.Error("CNI result printing to stdout failed", zap.Error(err), zap.Any("cni result", output))
+			} else {
+				logger.Info("CNI result printed to stdout successfully", zap.Any("cni result", output))
+			}
 		}
 
 		logger.Info("ADD command completed for",
@@ -779,7 +790,8 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	sendEvent(plugin, fmt.Sprintf("CNI ADD Process succeeded for interfaces: %v", ipamAddResult.PrettyString()))
 	return nil
 }
- 
+
+// matchIPAMAddResults is a helper function that matches the target interface (iface) with the IPAM results (ipamRes).
 // matchIPAMAddResults searches for a matching network interface in ipamRes based on the target interface (iface).
 // It first attempts to find a match by comparing the MAC addresses of iface with those in ipamRes.
 // If a match is found by MAC address, it returns the matched interface along with true.
@@ -1074,7 +1086,11 @@ func (plugin *NetPlugin) Get(args *cniSkel.CmdArgs) error {
 
 		if err == nil && res != nil {
 			// Output the result to stdout.
-			res.Print()
+			if err = res.Print(); err != nil {
+				logger.Error("CNI result printing failed", zap.Error(err), zap.Any("cni result", res.Print()))
+			} else {
+				logger.Info("CNI result printed successfully", zap.Any("cni result", res.Print()))
+			}
 		}
 
 		logger.Info("GET command completed", zap.Any("result", result),
@@ -1426,7 +1442,11 @@ func (plugin *NetPlugin) Update(args *cniSkel.CmdArgs) error {
 
 		if err == nil && res != nil {
 			// Output the result to stdout.
-			res.Print()
+			if err = res.Print(); err != nil {
+				logger.Error("CNI result printing failed", zap.Error(err), zap.Any("cni result", res.Print()))
+			} else {
+				logger.Info("CNI result printed successfully", zap.Any("cni result", res.Print()))
+			}
 		}
 
 		logger.Info("UPDATE command completed",
