@@ -229,7 +229,8 @@ func (c *Client) CreateHostNCApipaEndpoint(ctx context.Context, networkContainer
 		NetworkContainerID: networkContainerID,
 	}
 
-	fmt.Printf("CreateHostNCApipaEndpoint is called from the CNS client for network: %s \n", networkContainerID)
+	// not printing to stdout since it could conflict with the containerD expectation of CNI output
+	//fmt.Printf("CreateHostNCApipaEndpoint is called from the CNS client for network: %s \n", networkContainerID)
 
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(payload); err != nil {
