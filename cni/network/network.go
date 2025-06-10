@@ -400,7 +400,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	startTime := time.Now()
 
-	logger.Info("Processing ADD command, internal Prelude CNI version of May-13-2025",
+	logger.Info("Processing ADD command, internal Prelude CNI version of June-10-2025",
 		zap.String("containerId", args.ContainerID),
 		zap.String("netNS", args.Netns),
 		zap.String("ifName", args.IfName),
@@ -457,7 +457,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		addSnatInterface(nwCfg, cniResult) //nolint TODO: check whether Linux supports adding secondary snatinterface
 
 		// add IB NIC interfaceInfo to cniResult
-		for _, epInfo := range epInfos {	
+		for _, epInfo := range epInfos {
 			if epInfo.NICType == cns.BackendNIC {
 				cniResult.Interfaces = append(cniResult.Interfaces, &cniTypesCurr.Interface{
 					Name:  epInfo.MasterIfName,
@@ -477,7 +477,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 
 		if err == nil && res != nil {
-			// print the result in JSON.	
+			// print the result in JSON.
 			output, err := json.Marshal(res)
 			if err != nil {
 				logger.Error("Error marshalling result to JSON", zap.Error(err), zap.Any("result", res))
@@ -500,7 +500,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	// Initialize IPAM result.
 	ipamAddResult = IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
-	// Initialize shadow IPAM result. it is used to get the network container ID 
+	// Initialize shadow IPAM result. it is used to get the network container ID
 	shadowIpamAddResult := IPAMAddResult{interfaceInfo: make(map[string]network.InterfaceInfo)}
 
 	// Parse Pod arguments.
@@ -614,7 +614,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			if !isAcceptableError(shadowIpamAddResult, err) {
 				//return err
 			} else {
-				logger.Info("GetAllNetworkContainers failed, but the error is acceptable, we will continue")	
+				logger.Info("GetAllNetworkContainers failed, but the error is acceptable, we will continue")
 			}
 		}
 
@@ -671,18 +671,23 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 	endpointIndex := 1
 	for key := range ipamAddResult.interfaceInfo {
 		ifInfo := ipamAddResult.interfaceInfo[key]
-		logger.Info("Processing interfaceInfo:", zap.Any("key", key),zap.Any("ifInfo", ifInfo))
+		logger.Info("Processing interfaceInfo:", zap.Any("key", key), zap.Any("ifInfo", ifInfo))
+		// check if NC response if null, if not check the AllowNCToHostCommunication
+		if ifInfo.NCResponse != nil && ifInfo.NCResponse.AllowNCToHostCommunication == true {
+			logger.Info("The AllowNCToHostCommunication is set to true", zap.Any("ifInfo.NCResponse.AllowNCToHostCommunication", ifInfo.NCResponse.AllowNCToHostCommunication))
+		} else {
+			logger.Info("AllowNCToHostCommunication is not enabled for interface:", zap.Any("ifinfo", ifInfo))
+		}
 
 		// check if the sahdowIpamAddResult includes the interfaceInfo for the same key
-		if foundIface, isFound := matchIPAMAddResults(ifInfo, shadowIpamAddResult); isFound{
+		if foundIface, isFound := matchIPAMAddResults(ifInfo, shadowIpamAddResult); isFound {
 			if foundIface.NCResponse != nil {
 				foundIface.NCResponse.AllowHostToNCCommunication = true
 				foundIface.NCResponse.AllowNCToHostCommunication = true
 				ifInfo.NCResponse = foundIface.NCResponse
 				logger.Info("adding the NCResponse we got from multitenancyClient.GetAllNetworkContainers to the interface info", zap.Any("foundIface", foundIface.PrettyString()))
 			}
-		} else 
-		{
+		} else {
 			// print the two ipam resuls
 			logger.Info("IPAM results did not match",
 				zap.String("shadowIpamAddResult", shadowIpamAddResult.PrettyString()),
@@ -692,7 +697,6 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		ifInfo.MacAddress = net.HardwareAddr(ifInfo.MacAddress)
 
 		logger.Info("Processing ipamAddResult with the following interfaceInfo:", zap.Any("interface", key), zap.Any("ifInfo", ifInfo))
-
 
 		if ifInfo.NICType == cns.DelegatedVMNIC {
 			logger.Info("The NIC type is Delegated VM NIC, we will also create the APIPA endpoint")
@@ -728,20 +732,20 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 
 		// Set the network container ID for the endpoint info if it is not set
-			if epInfo.NetworkContainerID == "" {
-				logger.Info("The network container ID for endpoint info is empty", zap.String("endpoint info", epInfo.PrettyString()))
-				// Set the network container ID for the endpoint info
-				if ifInfo.NCResponse != nil {
-					if ifInfo.NCResponse.NetworkContainerID == "" {
-						logger.Error("Network container ID is not set in both the NCResponse and endpoint info", zap.Any("network container ID", ifInfo.NCResponse))
-					} else {
-						epInfo.NetworkContainerID = ifInfo.NCResponse.NetworkContainerID
-						logger.Info("Setting network container ID for endpoint info", zap.String("network container ID", epInfo.NetworkContainerID))
-					}
+		if epInfo.NetworkContainerID == "" {
+			logger.Info("The network container ID for endpoint info is empty", zap.String("endpoint info", epInfo.PrettyString()))
+			// Set the network container ID for the endpoint info
+			if ifInfo.NCResponse != nil {
+				if ifInfo.NCResponse.NetworkContainerID == "" {
+					logger.Error("Network container ID is not set in both the NCResponse and endpoint info", zap.Any("network container ID", ifInfo.NCResponse))
 				} else {
-					logger.Info("No network container ID found for endpoint info, and the NCResponse is nil", zap.String("endpoint info", epInfo.PrettyString()))
+					epInfo.NetworkContainerID = ifInfo.NCResponse.NetworkContainerID
+					logger.Info("Setting network container ID for endpoint info", zap.String("network container ID", epInfo.NetworkContainerID))
 				}
+			} else {
+				logger.Info("No network container ID found for endpoint info, and the NCResponse is nil", zap.String("endpoint info", epInfo.PrettyString()))
 			}
+		}
 
 		epInfos = append(epInfos, epInfo)
 		// TODO: should this statement be based on the current iteration instead of the constant ifIndex?
@@ -749,6 +753,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 		//	ipamAddResult.interfaceInfo[ifIndex].IPConfigs, epInfo.Data[network.VlanIDKey], k8sPodName, k8sNamespace, plugin.nm.GetNumberOfEndpoints("", nwCfg.Name)))
 		endpointIndex++
 	}
+
 	cnsclient, err := cnscli.New(nwCfg.CNSUrl, defaultRequestTimeout)
 	if err != nil {
 		return errors.Wrap(err, "failed to create cns client")
@@ -767,6 +772,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 			}
 			// Rely on cleanupAllocationOnError declared above to delete ips
 			// Delete state in disk here
+			logger.Info("attempting to delete state for endpoints:", zap.Any("endpointInfo", epInfos))
 			delErr := plugin.nm.DeleteState(epInfos)
 			if delErr != nil {
 				logger.Error("Could not delete state after detecting add failure", zap.Error(delErr))
@@ -800,34 +806,34 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 // If a NIC type match is found in this case, it returns the matched interface and true.
 // If no matching interface is found through either method, the function returns a zero-value interface and false.
 func matchIPAMAddResults(iface network.InterfaceInfo, ipamRes IPAMAddResult) (foundIface network.InterfaceInfo, isFound bool) {
-    logger.Info("Entering matchIPAMAddResults", zap.Any("target_iface", iface), zap.Any("IPAMAddResult", ipamRes))
+	logger.Info("Entering matchIPAMAddResults", zap.Any("target_iface", iface), zap.Any("IPAMAddResult", ipamRes))
 
-    // first, attempt to match by MAC address
-    logger.Info("Attempting to match by MAC address")
-    for key, intf := range ipamRes.interfaceInfo {
-        logger.Debug("Checking MAC address match", zap.String("key", key), zap.String("current_mac", intf.MacAddress.String()), zap.String("target_mac", iface.MacAddress.String()))
-        if intf.MacAddress.String() == iface.MacAddress.String() {
-            logger.Info("Match found by MAC address", zap.String("key", key), zap.Any("matched_iface", intf))
-            return intf, true
-        }
-    }
+	// first, attempt to match by MAC address
+	logger.Info("Attempting to match by MAC address")
+	for key, intf := range ipamRes.interfaceInfo {
+		logger.Debug("Checking MAC address match", zap.String("key", key), zap.String("current_mac", intf.MacAddress.String()), zap.String("target_mac", iface.MacAddress.String()))
+		if intf.MacAddress.String() == iface.MacAddress.String() {
+			logger.Info("Match found by MAC address", zap.String("key", key), zap.Any("matched_iface", intf))
+			return intf, true
+		}
+	}
 
-    // if no MAC address match, then only match by NIC type if the target NIC type is DelegatedVMNIC
-    if iface.NICType == cns.DelegatedVMNIC {
-        logger.Info("No MAC match found and target NIC type is DelegatedVMNIC, attempting to match by NIC type")
-        for key, intf := range ipamRes.interfaceInfo {
-            logger.Debug("Checking NIC type match", zap.String("key", key), zap.String("current_nicType", string(intf.NICType)), zap.String("target_nicType", string(iface.NICType)))
-            if intf.NICType == iface.NICType {
-                logger.Info("Match found by NIC type", zap.String("key", key), zap.Any("matched_iface", intf))
-                return intf,true
-            }
-        }
-    } else {
-        logger.Info("No MAC match found and target NIC type is not DelegatedVMNIC; skipping NIC type matching")
-    }
+	// if no MAC address match, then only match by NIC type if the target NIC type is DelegatedVMNIC
+	if iface.NICType == cns.DelegatedVMNIC {
+		logger.Info("No MAC match found and target NIC type is DelegatedVMNIC, attempting to match by NIC type")
+		for key, intf := range ipamRes.interfaceInfo {
+			logger.Debug("Checking NIC type match", zap.String("key", key), zap.String("current_nicType", string(intf.NICType)), zap.String("target_nicType", string(iface.NICType)))
+			if intf.NICType == iface.NICType {
+				logger.Info("Match found by NIC type", zap.String("key", key), zap.Any("matched_iface", intf))
+				return intf, true
+			}
+		}
+	} else {
+		logger.Info("No MAC match found and target NIC type is not DelegatedVMNIC; skipping NIC type matching")
+	}
 
-    logger.Info("No matching interface found", zap.Any("target_iface", iface))
-    return foundIface, false
+	logger.Info("No matching interface found", zap.Any("target_iface", iface))
+	return foundIface, false
 }
 
 func (plugin *NetPlugin) findMasterInterface(opt *createEpInfoOpt) string {
@@ -1644,15 +1650,15 @@ func isAcceptableError(ipamAddRes IPAMAddResult, err error) bool {
 		logger.Info("ipamAddRes.interfaceInfo is nil or has no interfaces")
 	}
 
-    if strings.Contains(err.Error(), "VFP programming is pending") {
+	if strings.Contains(err.Error(), "VFP programming is pending") {
 
 		for key, info := range ipamAddRes.interfaceInfo {
 
 			logger.Info("verifying the interface info",
 				zap.String("interface", key),
-			zap.String("interface NIC type", string(info.NICType)))
+				zap.String("interface NIC type", string(info.NICType)))
 
-			if info.NICType == cns.DelegatedVMNIC || info.NICType ==  "FrontendNIC" {
+			if info.NICType == cns.DelegatedVMNIC || info.NICType == "FrontendNIC" {
 				logger.Info("Ignoring VFP programming is pending error for delegated vm nic",
 					zap.String("interface", key),
 					zap.String("error", err.Error()))
@@ -1662,12 +1668,12 @@ func isAcceptableError(ipamAddRes IPAMAddResult, err error) bool {
 		}
 
 		logger.Info("Error is not nil and includes VFP programming is pending, however, no delegated vm nic found",
-		zap.String("error", err.Error()))
-    } 
+			zap.String("error", err.Error()))
+	}
 
 	logger.Info("Error is not acceptable",
-	zap.String("error", err.Error()),
-	zap.String("ipamAddRes", ipamAddRes.PrettyString()))
+		zap.String("error", err.Error()),
+		zap.String("ipamAddRes", ipamAddRes.PrettyString()))
 
 	return false
 }

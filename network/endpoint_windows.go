@@ -475,16 +475,20 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (
 	}()
 
 	// when using delegated nics, automatically allow inbound from nc to host
-	if (epInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC || epInfo.NICType == cns.NodeNetworkInterfaceAPIPANIC) {
+	if epInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC || epInfo.NICType == cns.NodeNetworkInterfaceAPIPANIC {
 		if !epInfo.AllowInboundFromNCToHost {
 			logger.Info("setting AllowInboundFromNCToHost to true since the NC has a delegated nic", zap.String("PODName", epInfo.PODName), zap.String("NetworkContainerID", epInfo.NetworkContainerID))
 			epInfo.AllowInboundFromNCToHost = true
-		}	
+		}
+		if !epInfo.AllowInboundFromHostToNC {
+			logger.Info("setting AllowInboundFromHostToNC to true since the NC has a delegated nic", zap.String("PODName", epInfo.PODName), zap.String("NetworkContainerID", epInfo.NetworkContainerID))
+			epInfo.AllowInboundFromHostToNC = true
+		}
 	}
 
 	// If the Host - container connectivity is requested, create endpoint in HostNCApipaNetwork
 	if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost {
-		logger.Info("Creating HostNCApipaEndpoint for host container connectivity", zap.Any("endpoint info", epInfo)) 
+		logger.Info("Creating HostNCApipaEndpoint for host container connectivity", zap.Any("endpoint info", epInfo))
 		if err = nw.createHostNCApipaEndpoint(cli, epInfo); err != nil {
 			return nil, fmt.Errorf("Failed to create HostNCApipaEndpoint due to error: %v", err)
 		}
