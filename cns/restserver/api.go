@@ -1142,6 +1142,14 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 	case http.MethodPost:
 		networkContainerDetails, found := service.getNetworkContainerDetails(req.NetworkContainerID)
 		if found {
+
+			// ensuring birectional communication between host and NC
+			if networkContainerDetails.CreateNetworkContainerRequest.AllowNCToHostCommunication != networkContainerDetails.CreateNetworkContainerRequest.AllowHostToNCCommunication &&
+				networkContainerDetails.CreateNetworkContainerRequest.AllowNCToHostCommunication == true {
+				logger.Printf("[Azure-CNS] AllowNCToHostCommunication is set to true, while AllowHostToNCCommunication is set to false, therefore setting AllowHostToNCCommunication to true")
+				networkContainerDetails.CreateNetworkContainerRequest.AllowHostToNCCommunication = true
+			}
+
 			if !networkContainerDetails.CreateNetworkContainerRequest.AllowNCToHostCommunication &&
 				!networkContainerDetails.CreateNetworkContainerRequest.AllowHostToNCCommunication {
 				returnMessage = fmt.Sprintf("HostNCApipaEndpoint creation is not supported unless " +

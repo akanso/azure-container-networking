@@ -393,6 +393,12 @@ func configureAclSettingHostNCApipaEndpoint(
 
 	if allowHostToNCCommunication {
 		logger.Printf("[Azure CNS] Allowing Host (%s) to NC (%s) connectivity", hostApipaIP, networkContainerApipaIP)
+	} else {
+		// if allowNCToHostCommunication is true, then allowHostToNCCommunication must be true
+		if allowNCToHostCommunication {
+			allowHostToNCCommunication = true
+		}
+		logger.Printf("[Azure CNS] Explicitly enabling Host (%s) to NC (%s) connectivity when AllowNCToHostCommunication is true", hostApipaIP, networkContainerApipaIP)
 	}
 
 	// Iterate thru the protocol list and add ACL for each
