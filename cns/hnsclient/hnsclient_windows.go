@@ -72,7 +72,7 @@ const (
 	aclPriority200 = 200
 
 	// aclPriority1000 indicates the ACL priority of 1000
-	aclPriority1000 = 1000
+	aclPriority1000 = 10 // TODO: this is a temporary value, need to be changed to 1000
 
 	// aclPolicyType indicates a ACL policy
 	aclPolicyType = "ACLPolicy"
@@ -487,6 +487,9 @@ func configureAclSettingHostNCApipaEndpoint(
 					requestedAclPolicy.RemoteAddresses = hostApipaIP
 				}
 				logger.Printf("ACL Policy requested in NcGoalState %+v", requestedAclPolicy)
+				if requestedAclPolicy.Priority < 100 {
+					requestedAclPolicy.Priority = 110 // TODO this is a temporary value, need to be changed to its original value
+				}
 				if err = addAclToEndpointPolicy(requestedAclPolicy, &endpointPolicies); err != nil {
 					return nil, err
 				}
@@ -547,8 +550,30 @@ func configureHostNCApipaEndpoint(
 	endpoint.IpConfigurations = append(endpoint.IpConfigurations, ipConfiguration)
 
 	logger.Printf("[Azure CNS] Configured HostNCApipaEndpoint: %+v", endpoint)
+	if len(endpoint.Policies) != 0 {
+		// Print all IpConfigurations in a readable format
+		logger.Printf("[Azure CNS] HostNCApipaEndpoint endpoint %s policies:", endpointName)
+		prettyPrintEndpointPolicies(endpoint.Policies)
+	}
 
 	return endpoint, nil
+}
+
+func prettyPrintEndpointPolicies(policies []hcn.EndpointPolicy) {
+	for i, policy := range policies {
+		logger.Printf("Policy [%d]:", i+1)
+		logger.Printf("  Type: %s", policy.Type)
+
+		// Unmarshal the raw JSON in Settings
+		var prettySettings map[string]interface{}
+		if err := json.Unmarshal(policy.Settings, &prettySettings); err == nil {
+			// Pretty-print the JSON
+			pretty, _ := json.MarshalIndent(prettySettings, "    ", "  ")
+			logger.Printf("  Settings:\n%s", pretty)
+		} else {
+			logger.Printf("  Failed to unmarshal Settings: %v", err)
+		}
+	}
 }
 
 // CreateHostNCApipaEndpoint creates the endpoint in the apipa network for host container connectivity
