@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-container-networking/cns"
+	"github.com/Azure/azure-container-networking/cns/restserver"
 	"github.com/Azure/azure-container-networking/netio"
 	"github.com/Azure/azure-container-networking/netlink"
 	"github.com/Azure/azure-container-networking/network/policy"
@@ -152,6 +153,7 @@ func (nw *network) newEndpointImpl(
 	_ ipTablesClient,
 	_ dhcpClient,
 	epInfo *EndpointInfo,
+	isApipa bool,
 ) (*endpoint, error) {
 	if epInfo.NICType == cns.BackendNIC {
 		return nw.getEndpointWithVFDevice(plc, epInfo)
@@ -162,7 +164,7 @@ func (nw *network) newEndpointImpl(
 			return nil, err
 		}
 
-		return nw.newEndpointImplHnsV2(cli, epInfo)
+		return nw.newEndpointImplHnsV2(cli, epInfo, isApipa)
 	}
 
 	return nw.newEndpointImplHnsV1(epInfo, plc)
@@ -387,30 +389,34 @@ func (nw *network) deleteHostNCApipaEndpoint(networkContainerID string) error {
 
 // createHostNCApipaEndpoint creates a new endpoint in the HostNCApipaNetwork
 // for host container connectivity
-func (nw *network) createHostNCApipaEndpoint(cli apipaClient, epInfo *EndpointInfo) error {
+func (nw *network) createHostNCApipaEndpoint(cli apipaClient, epInfo *EndpointInfo) (ipInfo *restserver.IPInfo, err error) {
 	var (
-		err                   error
 		hostNCApipaEndpointID string
 		namespace             *hcn.HostComputeNamespace
 	)
 
 	if namespace, err = hcn.GetNamespaceByID(epInfo.NetNsPath); err != nil {
-		return fmt.Errorf("Failed to retrieve namespace with GetNamespaceByID for NetNsPath: %s"+
+		return nil, fmt.Errorf("Failed to retrieve namespace with GetNamespaceByID for NetNsPath: %s"+
 			" due to error: %v", epInfo.NetNsPath, err)
 	}
 
 	// Check if the network container ID is set, since it can create a panic in the cni/plugin.go
 	if epInfo.NetworkContainerID == "" {
 		logger.Error("Network container ID is not set for endpoint info", zap.String("endpoint info", epInfo.PrettyString()))
-		return fmt.Errorf("Network container ID is not set for endpoint info: %s", epInfo.PrettyString())
+		return nil, fmt.Errorf("Network container ID is not set for endpoint info: %s", epInfo.PrettyString())
 	}
 
 	logger.Info("Creating HostNCApipaEndpoint for host container connectivity for NC",
 		zap.String("NetworkContainerID", epInfo.NetworkContainerID))
 
-	if hostNCApipaEndpointID, err = cli.CreateHostNCApipaEndpoint(context.TODO(), epInfo.NetworkContainerID); err != nil {
-		return err
+	ipInfo, err = cli.CreateHostNCApipaEndpoint(context.TODO(), epInfo.NetworkContainerID)
+	if err != nil {
+		return nil, err
 	}
+
+	logger.Info("cli.CreateHostNCApipaEndpoint completed successfully, and returned ipInfo", zap.Any("ipInfo", ipInfo))
+
+	hostNCApipaEndpointID = ipInfo.HnsEndpointID
 
 	defer func() {
 		if err != nil {
@@ -419,16 +425,70 @@ func (nw *network) createHostNCApipaEndpoint(cli apipaClient, epInfo *EndpointIn
 	}()
 
 	if err = hcn.AddNamespaceEndpoint(namespace.Id, hostNCApipaEndpointID); err != nil {
-		return fmt.Errorf("Failed to add HostNCApipaEndpoint: %s to namespace: %s due to error: %v", hostNCApipaEndpointID, namespace.Id, err) //nolint
+		return nil, fmt.Errorf("Failed to add HostNCApipaEndpoint: %s to namespace: %s due to error: %v", hostNCApipaEndpointID, namespace.Id, err) //nolint
 	}
 
-	return nil
+	return ipInfo, nil
 }
 
 // newEndpointImplHnsV2 creates a new endpoint in the network using Hnsv2
-func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (*endpoint, error) {
+func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo, isApipa bool) (endpt *endpoint, err error) {
+
+	if isApipa {
+		logger.Info("Creating HostNCApipaEndpoint since the isApipa flag is set to true")
+		var ipInfo *restserver.IPInfo
+		// when using delegated nics, automatically allow inbound from nc to host
+		if epInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC || epInfo.NICType == cns.NodeNetworkInterfaceAPIPANIC {
+			if !epInfo.AllowInboundFromNCToHost {
+				logger.Info("setting AllowInboundFromNCToHost to true since the NC has a delegated nic", zap.String("PODName", epInfo.PODName), zap.String("NetworkContainerID", epInfo.NetworkContainerID))
+				epInfo.AllowInboundFromNCToHost = true
+			}
+			if !epInfo.AllowInboundFromHostToNC {
+				logger.Info("setting AllowInboundFromHostToNC to true since the NC has a delegated nic", zap.String("PODName", epInfo.PODName), zap.String("NetworkContainerID", epInfo.NetworkContainerID))
+				epInfo.AllowInboundFromHostToNC = true
+			}
+		}
+
+		// If the Host - container connectivity is requested, create endpoint in HostNCApipaNetwork
+		if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost {
+			logger.Info("Creating HostNCApipaEndpoint for host container connectivity", zap.Any("endpoint info", epInfo))
+			if ipInfo, err = nw.createHostNCApipaEndpoint(cli, epInfo); err != nil {
+				return nil, fmt.Errorf("Failed to create HostNCApipaEndpoint due to error: %v", err)
+			}
+		} else {
+			logger.Info("Skipping creation of HostNCApipaEndpoint for host container connectivity")
+		}
+
+		// Create the endpoint object.
+		ep := &endpoint{
+			Id:                       ipInfo.HnsEndpointID,
+			IfName:                   ipInfo.HostVethName,
+			HnsId:                    ipInfo.HnsNetworkID,
+			SandboxKey:               epInfo.ContainerID,
+			HostIfName:               ipInfo.HostVethName,
+			IPAddresses:              epInfo.IPAddresses,
+			DNS:                      epInfo.EndpointDNS,
+			EnableSnatOnHost:         epInfo.EnableSnatOnHost,
+			NetNs:                    epInfo.NetNsPath,
+			AllowInboundFromNCToHost: epInfo.AllowInboundFromNCToHost,
+			AllowInboundFromHostToNC: epInfo.AllowInboundFromHostToNC,
+			NetworkContainerID:       epInfo.NetworkContainerID,
+			ContainerID:              epInfo.ContainerID,
+			PODName:                  epInfo.PODName,
+			PODNameSpace:             epInfo.PODNameSpace,
+			HNSNetworkID:             ipInfo.HnsNetworkID,
+			NICType:                  cns.NodeNetworkInterfaceAPIPANIC,
+		}
+
+		ep.MacAddress, _ = net.ParseMAC(ipInfo.MacAddress)
+
+		logger.Info("The HostNCApipaEndpoint created has the following configuration", zap.Any("endpoint", ep))
+
+		return ep, nil
+	}
 
 	logger.Info("Creating hcn endpoint for network container", zap.Any("endpoint info", epInfo))
+
 	hcnEndpoint, err := nw.configureHcnEndpoint(epInfo)
 	if err != nil {
 		logger.Error("Failed to configure hcn endpoint due to", zap.Error(err))
@@ -473,28 +533,6 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo) (
 			}
 		}
 	}()
-
-	// when using delegated nics, automatically allow inbound from nc to host
-	if epInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC || epInfo.NICType == cns.NodeNetworkInterfaceAPIPANIC {
-		if !epInfo.AllowInboundFromNCToHost {
-			logger.Info("setting AllowInboundFromNCToHost to true since the NC has a delegated nic", zap.String("PODName", epInfo.PODName), zap.String("NetworkContainerID", epInfo.NetworkContainerID))
-			epInfo.AllowInboundFromNCToHost = true
-		}
-		if !epInfo.AllowInboundFromHostToNC {
-			logger.Info("setting AllowInboundFromHostToNC to true since the NC has a delegated nic", zap.String("PODName", epInfo.PODName), zap.String("NetworkContainerID", epInfo.NetworkContainerID))
-			epInfo.AllowInboundFromHostToNC = true
-		}
-	}
-
-	// If the Host - container connectivity is requested, create endpoint in HostNCApipaNetwork
-	if epInfo.AllowInboundFromHostToNC || epInfo.AllowInboundFromNCToHost {
-		logger.Info("Creating HostNCApipaEndpoint for host container connectivity", zap.Any("endpoint info", epInfo))
-		if err = nw.createHostNCApipaEndpoint(cli, epInfo); err != nil {
-			return nil, fmt.Errorf("Failed to create HostNCApipaEndpoint due to error: %v", err)
-		}
-	} else {
-		logger.Info("Skipping creation of HostNCApipaEndpoint for host container connectivity")
-	}
 
 	var vlanid int
 	if epInfo.Data != nil {
@@ -598,11 +636,15 @@ func (nw *network) deleteEndpointImplHnsV2(ep *endpoint) error {
 		err         error
 	)
 
-	if ep.AllowInboundFromHostToNC || ep.AllowInboundFromNCToHost {
+	if ep.AllowInboundFromHostToNC || ep.AllowInboundFromNCToHost || ep.NICType == cns.NodeNetworkInterfaceAPIPANIC {
 		if err = nw.deleteHostNCApipaEndpoint(ep.NetworkContainerID); err != nil {
 			logger.Error("Failed to delete HostNCApipaEndpoint due to error", zap.Error(err))
 			return err
+		} else {
+			logger.Info("Successfully deleted HostNCApipaEndpoint for host container connectivity", zap.String("NetworkContainerID", ep.NetworkContainerID))
 		}
+	} else {
+		logger.Info("Skipping deletion of HostNCApipaEndpoint for host container connectivity", zap.String("NetworkContainerID", ep.NetworkContainerID), zap.Any("endpoint", ep))
 	}
 
 	logger.Info("Deleting hcn endpoint with id", zap.String("HnsId", ep.HnsId))

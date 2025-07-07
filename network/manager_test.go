@@ -461,7 +461,7 @@ var _ = Describe("Test Manager", func() {
 						MacAddress:   mac2,
 					},
 				}
-				cnsEpInfos := generateCNSIPInfoMap(endpoints)
+				cnsEpInfos := generateCNSIPInfoMap(endpoints, "")
 				Expect(len(cnsEpInfos)).To(Equal(2))
 
 				Expect(cnsEpInfos).To(HaveKey("eth0"))

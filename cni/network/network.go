@@ -400,7 +400,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	startTime := time.Now()
 
-	logger.Info("Processing ADD command, internal Prelude CNI version of June-10-2025",
+	logger.Info("Processing ADD command, internal Prelude CNI version of July-1-2025",
 		zap.String("containerId", args.ContainerID),
 		zap.String("netNS", args.Netns),
 		zap.String("ifName", args.IfName),
@@ -661,6 +661,9 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 					// If it does then will have to search for infraNIC
 					if ifInfo.NICType == cns.InfraNIC {
 						plugin.cleanupAllocationOnError(ifInfo.IPConfigs, nwCfg, args, options)
+					} else if ifInfo.NICType == cns.DelegatedVMNIC {
+						logger.Info("Cleaning up the NIC type is Delegated VM NIC")
+						plugin.cleanupAllocationOnError(ifInfo.IPConfigs, nwCfg, args, options)
 					}
 				}
 			}
@@ -763,6 +766,8 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 			// Delete all endpoints
 			for _, epInfo := range epInfos {
+				logger.Info("Attempting to delete endpoint after detecting add failure",
+					zap.String("epInfo", epInfo.PrettyString()))
 				deleteErr := plugin.nm.DeleteEndpoint(epInfo.NetworkID, epInfo.EndpointID, epInfo)
 				if deleteErr != nil {
 					// we already do not return an error when the endpoint is not found, so deleteErr is a real error

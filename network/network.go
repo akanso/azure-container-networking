@@ -336,11 +336,11 @@ func (nm *networkManager) EndpointCreate(cnsclient apipaClient, epInfos []*Endpo
 			if err != nil {
 				return err
 			} else {
-				logger.Info("Created network", zap.String("networkID", epInfo.NetworkID))	
+				logger.Info("Created network", zap.String("networkID", epInfo.NetworkID))
 			}
 		}
 
-		ep, err := nm.createEndpoint(cnsclient, epInfo.NetworkID, epInfo)
+		ep, err := nm.createEndpoint(cnsclient, epInfo.NetworkID, epInfo, false)
 		if err != nil {
 			return err
 		} else {
@@ -348,12 +348,26 @@ func (nm *networkManager) EndpointCreate(cnsclient apipaClient, epInfos []*Endpo
 		}
 
 		eps = append(eps, ep)
+
+		// If the endpoint is an APIPA endpoint, create it as well.
+		// this is a second call to createEndpoint, but it is needed to create the APIPA endpoint
+		// this treats APIPA like seperate endpoint.
+		isApipa := epInfo.NICType == cns.NodeNetworkInterfaceFrontendNIC || epInfo.NICType == cns.NodeNetworkInterfaceAPIPANIC
+		if isApipa {
+			logger.Info("attempting to create APIPA endpoint", zap.String("endpointID", ep.Id), zap.String("networkID", epInfo.NetworkID))
+			epApipa, err := nm.createEndpoint(cnsclient, epInfo.NetworkID, epInfo, true)
+			if err != nil {
+				return err
+			}
+			logger.Info("Created APIPA endpoint", zap.String("endpointID", epApipa.Id), zap.String("networkID", epInfo.NetworkID), zap.Any("apipa endpoint", epApipa))
+			eps = append(eps, epApipa)
+		}
 	}
 
 	if err := validateEndpoints(eps); err != nil {
 		logger.Error("Failed to validate endpoints", zap.Error(err))
 		return err
-	} 
+	}
 
 	// save endpoints
 	return nm.SaveState(eps)

@@ -11,6 +11,7 @@ import (
 
 	"github.com/Azure/azure-container-networking/cni/log"
 	"github.com/Azure/azure-container-networking/cns"
+	"github.com/Azure/azure-container-networking/cns/restserver"
 	"github.com/Azure/azure-container-networking/netio"
 	"github.com/Azure/azure-container-networking/netlink"
 	"github.com/Azure/azure-container-networking/network/policy"
@@ -148,7 +149,7 @@ type IPConfig struct {
 
 type apipaClient interface {
 	DeleteHostNCApipaEndpoint(ctx context.Context, networkContainerID string) error
-	CreateHostNCApipaEndpoint(ctx context.Context, networkContainerID string) (string, error)
+	CreateHostNCApipaEndpoint(ctx context.Context, networkContainerID string) (*restserver.IPInfo, error)
 }
 
 func (epInfo *EndpointInfo) PrettyString() string {
@@ -172,6 +173,7 @@ func (nw *network) newEndpoint(
 	iptc ipTablesClient,
 	dhcpc dhcpClient,
 	epInfo *EndpointInfo,
+	isApipa bool,
 ) (*endpoint, error) {
 	var ep *endpoint
 	var err error
@@ -184,7 +186,7 @@ func (nw *network) newEndpoint(
 
 	// Call the platform implementation.
 	// Pass nil for epClient and will be initialized in newendpointImpl
-	ep, err = nw.newEndpointImpl(apipaCli, nl, plc, netioCli, nil, nsc, iptc, dhcpc, epInfo)
+	ep, err = nw.newEndpointImpl(apipaCli, nl, plc, netioCli, nil, nsc, iptc, dhcpc, epInfo, isApipa)
 	if err != nil {
 		return nil, err
 	}

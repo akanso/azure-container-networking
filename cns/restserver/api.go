@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -1130,6 +1131,8 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 		returnCode    types.ResponseCode
 		returnMessage string
 		endpointID    string
+		endpointName  string
+		resp          cns.CreateHostNCApipaEndpointResponse
 	)
 
 	err = common.Decode(w, r, &req)
@@ -1148,14 +1151,42 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 					"AllowNCToHostCommunication or AllowHostToNCCommunication is set to true")
 				returnCode = types.InvalidRequest
 			} else {
-				if endpointID, err = hnsclient.CreateHostNCApipaEndpoint(
+				var (
+					createdEndpointID string
+					ipAddress         string
+					macAddress        string
+					networkID         string
+				)
+				createdEndpointID, endpointName, ipAddress, networkID, macAddress, err = hnsclient.CreateHostNCApipaEndpoint(
 					req.NetworkContainerID,
 					networkContainerDetails.CreateNetworkContainerRequest.LocalIPConfiguration,
 					networkContainerDetails.CreateNetworkContainerRequest.AllowNCToHostCommunication,
 					networkContainerDetails.CreateNetworkContainerRequest.AllowHostToNCCommunication,
-					networkContainerDetails.CreateNetworkContainerRequest.EndpointPolicies); err != nil {
+					networkContainerDetails.CreateNetworkContainerRequest.EndpointPolicies)
+
+				endpointID = createdEndpointID
+
+				if err != nil {
 					returnMessage = fmt.Sprintf("CreateHostNCApipaEndpoint failed with error: %v", err)
 					returnCode = types.UnexpectedError
+				}
+
+				// convert these: createdEndpointID, ipAddress, macAddress, networkID, interfaceAlias into CreateHostNCApipaEndpointResponse
+				var ipNets []net.IPNet
+				if ipAddress != "" {
+					_, ipNet, parseErr := net.ParseCIDR(ipAddress)
+					if parseErr == nil && ipNet != nil {
+						ipNets = append(ipNets, *ipNet)
+					}
+				}
+
+				resp = cns.CreateHostNCApipaEndpointResponse{
+					EndpointID:   createdEndpointID,
+					EndpointName: endpointName,
+					IPv4:         ipNets,
+					MacAddress:   macAddress,
+					HnsNetworkID: networkID,
+					HostVethName: "",
 				}
 			}
 		} else {
@@ -1168,16 +1199,14 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 		returnCode = types.UnsupportedVerb
 	}
 
-	response := cns.CreateHostNCApipaEndpointResponse{
-		Response: cns.Response{
-			ReturnCode: returnCode,
-			Message:    returnMessage,
-		},
-		EndpointID: endpointID,
+	resp.Response = cns.Response{
+		ReturnCode: returnCode,
+		Message:    returnMessage,
 	}
+	resp.EndpointID = endpointID
 
-	err = common.Encode(w, &response)
-	logger.Response(service.Name, response, response.Response.ReturnCode, err)
+	err = common.Encode(w, &resp)
+	logger.Response(service.Name, resp, resp.Response.ReturnCode, err)
 }
 
 func (service *HTTPRestService) DeleteHostNCApipaEndpoint(w http.ResponseWriter, r *http.Request) {

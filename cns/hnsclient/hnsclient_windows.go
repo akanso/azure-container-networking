@@ -551,7 +551,14 @@ func CreateHostNCApipaEndpoint(
 	localIPConfiguration cns.IPConfiguration,
 	allowNCToHostCommunication bool,
 	allowHostToNCCommunication bool,
-	ncPolicies []cns.NetworkContainerRequestPolicies) (string, error) {
+	ncPolicies []cns.NetworkContainerRequestPolicies) (
+	hnsEndpointID string,
+	hnsEndpointName string,
+	ipv4 string,
+	hnsNetworkID string,
+	macAddress string,
+	erro error,
+) {
 	var (
 		network      *hcn.HostComputeNetwork
 		endpoint     *hcn.HostComputeEndpoint
@@ -559,6 +566,7 @@ func CreateHostNCApipaEndpoint(
 		err          error
 	)
 
+	// Check if the endpoint already exists
 	namedLock.LockAcquire(endpointName)
 	defer namedLock.LockRelease(endpointName)
 
@@ -566,20 +574,20 @@ func CreateHostNCApipaEndpoint(
 	if endpoint, err = hcn.GetEndpointByName(endpointName); err != nil {
 		// If error is anything other than EndpointNotFoundError, return error.
 		if _, endpointNotFound := err.(hcn.EndpointNotFoundError); !endpointNotFound {
-			return "", fmt.Errorf("ERROR: Failed to query endpoint using GetEndpointByName "+
+			return "", "", "", "", "", fmt.Errorf("ERROR: Failed to query endpoint using GetEndpointByName "+
 				"due to error: %v", err)
 		}
 	}
 
 	if endpoint != nil {
 		logger.Debugf("[Azure CNS] Found existing endpoint: %+v", endpoint)
-		return endpoint.Id, nil
+		return endpoint.Id, "", "", "", "", nil
 	}
 
 	updateGwForLocalIPConfiguration(&localIPConfiguration)
 	if network, err = createHostNCApipaNetwork(localIPConfiguration); err != nil {
 		logger.Errorf("[Azure CNS] Failed to create HostNCApipaNetwork. Error: %v", err)
-		return "", err
+		return "", "", "", "", "", err
 	}
 
 	logger.Printf("[Azure CNS] Configuring HostNCApipaEndpoint: %s, in network: %s with localIPConfig: %+v",
@@ -593,19 +601,19 @@ func CreateHostNCApipaEndpoint(
 		allowHostToNCCommunication,
 		ncPolicies); err != nil {
 		logger.Errorf("[Azure CNS] Failed to configure HostNCApipaEndpoint: %s. Error: %v", endpointName, err)
-		return "", err
+		return "", "", "", "", "", err
 	}
 
 	logger.Printf("[Azure CNS] Creating HostNCApipaEndpoint for host container connectivity: %+v", endpoint)
 	if endpoint, err = endpoint.Create(); err != nil {
 		err = fmt.Errorf("Failed to create HostNCApipaEndpoint: %s. Error: %v", endpointName, err)
 		logger.Errorf("[Azure CNS] %s", err.Error())
-		return "", err
+		return "", "", "", "", "", err
 	}
 
 	logger.Printf("[Azure CNS] Successfully created HostNCApipaEndpoint: %+v", endpoint)
 
-	return endpoint.Id, nil
+	return endpoint.Id, endpoint.Name, localIPConfiguration.IPSubnet.IPAddress, endpoint.HostComputeNetwork, endpoint.MacAddress, nil
 }
 
 // updateGwForLocalIPConfiguration applies change on gw IP address for apipa NW and endpoint.

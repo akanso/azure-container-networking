@@ -131,7 +131,7 @@ func (c *Client) GetAllNetworkContainers(ctx context.Context, orchestratorContex
 	req.Header.Set(headerContentType, contentTypeJSON)
 	res, reqErr := c.client.Do(req)
 	defer res.Body.Close()
-	
+
 	decodeErr := json.NewDecoder(res.Body).Decode(&resp)
 	if reqErr != nil {
 		if decodeErr == nil {
@@ -204,7 +204,6 @@ func (c *Client) GetNetworkContainer(ctx context.Context, orchestratorContext []
 	if decodeErr != nil {
 		return nil, errors.Wrap(decodeErr, "http request succeeded but decode failed")
 	}
-	
 
 	if res.StatusCode != http.StatusOK {
 		return &resp, &CNSClientError{
@@ -224,7 +223,7 @@ func (c *Client) GetNetworkContainer(ctx context.Context, orchestratorContext []
 }
 
 // CreateHostNCApipaEndpoint creates an endpoint in APIPA network for host container connectivity.
-func (c *Client) CreateHostNCApipaEndpoint(ctx context.Context, networkContainerID string) (string, error) {
+func (c *Client) CreateHostNCApipaEndpoint(ctx context.Context, networkContainerID string) (ipInfo *restserver.IPInfo, err error) {
 	payload := cns.CreateHostNCApipaEndpointRequest{
 		NetworkContainerID: networkContainerID,
 	}
@@ -234,37 +233,47 @@ func (c *Client) CreateHostNCApipaEndpoint(ctx context.Context, networkContainer
 
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(payload); err != nil {
-		return "", errors.Wrap(err, "failed to encode CreateCNSHostNCApipaEndpointRequest")
+		return nil, errors.Wrap(err, "failed to encode CreateCNSHostNCApipaEndpointRequest")
 	}
 
 	u := c.routes[cns.CreateHostNCApipaEndpointPath]
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), &body)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to build request")
+		return nil, errors.Wrap(err, "failed to build request")
 	}
 	req.Header.Set(headerContentType, contentTypeJSON)
 	res, err := c.client.Do(req)
 	if err != nil {
-		return "", errors.Wrap(err, "http request failed")
+		return nil, errors.Wrap(err, "http request failed")
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return "", errors.Errorf("http response %d", res.StatusCode)
+		return nil, errors.Errorf("http response %d", res.StatusCode)
 	}
 
 	var resp cns.CreateHostNCApipaEndpointResponse
 
 	if err = json.NewDecoder(res.Body).Decode(&resp); err != nil {
-		return "", errors.Wrap(err, "failed to decode CreateHostNCApipaEndpointResponse")
+		return nil, errors.Wrap(err, "failed to decode CreateHostNCApipaEndpointResponse")
 	}
 
 	if resp.Response.ReturnCode != 0 {
-		return "", errors.New(resp.Response.Message)
+		return nil, errors.New(resp.Response.Message)
 	}
 
-	return resp.EndpointID, nil
+	// convert resp to ipinfo
+	ipInfo = &restserver.IPInfo{
+		HnsEndpointID: resp.EndpointID,
+		IPv4:          resp.IPv4,
+		MacAddress:    resp.MacAddress,
+		HnsNetworkID:  resp.HnsNetworkID,
+		NICType:       cns.NodeNetworkInterfaceAPIPANIC,
+		HostVethName:  resp.HostVethName,
+	}
+
+	return ipInfo, nil
 }
 
 // DeleteHostNCApipaEndpoint deletes the endpoint in APIPA network created for host container connectivity.

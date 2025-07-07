@@ -373,7 +373,7 @@ func (nm *networkManager) GetNetworkInfo(networkID string) (EndpointInfo, error)
 	return nwInfo, nil
 }
 
-func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epInfo *EndpointInfo) (*endpoint, error) {
+func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epInfo *EndpointInfo, isApipa bool) (*endpoint, error) {
 	nm.Lock()
 	defer nm.Unlock()
 
@@ -389,7 +389,7 @@ func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epIn
 		}
 	}
 
-	ep, err := nw.newEndpoint(cli, nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, nm.dhcpClient, epInfo)
+	ep, err := nw.newEndpoint(cli, nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, nm.dhcpClient, epInfo, isApipa)
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +410,7 @@ func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epIn
 
 // CreateEndpoint creates a new container endpoint (this is for compatibility-- add flow should no longer use this).
 func (nm *networkManager) CreateEndpoint(cli apipaClient, networkID string, epInfo *EndpointInfo) error {
-	_, err := nm.createEndpoint(cli, networkID, epInfo)
+	_, err := nm.createEndpoint(cli, networkID, epInfo, false)
 	return err
 }
 
@@ -421,7 +421,9 @@ func (nm *networkManager) UpdateEndpointState(eps []*endpoint) error {
 		return nil
 	}
 
-	ifnameToIPInfoMap := generateCNSIPInfoMap(eps) // key : interface name, value : IPInfo
+	networkContainerID := eps[0].NetworkContainerID
+
+	ifnameToIPInfoMap := generateCNSIPInfoMap(eps, networkContainerID) // key : interface name, value : IPInfo
 	for _, ipinfo := range ifnameToIPInfoMap {
 		logger.Info("Update endpoint state", zap.String("hnsEndpointID", ipinfo.HnsEndpointID), zap.String("hnsNetworkID", ipinfo.HnsNetworkID),
 			zap.String("hostVethName", ipinfo.HostVethName), zap.String("macAddress", ipinfo.MacAddress), zap.String("nicType", string(ipinfo.NICType)))
@@ -539,7 +541,7 @@ func (nm *networkManager) DeleteEndpointState(networkID string, epInfo *Endpoint
 		NICType:                  epInfo.NICType,
 		IfName:                   epInfo.IfName, // TODO: For stateless cni linux populate IfName here to use in deletion in secondary endpoint client
 	}
-	logger.Info("Deleting endpoint with", zap.String("Endpoint Info: ", epInfo.PrettyString()), zap.String("HNISID : ", ep.HnsId))
+	logger.Info("Deleting endpoint with", zap.String("Endpoint Info: ", epInfo.PrettyString()), zap.String("HNSID : ", ep.HnsId))
 
 	err := nw.deleteEndpointImpl(netlink.NewNetlink(), platform.NewExecClient(logger), nil, nil, nil, nil, nil, ep)
 	if err != nil {
@@ -832,10 +834,22 @@ func (nm *networkManager) GetEndpointInfosFromContainerID(containerID string) []
 	return ret
 }
 
-func generateCNSIPInfoMap(eps []*endpoint) map[string]*restserver.IPInfo {
+func generateCNSIPInfoMap(eps []*endpoint, networkContainerID string) map[string]*restserver.IPInfo {
 	ifNametoIPInfoMap := make(map[string]*restserver.IPInfo) // key : interface name, value : IPInfo
 
+	logger.Info("Generating CNS IPInfo map for endpoints", zap.Any("Endpoints", eps))
+
 	for _, ep := range eps {
+
+		if ep.IfName == "" && ep.NICType == cns.NodeNetworkInterfaceAPIPANIC {
+			logger.Info("IfName is empty for APIPA endpoint, generating a unique name")
+			// if the endpoint is an APIPA endpoint, we generate a unique name for it
+			ep.IfName = "HostNCApipaEndpoint" + "-" + networkContainerID
+			if ep.HostIfName == "" {
+				ep.HostIfName = ep.IfName
+			}
+		}
+
 		ifNametoIPInfoMap[ep.IfName] = &restserver.IPInfo{ // in windows, the nicname is args ifname, in linux, it's ethX
 			NICType:       ep.NICType,
 			HnsEndpointID: ep.HnsId,

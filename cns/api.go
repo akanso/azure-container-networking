@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/Azure/azure-container-networking/cns/common"
@@ -330,8 +331,14 @@ type CreateHostNCApipaEndpointRequest struct {
 // CreateHostNCApipaEndpointResponse describes response for create apipa endpoint request
 // for host container connectivity.
 type CreateHostNCApipaEndpointResponse struct {
-	Response   Response
-	EndpointID string
+	Response     Response
+	EndpointID   string
+	EndpointName string
+	IPv4         []net.IPNet
+	IPv6         []net.IPNet
+	HnsNetworkID string
+	HostVethName string
+	MacAddress   string
 }
 
 // DeleteHostNCApipaEndpointRequest describes request for deleting apipa endpoint created
