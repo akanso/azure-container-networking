@@ -57,7 +57,7 @@ func TestNewAndDeleteEndpointImplHnsV2(t *testing.T) {
 		NICType:      cns.InfraNIC,
 		HNSNetworkID: "853d3fb6-e9b3-49e2-a109-2acc5dda61f1",
 	}
-	ep, err := nw.newEndpointImplHnsV2(nil, epInfo)
+	ep, err := nw.newEndpointImplHnsV2(nil, epInfo, false)
 	if err != nil {
 		fmt.Printf("+%v", err)
 		t.Fatal(err)
@@ -172,7 +172,7 @@ func TestNewEndpointImplHnsv2Timesout(t *testing.T) {
 		},
 		MacAddress: net.HardwareAddr("00:00:5e:00:53:01"),
 	}
-	_, err := nw.newEndpointImplHnsV2(nil, epInfo)
+	_, err := nw.newEndpointImplHnsV2(nil, epInfo, false)
 
 	if err == nil {
 		t.Fatal("Failed to timeout HNS calls for creating endpoint")
@@ -199,7 +199,7 @@ func TestDeleteEndpointImplHnsv2Timeout(t *testing.T) {
 		},
 		MacAddress: net.HardwareAddr("00:00:5e:00:53:01"),
 	}
-	endpoint, err := nw.newEndpointImplHnsV2(nil, epInfo)
+	endpoint, err := nw.newEndpointImplHnsV2(nil, epInfo, false)
 	if err != nil {
 		fmt.Printf("+%v", err)
 		t.Fatal(err)
@@ -494,7 +494,7 @@ func TestNewEndpointImplHnsv2ForIBHappyPath(t *testing.T) {
 
 	// Happy Path
 	endpoint, err := nw.newEndpointImpl(nil, netlink.NewMockNetlink(false, ""), platform.NewMockExecClient(false),
-		netio.NewMockNetIO(false, 0), NewMockEndpointClient(nil), NewMockNamespaceClient(), iptables.NewClient(), &mockDHCP{}, epInfo)
+		netio.NewMockNetIO(false, 0), NewMockEndpointClient(nil), NewMockNamespaceClient(), iptables.NewClient(), &mockDHCP{}, epInfo, false)
 
 	if endpoint != nil || err != nil {
 		t.Fatalf("Endpoint is created for IB due to %v", err)
@@ -524,7 +524,7 @@ func TestNewEndpointImplHnsv2ForIBUnHappyPath(t *testing.T) {
 
 	// Set UnHappy Path
 	_, err := nw.newEndpointImpl(nil, netlink.NewMockNetlink(false, ""), platform.NewMockExecClient(true),
-		netio.NewMockNetIO(false, 0), NewMockEndpointClient(nil), NewMockNamespaceClient(), iptables.NewClient(), &mockDHCP{}, epInfo)
+		netio.NewMockNetIO(false, 0), NewMockEndpointClient(nil), NewMockNamespaceClient(), iptables.NewClient(), &mockDHCP{}, epInfo, false)
 
 	if err == nil {
 		t.Fatal("Failed to test Endpoint creation for IB with unhappy path")
@@ -558,7 +558,7 @@ func TestCreateAndDeleteEndpointImplHnsv2ForDelegatedHappyPath(t *testing.T) {
 	}
 
 	// Happy Path to create and delete endpoint for delegated NIC
-	ep, err := nw.newEndpointImplHnsV2(nil, epInfo)
+	ep, err := nw.newEndpointImplHnsV2(nil, epInfo, false)
 	if err != nil {
 		t.Fatalf("Failed to create endpoint for Delegated NIC due to %v", err)
 	}

@@ -1152,26 +1152,23 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 				returnCode = types.InvalidRequest
 			} else {
 				var (
-					createdEndpointID string
-					ipAddress         string
-					macAddress        string
-					networkID         string
+					ipAddress  string
+					macAddress string
+					networkID  string
 				)
-				createdEndpointID, endpointName, ipAddress, networkID, macAddress, err = hnsclient.CreateHostNCApipaEndpoint(
+				endpointID, endpointName, ipAddress, networkID, macAddress, err = hnsclient.CreateHostNCApipaEndpoint(
 					req.NetworkContainerID,
 					networkContainerDetails.CreateNetworkContainerRequest.LocalIPConfiguration,
 					networkContainerDetails.CreateNetworkContainerRequest.AllowNCToHostCommunication,
 					networkContainerDetails.CreateNetworkContainerRequest.AllowHostToNCCommunication,
 					networkContainerDetails.CreateNetworkContainerRequest.EndpointPolicies)
 
-				endpointID = createdEndpointID
-
 				if err != nil {
 					returnMessage = fmt.Sprintf("CreateHostNCApipaEndpoint failed with error: %v", err)
 					returnCode = types.UnexpectedError
 				}
 
-				// convert these: createdEndpointID, ipAddress, macAddress, networkID, interfaceAlias into CreateHostNCApipaEndpointResponse
+				// convert these: endpointID, ipAddress, macAddress, networkID, interfaceAlias into CreateHostNCApipaEndpointResponse
 				var ipNets []net.IPNet
 				if ipAddress != "" {
 					_, ipNet, parseErr := net.ParseCIDR(ipAddress)
@@ -1181,7 +1178,7 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 				}
 
 				resp = cns.CreateHostNCApipaEndpointResponse{
-					EndpointID:   createdEndpointID,
+					EndpointID:   endpointID,
 					EndpointName: endpointName,
 					IPv4:         ipNets,
 					MacAddress:   macAddress,
@@ -1203,10 +1200,10 @@ func (service *HTTPRestService) CreateHostNCApipaEndpoint(w http.ResponseWriter,
 		ReturnCode: returnCode,
 		Message:    returnMessage,
 	}
-	resp.EndpointID = endpointID
 
 	err = common.Encode(w, &resp)
 	logger.Response(service.Name, resp, resp.Response.ReturnCode, err)
+	logger.Printf("[Azure-CNS] CreateHostNCApipaEndpoint with response: %v", resp)
 }
 
 func (service *HTTPRestService) DeleteHostNCApipaEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -1246,6 +1243,7 @@ func (service *HTTPRestService) DeleteHostNCApipaEndpoint(w http.ResponseWriter,
 
 	err = common.Encode(w, &response)
 	logger.Response(service.Name, response, response.Response.ReturnCode, err)
+	logger.Printf("[Azure-CNS] DeleteHostNCApipaEndpoint with response: %v", response)
 }
 
 // This function is used to query NMagents's supported APIs list

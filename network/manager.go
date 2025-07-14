@@ -6,6 +6,7 @@ package network
 import (
 	"context"
 	"net"
+	"regexp"
 	"sync"
 	"time"
 
@@ -387,6 +388,10 @@ func (nm *networkManager) createEndpoint(cli apipaClient, networkID string, epIn
 			logger.Info("overriding endpoint vlanid with network vlanid")
 			epInfo.Data[VlanIDKey] = nw.VlanId
 		}
+	}
+
+	if isApipa {
+		logger.Info("creating APIPA endpoint", zap.String("networkID", networkID), zap.String("endpointID", epInfo.EndpointID))
 	}
 
 	ep, err := nw.newEndpoint(cli, nm.netlink, nm.plClient, nm.netio, nm.nsClient, nm.iptablesClient, nm.dhcpClient, epInfo, isApipa)
@@ -850,6 +855,17 @@ func generateCNSIPInfoMap(eps []*endpoint, networkContainerID string) map[string
 			}
 		}
 
+		// verify that HnsID is a valid UUID
+		if ep.HnsId != "" && !isValidUUID(ep.HnsId) {
+			logger.Error("HnsId is not a valid UUID", zap.String("HnsId", ep.HnsId), zap.Any("endpoint", ep))
+			continue
+		}
+		// verify that HNSNetworkID is a valid UUID
+		if ep.HNSNetworkID != "" && !isValidUUID(ep.HNSNetworkID) {
+			logger.Error("HNSNetworkID is not a valid UUID", zap.String("HNSNetworkID", ep.HNSNetworkID), zap.Any("endpoint", ep))
+			continue
+		}
+
 		ifNametoIPInfoMap[ep.IfName] = &restserver.IPInfo{ // in windows, the nicname is args ifname, in linux, it's ethX
 			NICType:       ep.NICType,
 			HnsEndpointID: ep.HnsId,
@@ -860,4 +876,10 @@ func generateCNSIPInfoMap(eps []*endpoint, networkContainerID string) map[string
 	}
 
 	return ifNametoIPInfoMap
+}
+
+func isValidUUID(uuid string) bool {
+	// Regular expression to match UUID format
+	var re = regexp.MustCompile(`^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$`)
+	return re.MatchString(uuid)
 }

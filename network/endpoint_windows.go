@@ -463,7 +463,7 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo, i
 		ep := &endpoint{
 			Id:                       ipInfo.HnsEndpointID,
 			IfName:                   ipInfo.HostVethName,
-			HnsId:                    ipInfo.HnsNetworkID,
+			HnsId:                    ipInfo.HnsEndpointID, // TODO check if this is correct
 			SandboxKey:               epInfo.ContainerID,
 			HostIfName:               ipInfo.HostVethName,
 			IPAddresses:              epInfo.IPAddresses,

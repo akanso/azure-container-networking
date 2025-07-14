@@ -613,7 +613,7 @@ func CreateHostNCApipaEndpoint(
 
 	logger.Printf("[Azure CNS] Successfully created HostNCApipaEndpoint: %+v", endpoint)
 
-	return endpoint.Id, endpoint.Name, localIPConfiguration.IPSubnet.IPAddress, endpoint.HostComputeNetwork, endpoint.MacAddress, nil
+	return endpoint.Id, endpoint.Name, localIPConfiguration.IPSubnet.IPAddress, network.Id, endpoint.MacAddress, nil
 }
 
 // updateGwForLocalIPConfiguration applies change on gw IP address for apipa NW and endpoint.
