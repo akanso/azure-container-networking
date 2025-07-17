@@ -478,6 +478,12 @@ func (nw *network) newEndpointImplHnsV2(cli apipaClient, epInfo *EndpointInfo, i
 			PODNameSpace:             epInfo.PODNameSpace,
 			HNSNetworkID:             ipInfo.HnsNetworkID,
 			NICType:                  cns.NodeNetworkInterfaceAPIPANIC,
+			LocalIP: func() string {
+				if ipInfo != nil && len(ipInfo.IPv4) > 0 && ipInfo.IPv4[0].IP != nil {
+					return ipInfo.IPv4[0].IP.String()
+				}
+				return ""
+			}(),
 		}
 
 		ep.MacAddress, _ = net.ParseMAC(ipInfo.MacAddress)

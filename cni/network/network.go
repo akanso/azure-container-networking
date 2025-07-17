@@ -400,7 +400,7 @@ func (plugin *NetPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	startTime := time.Now()
 
-	logger.Info("Processing ADD command, internal Prelude CNI version of July-11.5-2025",
+	logger.Info("Processing ADD command, internal Prelude CNI version of July-16-2025",
 		zap.String("containerId", args.ContainerID),
 		zap.String("netNS", args.Netns),
 		zap.String("ifName", args.IfName),
